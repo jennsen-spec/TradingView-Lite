@@ -128,7 +128,7 @@ export default function DrawingLayer({
   };
 
   // Série servant d'échelle de prix pour un panneau (0=prix, 1=volume, 2=RSI).
-  const PANE_SERIES = ["candle", "volume", "rsi"];
+  const PANE_SERIES = ["candle", "volume", "rsi", "atr"];
   const seriesForPane = (pane: number) => seriesRef.current[PANE_SERIES[pane] ?? "candle"] ?? seriesRef.current.candle;
   // Panneau contenant l'ordonnée `yWrap` (relative au wrap) ; clampe au 1er/dernier hors zone.
   const paneAtY = (yWrap: number): number => {

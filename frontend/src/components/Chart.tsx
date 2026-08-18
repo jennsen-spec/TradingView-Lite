@@ -14,7 +14,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle, LinePoint, Time } from "../lib/indicators";
-import { sma, rsi, smaOfPoints } from "../lib/indicators";
+import { sma, rsi, atr, smaOfPoints } from "../lib/indicators";
 import IndicatorSettings from "./IndicatorSettings";
 import IndicatorCatalog from "./IndicatorCatalog";
 import DrawingLayer from "./DrawingLayer";
@@ -136,6 +136,7 @@ interface LegendRow {
   o: number; h: number; l: number; c: number; change: number; pct: number;
   sma: Record<string, number | null>; // valeur par id de SMA
   vol: number; volMa: number | null; rsi: number | null; rsiMa: number | null;
+  atr: number | null;
 }
 
 // Outil de mesure (Shift + clic). Points ancrés aux données (prix + position logique)
@@ -148,7 +149,7 @@ interface Measure {
 }
 
 // Type d'un id d'instance. Les SMA ont un id commençant par "sma" (sma9/sma50/sma200/sma-<n>).
-const typeOf = (id: string): IndType => (id === "volume" ? "volume" : id === "rsi" ? "rsi" : "sma");
+const typeOf = (id: string): IndType => (id === "volume" ? "volume" : id === "rsi" ? "rsi" : id === "atr" ? "atr" : "sma");
 // Sous-séries (clés seriesRef) contrôlées ensemble par une instance.
 const seriesKeysOf = (id: string): string[] =>
   id === "volume" ? ["volume", "volumeMa"] : id === "rsi" ? ["rsi", "rsiMa"] : [id];
@@ -218,7 +219,7 @@ const loadStretch = (): number[] | null => {
   return null;
 };
 
-const N_PANES = 3; // principal, volume, RSI
+const N_PANES = 4; // principal, volume, RSI, ATR (ATR créé dynamiquement à l'activation)
 const RIGHT_OFFSET = 20; // marge future visible par défaut (barres)
 const INITIAL_FUTURE = 120; // barres "whitespace" futures pré-générées au chargement
 const EXTEND_CHUNK = 300; // barres futures ajoutées quand on approche du bord
@@ -258,6 +259,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const [smaOrder, setSmaOrder] = useState<string[]>(cfg0.smaOrder);
   const [activeVolume, setActiveVolume] = useState(cfg0.activeVolume);
   const [activeRsi, setActiveRsi] = useState(cfg0.activeRsi);
+  const [activeAtr, setActiveAtr] = useState(cfg0.activeAtr);
+  // Incrémenté à chaque (re)création du chart → ré-attache l'ATR au nouveau chart.
+  const [chartEpoch, setChartEpoch] = useState(0);
   const [favorites, setFavorites] = useState<IndType[]>(cfg0.favorites);
   const [settings, setSettings] = useState<Record<string, IndSettings>>(cfg0.settings);
   const [hidden, setHidden] = useState<Record<string, boolean>>({}); // œil (non persisté)
@@ -273,8 +277,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
   // Persistance de toute la config d'indicateurs (structure + réglages + favoris).
   useEffect(() => {
-    saveIndicators({ smaOrder, activeVolume, activeRsi, favorites, settings });
-  }, [smaOrder, activeVolume, activeRsi, favorites, settings]);
+    saveIndicators({ smaOrder, activeVolume, activeRsi, activeAtr, favorites, settings });
+  }, [smaOrder, activeVolume, activeRsi, activeAtr, favorites, settings]);
 
   const toggleIndicator = (id: string) => setHidden((h) => ({ ...h, [id]: !h[id] }));
   const removeIndicator = (id: string) => {
@@ -289,11 +293,13 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       setSettings((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } else if (id === "volume") setActiveVolume(false);
     else if (id === "rsi") setActiveRsi(false);
+    else if (id === "atr") setActiveAtr(false);
     setHidden((h) => { const n = { ...h }; delete n[id]; return n; });
   };
   const addIndicator = (type: IndType) => {
     if (type === "volume") { setActiveVolume(true); setHidden((h) => ({ ...h, volume: false })); return; }
     if (type === "rsi") { setActiveRsi(true); setHidden((h) => ({ ...h, rsi: false })); return; }
+    if (type === "atr") { setActiveAtr(true); setHidden((h) => ({ ...h, atr: false })); return; }
     // Nouvelle SMA : couleur non encore utilisée, longueur 50 par défaut.
     const id = `sma-${smaIdCounterRef.current++}`;
     const used = new Set(smaOrder.map((x) => settings[x]?.color));
@@ -472,6 +478,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       return base;
     };
     providerRef.current = provider; // pour créer les SMA dynamiquement avec la bonne échelle
+    setChartEpoch((e) => e + 1); // signale un nouveau chart → ré-attache l'ATR
     candleSeries.applyOptions({ autoscaleInfoProvider: provider(0) });
     volumeSeries.applyOptions({ autoscaleInfoProvider: provider(1) });
     volumeMaSeries.applyOptions({ autoscaleInfoProvider: provider(1) });
@@ -737,7 +744,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const dataSig =
     smaOrder.map((id) => `${id}:${settings[id]?.length}:${settings[id]?.timeframe}`).join("|") +
     `|vol:${v?.maLength}:${v?.upColor}:${v?.upOpacity}:${v?.downColor}:${v?.downOpacity}` +
-    `|rsi:${r?.length}:${r?.maLength}:${r?.timeframe}`;
+    `|rsi:${r?.length}:${r?.maLength}:${r?.timeframe}` +
+    `|atr:${settings.atr?.length}`;
 
   // Style des lignes (couleur/opacité/épaisseur/style) — applyOptions léger, sans recalcul.
   useEffect(() => {
@@ -761,6 +769,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     const rs = settings.rsi;
     rs && applyLine("rsi", rs.color, rs.opacity, rs.lineWidth, rs.lineStyle);
     rs && applyLine("rsiMa", rs.maColor, rs.maOpacity, rs.maWidth, rs.maStyle);
+    const at = settings.atr;
+    at && applyLine("atr", at.color, at.opacity, at.lineWidth, at.lineStyle);
   }, [settings, smaOrder]);
 
   // Une sous-série est-elle activée dans les réglages Style (case à cocher d'un élément) ?
@@ -798,7 +808,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
   // Visibilité de chaque série = actif ET autorisé par l'intervalle ET non masqué (œil) ET élément activé.
   useEffect(() => {
-    const activeIds = [...smaOrder, ...(activeVolume ? ["volume"] : []), ...(activeRsi ? ["rsi"] : [])];
+    const activeIds = [...smaOrder, ...(activeVolume ? ["volume"] : []), ...(activeRsi ? ["rsi"] : []), ...(activeAtr ? ["atr"] : [])];
     activeIds.forEach((id) => {
       const st = settings[id];
       const allowed = st ? visibleForInterval(interval, st.visibility) : true;
@@ -814,7 +824,43 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     // Volume / RSI retirés → on masque leurs séries (conservées pour garder les panneaux).
     if (!activeVolume) seriesKeysOf("volume").forEach((k) => { try { seriesRef.current[k]?.applyOptions({ visible: false }); } catch { /* */ } });
     if (!activeRsi) seriesKeysOf("rsi").forEach((k) => { try { seriesRef.current[k]?.applyOptions({ visible: false }); } catch { /* */ } });
-  }, [settings, interval, hidden, smaOrder, activeVolume, activeRsi]);
+  }, [settings, interval, hidden, smaOrder, activeVolume, activeRsi, activeAtr]);
+
+  // ATR : panneau créé dynamiquement à l'activation (en bas, hauteur type volume),
+  // retiré à la désactivation (pas de panneau vide, contrairement à Volume/RSI).
+  useEffect(() => {
+    const chart = chartRef.current;
+    const s = seriesRef.current;
+    if (!chart) return;
+    if (activeAtr && !s.atr) {
+      const st = settings.atr;
+      const atrSeries = chart.addSeries(
+        LineSeries,
+        {
+          color: rgba(st?.color ?? "#ef5350", st?.opacity),
+          lineWidth: (st?.lineWidth ?? 2) as 1 | 2 | 3 | 4,
+          lineStyle: LINE_STYLE_MAP[st?.lineStyle ?? "solid"],
+          priceLineVisible: false,
+        },
+        3
+      );
+      const prov = providerRef.current;
+      if (prov) atrSeries.applyOptions({ autoscaleInfoProvider: prov(3) });
+      atrSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
+      s.atr = atrSeries;
+      paneScalesRef.current[3] = atrSeries.priceScale();
+      const panes = chart.panes();
+      if (panes[3]) panes[3].setStretchFactor(panes[1]?.getStretchFactor() ?? 1); // aussi haut que le volume
+      atrSeries.setData(atr(candles, st?.length ?? 14).map((p) => ({ time: toTime(p.time), value: p.value })));
+      requestAnimationFrame(() => measure());
+    } else if (!activeAtr && s.atr) {
+      try { chart.removeSeries(s.atr); } catch { /* déjà retirée */ }
+      delete s.atr;
+      paneScalesRef.current = paneScalesRef.current.slice(0, 3);
+      requestAnimationFrame(() => measure());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAtr, chartEpoch]);
 
   // Mise à jour des données quand les bougies changent.
   useEffect(() => {
@@ -857,7 +903,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
     // --- SMA dynamiques : synchronise les séries (pane 0) avec smaOrder, puis calcule/pose les données ---
     const chart = chartRef.current;
-    const FIXED = new Set(["candle", "volume", "volumeMa", "rsi", "rsiMa"]);
+    const FIXED = new Set(["candle", "volume", "volumeMa", "rsi", "rsiMa", "atr"]);
     // Retire les SMA qui ne sont plus dans l'ordre.
     Object.keys(s).forEach((k) => {
       if (!FIXED.has(k) && !smaOrder.includes(k)) {
@@ -895,6 +941,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
     // RSI + sa MA : longueur / longueur MA / plage temporelle depuis les réglages.
     const { rsiMap, maMap: rsiMaMap } = rsiValues(settings.rsi, candles, dailyCandles);
+    // ATR : lissage de Wilder du True Range sur l'intervalle affiché.
+    const atrMap = new Map(atr(candles, settings.atr?.length ?? 14).map((p) => [p.time, p.value]));
     // Volume MA : moyenne mobile du volume (longueur réglable).
     const vol = settings.volume;
     const volMaPts = smaOfPoints(candles.map((c) => ({ time: c.time, value: c.volume })), vol.maLength ?? 20);
@@ -910,6 +958,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     s.volumeMa?.setData(volMaPts.map((p) => ({ time: toTime(p.time), value: p.value })));
     s.rsi?.setData([...rsiMap].map(([t, v]) => ({ time: toTime(t), value: v })));
     s.rsiMa?.setData([...rsiMaMap].map(([t, v]) => ({ time: toTime(t), value: v })));
+    s.atr?.setData([...atrMap].map(([t, v]) => ({ time: toTime(t), value: v })));
 
     // Lignes pour la légende dynamique.
     const rows: LegendRow[] = candles.map((c, i) => {
@@ -922,6 +971,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         sma,
         vol: c.volume, volMa: mVolMa.get(c.time) ?? null,
         rsi: rsiMap.get(c.time) ?? null, rsiMa: rsiMaMap.get(c.time) ?? null,
+        atr: atrMap.get(c.time) ?? null,
       };
     });
     legendRowsRef.current = rows;
@@ -1150,6 +1200,11 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             )}
           </div>
         )}
+        {legend && layout[3] && activeAtr && (
+          <div className="pane-legend" style={{ top: layout[3].top + 4 }}>
+            {indRow("atr", settings.atr?.color ?? "#ef5350", <>ATR {settings.atr?.length ?? 14} {f2(legend.atr)}</>)}
+          </div>
+        )}
         {currency && layout[0] && (
           <div className="currency-label" style={{ top: layout[0].top + 4, right: 6 }}>
             {currency}
@@ -1187,7 +1242,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         const t = typeOf(settingsOpenId);
         return (
           <IndicatorSettings
-            title={t === "volume" ? "Vol" : t === "rsi" ? "RSI" : "SMA"}
+            title={t === "volume" ? "Vol" : t === "rsi" ? "RSI" : t === "atr" ? "ATR" : "SMA"}
             type={t}
             settings={settings[settingsOpenId]}
             onChange={changeSettings}

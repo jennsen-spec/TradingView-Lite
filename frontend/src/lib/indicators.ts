@@ -75,3 +75,27 @@ export function rsi(candles: Candle[], period = 14): LinePoint[] {
   }
   return out;
 }
+
+// ATR (Average True Range) — lissage de Wilder du True Range, comme le RSI.
+export function atr(candles: Candle[], period = 14): LinePoint[] {
+  const out: LinePoint[] = [];
+  if (candles.length <= period) return out;
+
+  // True Range de chaque bougie (dès la 2e : besoin du close précédent). tr[k] ↔ candles[k+1].
+  const tr: number[] = [];
+  for (let i = 1; i < candles.length; i++) {
+    const h = candles[i].high, l = candles[i].low, pc = candles[i - 1].close;
+    tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  // Première ATR = moyenne simple des `period` premiers TR, posée à candles[period].
+  let avg = 0;
+  for (let i = 0; i < period; i++) avg += tr[i];
+  avg /= period;
+  out.push({ time: candles[period].time, value: avg });
+
+  for (let i = period; i < tr.length; i++) {
+    avg = (avg * (period - 1) + tr[i]) / period;
+    out.push({ time: candles[i + 1].time, value: avg });
+  }
+  return out;
+}

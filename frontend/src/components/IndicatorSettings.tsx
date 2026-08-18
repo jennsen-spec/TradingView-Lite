@@ -14,7 +14,7 @@ type Tab = "params" | "style" | "visibility";
 
 interface Props {
   title: string;
-  type: "sma" | "volume" | "rsi";
+  type: "sma" | "volume" | "rsi" | "atr";
   settings: IndicatorSettings;
   onChange: (s: IndicatorSettings) => void;
   onCancel: () => void;
@@ -63,6 +63,17 @@ export default function IndicatorSettings({ title, type, settings: s, onChange, 
           </>
         )}
 
+        {tab === "params" && type === "atr" && (
+          <div className="is-field">
+            <label>Longueur</label>
+            <input
+              type="number" min={1}
+              value={s.length ?? 14}
+              onChange={(e) => set({ length: Math.max(1, Number(e.target.value) || 1) })}
+            />
+          </div>
+        )}
+
         {tab === "params" && type === "volume" && (
           <div className="is-field">
             <label>Longueur MA</label>
@@ -103,7 +114,7 @@ export default function IndicatorSettings({ title, type, settings: s, onChange, 
           </>
         )}
 
-        {tab === "style" && type === "sma" && (
+        {tab === "style" && (type === "sma" || type === "atr") && (
           <>
             <div className="is-section">Couleur</div>
             <div className="is-swatches">

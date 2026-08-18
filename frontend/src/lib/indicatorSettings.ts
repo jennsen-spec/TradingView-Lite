@@ -82,6 +82,11 @@ export const DEFAULT_SETTINGS = (): Record<string, IndicatorSettings> => ({
     bgOn: true, bgColor: "#7e57c2", bgOpacity: 12,
     visibility: cloneVis(),
   },
+  atr: {
+    length: 14, timeframe: "chart",
+    color: "#ef5350", opacity: 100, lineWidth: 2, lineStyle: "solid",
+    visibility: cloneVis(),
+  },
 });
 
 // Fabrique de réglages SMA (pour les instances ajoutées dynamiquement, #9).
@@ -92,11 +97,12 @@ export const smaDefault = (length: number, color: string): IndicatorSettings => 
 export const SMA_COLORS = ["#a371f7", "#26c6da", "#ec407a", "#66bb6a", "#ffb300", "#5c6bc0", "#ef5350", "#00838f"];
 
 // Types d'indicateurs au catalogue (#9). mono = une seule instance possible.
-export type IndType = "sma" | "volume" | "rsi";
+export type IndType = "sma" | "volume" | "rsi" | "atr";
 export const IND_TYPES: { type: IndType; label: string; mono: boolean }[] = [
   { type: "sma", label: "Moyenne mobile simple (SMA)", mono: false },
   { type: "volume", label: "Volume", mono: true },
   { type: "rsi", label: "RSI — Indice de force relative", mono: true },
+  { type: "atr", label: "ATR — Average True Range", mono: true },
 ];
 
 export const LS_SETTINGS = "tvlike:indicator-settings";
@@ -136,8 +142,9 @@ export interface IndicatorsConfig {
   smaOrder: string[]; // ids des SMA, dans l'ordre d'affichage (haut→bas de la légende)
   activeVolume: boolean;
   activeRsi: boolean;
+  activeAtr: boolean;
   favorites: IndType[]; // types favoris (accès rapide au chevron)
-  settings: Record<string, IndicatorSettings>; // réglages par id (sma*, volume, rsi)
+  settings: Record<string, IndicatorSettings>; // réglages par id (sma*, volume, rsi, atr)
 }
 export const LS_INDICATORS = "tvlike:indicators";
 
@@ -146,6 +153,7 @@ export function loadIndicators(): IndicatorsConfig {
     smaOrder: ["sma200", "sma50", "sma9"],
     activeVolume: true,
     activeRsi: true,
+    activeAtr: false,
     favorites: ["sma", "volume", "rsi"],
     settings: loadSettings(), // défauts + migration de l'ancienne clé #7
   };
@@ -161,6 +169,7 @@ export function loadIndicators(): IndicatorsConfig {
         smaOrder,
         activeVolume: p.activeVolume ?? true,
         activeRsi: p.activeRsi ?? true,
+        activeAtr: p.activeAtr ?? false,
         favorites: Array.isArray(p.favorites) ? p.favorites : base.favorites,
         settings,
       };
