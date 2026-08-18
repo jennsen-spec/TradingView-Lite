@@ -1,4 +1,5 @@
 // Types et helpers des paramètres d'indicateurs (partagés Chart <-> pop-up).
+import { syncToCloud } from "./cloudPrefs";
 
 export type Timeframe = "1d" | "chart"; // Plage temporelle : journalier ou intervalle du graphique
 export type LineStyleName = "solid" | "dashed" | "dotted";
@@ -173,6 +174,7 @@ export function loadIndicators(): IndicatorsConfig {
 export function saveIndicators(cfg: IndicatorsConfig) {
   try {
     localStorage.setItem(LS_INDICATORS, JSON.stringify(cfg));
+    syncToCloud(LS_INDICATORS);
   } catch {
     /* ignore */
   }

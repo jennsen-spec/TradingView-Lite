@@ -4,6 +4,7 @@ import SymbolSearch from "./components/SymbolSearch";
 import IntervalSelector from "./components/IntervalSelector";
 import WatchlistPanel from "./components/WatchlistPanel";
 import { fetchCandles, searchSymbols } from "./lib/api";
+import { syncToCloud } from "./lib/cloudPrefs";
 import type { Candle } from "./lib/indicators";
 
 // Historique journalier long pour la SOURCE des SMA (au-delà de l'affichage) → SMA pleines
@@ -39,6 +40,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("tvlike:theme", theme);
+    syncToCloud("tvlike:theme");
   }, [theme]);
 
   useEffect(() => {

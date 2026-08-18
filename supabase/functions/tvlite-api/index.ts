@@ -155,11 +155,14 @@ async function getTimeSeries(symbol: string, interval = "1d", reqRange: string |
   const intraday = INTRADAY.has(yInterval);
   const candles: any[] = [];
   for (let i = 0; i < ts.length; i++) {
-    if (q.close?.[i] == null) continue;
+    // Contrat `bars` (partagé avec GCR) : on EXCLUT toute barre où close OU volume
+    // est null (même règle que le worker GCR). Garantit volume non-null et un jeu
+    // de barres identique quelle que soit la source (TVLite ou GCR).
+    if (q.close?.[i] == null || q.volume?.[i] == null) continue;
     candles.push({
       time: intraday ? ts[i] + gmt : new Date((ts[i] + gmt) * 1000).toISOString().slice(0, 10),
       open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i],
-      volume: q.volume?.[i] ?? 0,
+      volume: q.volume[i],
     });
   }
 
@@ -253,6 +256,23 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const url = new URL(req.url);
   try {
+    // Préférences (mono-utilisateur) : GET = toutes les prefs, POST = upsert d'une clé.
+    if (url.pathname.includes("/prefs")) {
+      if (!supabase) return jsonResponse({});
+      if (req.method === "POST") {
+        const body = await req.json().catch(() => null);
+        if (!body?.id) return jsonResponse({ error: "id requis" }, 400);
+        await supabase.from("tvlite_prefs").upsert(
+          { id: String(body.id), value: String(body.value ?? ""), updated_at: new Date().toISOString() },
+          { onConflict: "id" },
+        );
+        return jsonResponse({ ok: true });
+      }
+      const { data } = await supabase.from("tvlite_prefs").select("id,value");
+      const out: Record<string, string> = {};
+      for (const row of data ?? []) out[row.id] = row.value;
+      return jsonResponse(out);
+    }
     if (url.pathname.includes("/search")) {
       const query = url.searchParams.get("q") || "";
       if (!query.trim()) return jsonResponse([]);

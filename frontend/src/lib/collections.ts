@@ -1,4 +1,5 @@
 // Watchlist / Collections (#2) — modèle plat (sections + symboles ordonnés) + persistance localStorage.
+import { syncToCloud } from "./cloudPrefs";
 
 export interface WLItem {
   id: string;
@@ -50,6 +51,7 @@ export function loadCollections(): Collection[] {
 export function saveCollections(list: Collection[]) {
   try {
     localStorage.setItem(KEY, JSON.stringify(list));
+    syncToCloud(KEY);
   } catch {
     /* ignore */
   }

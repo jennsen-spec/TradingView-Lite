@@ -1,6 +1,7 @@
 // Modèle des dessins (socle #4) + persistance par symbole + helpers de géométrie.
 // Ancrage : temps (UTCTimestamp, secondes) + prix → suit pan/zoom, valable sur tous les intervalles.
 import type { Visibility, LineStyleName } from "./indicatorSettings";
+import { syncToCloud } from "./cloudPrefs";
 
 export type DrawingType = "trend" | "vline" | "channel" | "brush";
 export type CapStyle = "normal" | "arrow"; // embout d'un trait
@@ -168,6 +169,7 @@ export function loadDrawings(symbol: string): Drawing[] {
 export function saveDrawings(symbol: string, list: Drawing[]) {
   try {
     localStorage.setItem(keyFor(symbol), JSON.stringify(list));
+    syncToCloud(keyFor(symbol));
   } catch {
     /* ignore */
   }
