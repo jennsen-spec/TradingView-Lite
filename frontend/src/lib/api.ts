@@ -19,18 +19,33 @@ export interface SymbolHit {
   category: string;
 }
 
+// Prod : Edge Function Supabase (VITE_API_BASE défini). Dev : chaîne vide → proxy Vite → backend Node.
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+const API_KEY = import.meta.env.VITE_API_KEY ?? "";
+// En prod on envoie la clé publishable Supabase (publique) ; en dev aucun en-tête.
+const authHeaders: Record<string, string> = API_KEY
+  ? { apikey: API_KEY, Authorization: `Bearer ${API_KEY}` }
+  : {};
+
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
   return json as T;
 }
 
 export function fetchCandles(symbol: string, interval = "1d", fresh = false, range?: string) {
+  if (API_BASE) {
+    // Edge Function : pas de cache → le paramètre `fresh` n'a pas d'objet.
+    const q = new URLSearchParams({ symbol, interval });
+    if (range) q.set("range", range);
+    return getJson<CandlesResponse>(`${API_BASE}/candles?${q.toString()}`);
+  }
   const q = `interval=${interval}${fresh ? "&fresh=1" : ""}${range ? `&range=${range}` : ""}`;
   return getJson<CandlesResponse>(`/api/candles/${encodeURIComponent(symbol)}?${q}`);
 }
 
 export function searchSymbols(q: string) {
+  if (API_BASE) return getJson<SymbolHit[]>(`${API_BASE}/search?q=${encodeURIComponent(q)}`);
   return getJson<SymbolHit[]>(`/api/search?q=${encodeURIComponent(q)}`);
 }
