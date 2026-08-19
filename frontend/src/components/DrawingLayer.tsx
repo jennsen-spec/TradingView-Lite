@@ -271,7 +271,10 @@ export default function DrawingLayer({
     };
 
     const onDown = (e: MouseEvent) => {
-      if (e.button !== 0 || e.shiftKey) return; // droit → contextmenu ; Shift → mesure #27
+      if (e.button !== 0) return; // droit → contextmenu
+      // Shift : contrainte horizontale PENDANT un tracé ; hors tracé (mode curseur) → mesure #27.
+      const drawingNow = toolRef.current !== "cursor" || !!draftRef.current || !!chanDraftRef.current;
+      if (e.shiftKey && !drawingNow) return;
       if (inUi(e.target)) return; // clic sur l'UI dessins : ne pas intercepter
       if (chartMenuRef.current) setChartMenu(null); // un clic ailleurs ferme le menu contextuel
 
@@ -280,9 +283,11 @@ export default function DrawingLayer({
       if (tool === "trend" || tool === "arrow" || tool === "fib") {
         const dr = draftRef.current;
         // 2e clic : on verrouille le panneau du 1er point pour rester dans le même sous-graphe.
-        const pt = pxToData(e.clientX, e.clientY, dr ? dr.pane : undefined);
-        if (!pt) return;
+        const raw = pxToData(e.clientX, e.clientY, dr ? dr.pane : undefined);
+        if (!raw) return;
         e.preventDefault(); e.stopPropagation();
+        // Shift pendant le tracé → 2e point au prix du 1er (ligne horizontale).
+        const pt = e.shiftKey && dr ? { ...raw, price: dr.p0.price } : raw;
         if (!dr) { setDraft({ p0: pt, p1: pt, pane: pt.pane }); }
         else {
           let d: Drawing;
@@ -324,9 +329,11 @@ export default function DrawingLayer({
       // Canal : 3 clics (début base, fin base, largeur).
       if (tool === "channel") {
         const cd = chanDraftRef.current;
-        const pt = pxToData(e.clientX, e.clientY, cd ? cd.pane : undefined);
-        if (!pt) return;
+        const raw = pxToData(e.clientX, e.clientY, cd ? cd.pane : undefined);
+        if (!raw) return;
         e.preventDefault(); e.stopPropagation();
+        // Shift pendant le tracé de la base → base horizontale (2e point au prix du 1er).
+        const pt = e.shiftKey && cd && cd.p1 === null ? { ...raw, price: cd.p0.price } : raw;
         if (!cd) { setChanDraft({ p0: pt, p1: null, cursor: pt, pane: pt.pane }); }
         else if (cd.p1 === null) { setChanDraft({ p0: cd.p0, p1: pt, cursor: pt, pane: cd.pane }); }
         else {
@@ -381,9 +388,9 @@ export default function DrawingLayer({
         return;
       }
       const dr = draftRef.current;
-      if (dr) { const pt = pxToData(e.clientX, e.clientY, dr.pane); if (pt) setDraft({ ...dr, p1: pt }); return; }
+      if (dr) { const raw = pxToData(e.clientX, e.clientY, dr.pane); if (raw) setDraft({ ...dr, p1: e.shiftKey ? { ...raw, price: dr.p0.price } : raw }); return; }
       const cd = chanDraftRef.current;
-      if (cd) { const pt = pxToData(e.clientX, e.clientY, cd.pane); if (pt) setChanDraft({ ...cd, cursor: pt }); return; }
+      if (cd) { const raw = pxToData(e.clientX, e.clientY, cd.pane); if (raw) { const pt = e.shiftKey && cd.p1 === null ? { ...raw, price: cd.p0.price } : raw; setChanDraft({ ...cd, cursor: pt }); } return; }
       const dg = dragRef.current;
       if (!dg) return;
       const pt = pxToData(e.clientX, e.clientY, dg.pane); if (!pt) return;
