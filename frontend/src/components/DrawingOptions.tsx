@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { PALETTE, LINE_STYLES } from "../lib/indicatorSettings";
 import type { Drawing, DrawingStyle, CapStyle, DPoint, TextConfig, MeasureConfig } from "../lib/drawings";
-import { CHANNEL_LEVELS, BRUSH_WIDTHS, defaultMeasure, saveDrawingDefault, loadDrawingDefaults, drawingDefaultKey } from "../lib/drawings";
+import { CHANNEL_LEVELS, BRUSH_WIDTHS, defaultMeasure, drawingDefaultKey } from "../lib/drawings";
+import { templateFromDrawing, applyTemplate, factoryTemplate } from "../lib/templates";
 import VisibilityEditor from "./VisibilityEditor";
+import TemplateMenu from "./TemplateMenu";
 import ColorButton from "./ColorButton";
 
 type Tab = "style" | "text" | "measure" | "coords" | "visibility";
@@ -93,7 +95,6 @@ function CapDropdown({
 export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }: Props) {
   const [tab, setTab] = useState<Tab>("style");
   const [dd, setDd] = useState<Dropdown>(null);
-  const [savedDef, setSavedDef] = useState(false);
   const extBtnRef = useRef<HTMLButtonElement>(null);
   const [extPos, setExtPos] = useState({ left: 0, top: 0 });
   const s = d.style;
@@ -130,9 +131,9 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
     return () => document.removeEventListener("mousedown", onDoc);
   }, [dd]);
 
-  // Flèche = trait à embout droit « flèche » ; seul cas où l'onglet Mesure apparaît.
-  const isArrow = d.type === "trend" && s.rightCap === "arrow";
-  const m: MeasureConfig = d.measure ?? defaultMeasure();
+  // Onglet Mesure : disponible pour tous les traits (trait simple ET flèche).
+  const isTrend = d.type === "trend";
+  const m: MeasureConfig = d.measure ?? defaultMeasure(s.rightCap === "arrow");
   const setStyle = (patch: Partial<DrawingStyle>) => onChange({ ...d, style: { ...s, ...patch } });
   const setText = (patch: Partial<TextConfig>) => onChange({ ...d, text: { ...d.text, ...patch } });
   const setMeasure = (patch: Partial<MeasureConfig>) => onChange({ ...d, measure: { ...m, ...patch } });
@@ -154,7 +155,7 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
       <div className="is-tabs">
         <button className={tab === "style" ? "active" : ""} onClick={() => setTab("style")}>Style</button>
         {d.type !== "brush" && <button className={tab === "text" ? "active" : ""} onClick={() => setTab("text")}>Texte</button>}
-        {isArrow && <button className={tab === "measure" ? "active" : ""} onClick={() => setTab("measure")}>Mesure</button>}
+        {isTrend && <button className={tab === "measure" ? "active" : ""} onClick={() => setTab("measure")}>Mesure</button>}
         {d.type !== "brush" && <button className={tab === "coords" ? "active" : ""} onClick={() => setTab("coords")}>Coordonnées</button>}
         <button className={tab === "visibility" ? "active" : ""} onClick={() => setTab("visibility")}>Visibilité</button>
       </div>
@@ -388,9 +389,9 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
             <div className="do-align-row">
               <label>Position</label>
               <select value={m.position} onChange={(e) => setMeasure({ position: e.target.value as MeasureConfig["position"] })}>
-                <option value="top">En haut</option>
+                <option value="left">À gauche</option>
                 <option value="middle">Au milieu</option>
-                <option value="bottom">En bas</option>
+                <option value="right">À droite</option>
               </select>
             </div>
             <div className="do-align-row">
@@ -399,6 +400,13 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
                 <option value="left">À gauche</option>
                 <option value="center">Au milieu</option>
                 <option value="right">À droite</option>
+              </select>
+            </div>
+            <div className="do-align-row">
+              <label>Sens du texte</label>
+              <select value={m.orientation} onChange={(e) => setMeasure({ orientation: e.target.value as MeasureConfig["orientation"] })}>
+                <option value="h">Horizontal</option>
+                <option value="along">Le long du tracé</option>
               </select>
             </div>
           </>
@@ -445,28 +453,12 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
       </div>
 
       <div className="is-foot is-foot-split">
-        {(() => {
-          // Grisé si les réglages courants = le défaut enregistré ; « normal » s'ils en diffèrent.
-          const def = loadDrawingDefaults()[drawingDefaultKey(d.type, d.style)];
-          const matchesDefault = !!def
-            && JSON.stringify(def.style) === JSON.stringify(d.style)
-            && JSON.stringify(def.text) === JSON.stringify(d.text)
-            && JSON.stringify(def.visibility) === JSON.stringify(d.visibility);
-          return (
-            <button
-              className={`is-btn${matchesDefault ? " is-btn-ghost" : ""}`}
-              disabled={matchesDefault}
-              title="Utiliser ces paramètres comme défaut pour ce type d'outil"
-              onClick={() => {
-                saveDrawingDefault(d);
-                setSavedDef(true);
-                setTimeout(() => setSavedDef(false), 1500);
-              }}
-            >
-              {savedDef ? "✓ Défini par défaut" : "Définir par défaut"}
-            </button>
-          );
-        })()}
+        <TemplateMenu
+          drawingKey={drawingDefaultKey(d.type, d.style)}
+          current={templateFromDrawing(d)}
+          factory={factoryTemplate(d)}
+          onApply={(t) => onChange(applyTemplate(d, t))}
+        />
         <div className="is-foot-right">
           <button className="is-btn" onClick={onCancel}>Annuler</button>
           <button className="is-btn primary" onClick={onOk}>D'accord</button>

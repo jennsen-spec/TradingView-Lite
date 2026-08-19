@@ -57,16 +57,18 @@ export interface MeasureConfig {
   duration: boolean;  // afficher la durée (interrupteur maître)
   durTime: boolean;   // durée : échelle de temps (temps réel écoulé)
   durBars: boolean;   // durée : valeur du graphe (nombre de barres)
-  position: "top" | "middle" | "bottom"; // le long de la flèche
+  position: "left" | "middle" | "right"; // le long du tracé (par extrémité, stable si le trait s'inverse)
   align: "left" | "center" | "right";    // alignement horizontal du bloc
+  orientation: "h" | "along";            // sens du texte : horizontal ou le long du tracé
 }
-export const defaultMeasure = (): MeasureConfig => ({
-  percent: true,
+export const defaultMeasure = (percent = true): MeasureConfig => ({
+  percent,
   duration: false,
   durTime: true,
   durBars: true,
-  position: "top",
+  position: "right",
   align: "center",
+  orientation: "h",
 });
 
 export interface DPoint {
@@ -160,7 +162,7 @@ export function newTrend(p0: DPoint, p1: DPoint, rightCap: CapStyle = "normal", 
     points: [p0, p1],
     pane,
     style: { ...defaultTrendStyle(), rightCap },
-    ...(rightCap === "arrow" ? { measure: defaultMeasure() } : {}),
+    measure: defaultMeasure(rightCap === "arrow"), // flèche : % activé par défaut ; trait : désactivé
     text: defaultText(),
     visibility: defaultVisibility(),
     locked: false,
@@ -263,45 +265,10 @@ export function saveDrawings(symbol: string, list: Drawing[]) {
   }
 }
 
-// --- Paramètres par défaut par outil (« Définir par défaut ») ---
-interface DrawingDefault { style: DrawingStyle; text: TextConfig; visibility: Visibility; }
-const DEFAULTS_KEY = "tvlike:drawing-defaults";
-
-// Clé de défaut : la Flèche (trait à embout droit flèche) est distincte du Trait simple.
+// Clé de modèle par outil : la Flèche (trait à embout droit flèche) est distincte du Trait simple.
+// Les modèles/défauts sont propres à chaque clé (cf. lib/templates.ts).
 export function drawingDefaultKey(type: DrawingType, style: DrawingStyle): string {
   return type === "trend" && style.rightCap === "arrow" ? "arrow" : type;
-}
-
-export function loadDrawingDefaults(): Record<string, DrawingDefault> {
-  try {
-    const raw = localStorage.getItem(DEFAULTS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* ignore */
-  }
-  return {};
-}
-
-export function saveDrawingDefault(d: Drawing) {
-  try {
-    const all = loadDrawingDefaults();
-    all[drawingDefaultKey(d.type, d.style)] = { style: d.style, text: d.text, visibility: d.visibility };
-    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(all));
-  } catch {
-    /* ignore */
-  }
-}
-
-// Applique le défaut enregistré (si présent) à un dessin fraîchement créé, en gardant sa géométrie.
-export function applyDrawingDefault(d: Drawing): Drawing {
-  const def = loadDrawingDefaults()[drawingDefaultKey(d.type, d.style)];
-  if (!def) return d;
-  return {
-    ...d,
-    style: { ...d.style, ...def.style },
-    text: { ...d.text, ...def.text },
-    visibility: def.visibility ?? d.visibility,
-  };
 }
 
 // Distance (px) d'un point à un segment — pour le hit-test.

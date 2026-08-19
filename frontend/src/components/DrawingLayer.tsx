@@ -6,9 +6,9 @@ import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings"
 import { fmtTimeByInterval } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle,
-  newTrend, newVline, newChannel, newBrush, newFib, applyDrawingDefault, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  newTrend, newVline, newChannel, newBrush, newFib, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
-import { defaultOrFactoryFib } from "../lib/fibTemplates";
+import { applyTemplateDefault } from "../lib/templates";
 
 // Prix sur la droite de base (p0→p1) au temps `time` (interpolation linéaire).
 const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
@@ -328,10 +328,9 @@ export default function DrawingLayer({
         else {
           let d: Drawing;
           if (tool === "fib") {
-            d = newFib(dr.p0, pt, dr.pane);
-            d = { ...d, fib: defaultOrFactoryFib() }; // applique le thème par défaut s'il existe
+            d = applyTemplateDefault(newFib(dr.p0, pt, dr.pane));
           } else {
-            d = applyDrawingDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
+            d = applyTemplateDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
             if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
           }
           pushUndo();
@@ -347,7 +346,7 @@ export default function DrawingLayer({
         const pt = pxToData(e.clientX, e.clientY);
         if (!pt) return;
         e.preventDefault(); e.stopPropagation();
-        const d = applyDrawingDefault(newVline(pt.time, pt.pane));
+        const d = applyTemplateDefault(newVline(pt.time, pt.pane));
         pushUndo();
         setDrawings((prev) => [...prev, d]);
         setActiveTool("cursor");
@@ -377,7 +376,7 @@ export default function DrawingLayer({
         else if (cd.p1 === null) { setChanDraft({ p0: cd.p0, p1: pt, cursor: pt, pane: cd.pane }); }
         else {
           const offset = pt.price - basePriceAt(cd.p0, cd.p1, pt.time);
-          const d = applyDrawingDefault(newChannel(cd.p0, cd.p1, offset, cd.pane));
+          const d = applyTemplateDefault(newChannel(cd.p0, cd.p1, offset, cd.pane));
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setChanDraft(null);
@@ -471,7 +470,7 @@ export default function DrawingLayer({
         setBrushDraft(null);
         setActiveTool("cursor");
         if (pts.length >= 2) {
-          const d = applyDrawingDefault(newBrush(pts, brushPaneRef.current));
+          const d = applyTemplateDefault(newBrush(pts, brushPaneRef.current));
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setSelectedIds([d.id]);
@@ -795,7 +794,7 @@ export default function DrawingLayer({
   // Mesure d'une flèche (variation % + durée), placée le long du trait.
   const measureLabel = (d: Drawing, a: PxPt, b: PxPt) => {
     const m = d.measure;
-    if (d.style.rightCap !== "arrow" || !m) return null;
+    if (d.type !== "trend" || !m) return null;
     const hasDur = m.duration && (m.durTime || m.durBars);
     if (!m.percent && !hasDur) return null;
     const p0 = d.points[0], p1 = d.points[1];
@@ -816,27 +815,32 @@ export default function DrawingLayer({
     }
     if (!lines.length) return null;
 
-    // Position (le long de la flèche) : haut = extrémité la plus haute, bas = la plus basse.
-    const top = a.y <= b.y ? a : b;
-    const bot = a.y <= b.y ? b : a;
+    // Position (par extrémité, en x) : stable même si le trait s'inverse.
+    const leftPt = a.x <= b.x ? a : b;
+    const rightPt = a.x <= b.x ? b : a;
     const anchor =
-      m.position === "top" ? top
-        : m.position === "bottom" ? bot
+      m.position === "left" ? leftPt
+        : m.position === "right" ? rightPt
           : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     const textAnchor = m.align === "left" ? "start" : m.align === "right" ? "end" : "middle";
-    const dy = m.position === "top" ? -8 : m.position === "bottom" ? 8 : 0;
-    const baseline = m.position === "top" ? "auto" : m.position === "bottom" ? "hanging" : "central";
-    const lineH = 15;
+    // Sens du texte : horizontal, ou le long du tracé (angle borné à [-90,90] pour rester lisible).
+    let angle = 0;
+    if (m.orientation === "along") {
+      angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+      if (angle > 90) angle -= 180; else if (angle < -90) angle += 180;
+    }
+    const lineH = 15, gap = 6;
+    const firstDy = -(gap + (lines.length - 1) * lineH); // bloc calé au-dessus du point d'ancrage
     return (
       <text
-        x={anchor.x} y={anchor.y + dy}
-        textAnchor={textAnchor} dominantBaseline={baseline}
+        transform={`translate(${anchor.x},${anchor.y}) rotate(${angle})`}
+        textAnchor={textAnchor}
         fill={rgba(d.style.color, d.style.opacity)} fontSize={12} fontWeight="600"
         stroke="var(--surface)" strokeWidth={3} paintOrder="stroke"
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         {lines.map((ln, i) => (
-          <tspan key={i} x={anchor.x} dy={i === 0 ? 0 : lineH}>{ln}</tspan>
+          <tspan key={i} x={0} dy={i === 0 ? firstDy : lineH}>{ln}</tspan>
         ))}
       </text>
     );

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import type { Drawing, FibConfig } from "../lib/drawings";
+import { drawingDefaultKey } from "../lib/drawings";
+import { templateFromDrawing, applyTemplate, factoryTemplate } from "../lib/templates";
 import VisibilityEditor from "./VisibilityEditor";
-import FibTemplateMenu from "./FibTemplateMenu";
+import TemplateMenu from "./TemplateMenu";
 
 type Tab = "style" | "coords" | "visibility";
 
@@ -127,7 +129,12 @@ export default function FibOptions({ drawing: d, onChange, onCancel, onOk }: Pro
       </div>
 
       <div className="is-foot is-foot-split">
-        <FibTemplateMenu config={fib} onApply={(c) => onChange({ ...d, fib: c })} />
+        <TemplateMenu
+          drawingKey={drawingDefaultKey(d.type, d.style)}
+          current={templateFromDrawing(d)}
+          factory={factoryTemplate(d)}
+          onApply={(t) => onChange(applyTemplate(d, t))}
+        />
         <div className="is-foot-right">
           <button className="is-btn" onClick={onCancel}>Annuler</button>
           <button className="is-btn primary" onClick={onOk}>D'accord</button>

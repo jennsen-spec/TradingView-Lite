@@ -1,32 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { FibConfig } from "../lib/drawings";
-import { factoryFibConfig } from "../lib/drawings";
 import {
-  type FibPreset, loadFibPresets, loadFibDefault, saveFibDefault,
-  addFibPreset, renameFibPreset, deleteFibPreset, cloneFibConfig,
-} from "../lib/fibTemplates";
+  type DrawingTemplate, type NamedTemplate,
+  loadTemplates, loadTemplateDefault, saveTemplateDefault,
+  addTemplate, renameTemplate, deleteTemplate,
+} from "../lib/templates";
 
 interface Props {
-  config: FibConfig;              // config Fibonacci courante du dessin
-  onApply: (c: FibConfig) => void; // appliquer une config au dessin
+  drawingKey: string;              // clé propre au type de dessin (trend / arrow / vline / channel / brush / fib)
+  current: DrawingTemplate;        // config courante du dessin
+  factory: DrawingTemplate;        // config d'usine (thème d'origine) pour ce type
+  onApply: (t: DrawingTemplate) => void;
 }
 
-// Menu déroulant (vers le haut) des modèles Fibonacci — remplace « Définir par défaut ».
-export default function FibTemplateMenu({ config, onApply }: Props) {
+// Menu déroulant (vers le haut) des modèles d'un dessin — remplace « Définir par défaut ».
+export default function TemplateMenu({ drawingKey, current, factory, onApply }: Props) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ left: 0, bottom: 0 });
   const [naming, setNaming] = useState(false);
   const [nameVal, setNameVal] = useState("");
   const [manage, setManage] = useState(false);
-  const [presets, setPresets] = useState<FibPreset[]>([]);
+  const [presets, setPresets] = useState<NamedTemplate[]>([]);
   const [flash, setFlash] = useState("");
   const btnRef = useRef<HTMLButtonElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const refresh = () => setPresets(loadFibPresets());
-  useEffect(() => { refresh(); }, []);
-  const hasDefault = !!loadFibDefault();
+  const refresh = () => setPresets(loadTemplates(drawingKey));
+  useEffect(() => { refresh(); }, [drawingKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasDefault = !!loadTemplateDefault(drawingKey);
 
   const toggle = () => {
     if (!open) {
@@ -38,7 +39,6 @@ export default function FibTemplateMenu({ config, onApply }: Props) {
     setOpen((o) => !o);
   };
 
-  // Ferme au clic extérieur (le menu est en portail → on teste aussi sa classe).
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
@@ -50,11 +50,11 @@ export default function FibTemplateMenu({ config, onApply }: Props) {
   }, [open]);
 
   const flashMsg = (m: string) => { setFlash(m); setTimeout(() => setFlash(""), 1400); };
-  const apply = (c: FibConfig) => { onApply(cloneFibConfig(c)); setOpen(false); };
-  const setDefault = () => { saveFibDefault(config); setOpen(false); flashMsg("✓ Défini par défaut"); };
+  const apply = (t: DrawingTemplate) => { onApply(t); setOpen(false); };
+  const setDefault = () => { saveTemplateDefault(drawingKey, current); setOpen(false); flashMsg("✓ Défini par défaut"); };
   const submitName = () => {
     if (!nameVal.trim()) return;
-    addFibPreset(nameVal, config);
+    addTemplate(drawingKey, nameVal, current);
     setNameVal(""); setNaming(false); setOpen(false); refresh();
     flashMsg("✓ Enregistré");
   };
@@ -82,8 +82,8 @@ export default function FibTemplateMenu({ config, onApply }: Props) {
             </div>
           ) : (
             <>
-              <button className="fib-tpl-item" onClick={() => apply(factoryFibConfig())}>Appliquer le thème d'origine</button>
-              <button className="fib-tpl-item" disabled={!hasDefault} onClick={() => { const d = loadFibDefault(); if (d) apply(d); }}>Appliquer le thème par défaut</button>
+              <button className="fib-tpl-item" onClick={() => apply(factory)}>Appliquer le thème d'origine</button>
+              <button className="fib-tpl-item" disabled={!hasDefault} onClick={() => { const d = loadTemplateDefault(drawingKey); if (d) apply(d); }}>Appliquer le thème par défaut</button>
               <button className="fib-tpl-item" onClick={setDefault}>Définir par défaut</button>
               <button className="fib-tpl-item" onClick={() => { setNameVal(""); setNaming(true); }}>Enregistrer sous…</button>
               <button className="fib-tpl-item" disabled={!presets.length} onClick={() => { setManage(true); setOpen(false); }}>Renommer / Supprimer…</button>
@@ -91,30 +91,30 @@ export default function FibTemplateMenu({ config, onApply }: Props) {
               {presets.length === 0 ? (
                 <div className="fib-tpl-empty">Aucun modèle enregistré</div>
               ) : presets.map((p) => (
-                <button key={p.id} className="fib-tpl-item fib-tpl-preset" title={`Appliquer « ${p.name} »`} onClick={() => apply(p.config)}>{p.name}</button>
+                <button key={p.id} className="fib-tpl-item fib-tpl-preset" title={`Appliquer « ${p.name} »`} onClick={() => apply(p.template)}>{p.name}</button>
               ))}
             </>
           )}
         </div>, document.body)}
 
       {manage && createPortal(
-        <FibManageModal onClose={() => { setManage(false); refresh(); }} />, document.body
+        <TemplateManageModal drawingKey={drawingKey} onClose={() => { setManage(false); refresh(); }} />, document.body
       )}
     </div>
   );
 }
 
 // Fenêtre de gestion : table des modèles, renommer (✎) / supprimer (🗑 + confirmation).
-function FibManageModal({ onClose }: { onClose: () => void }) {
-  const [presets, setPresets] = useState<FibPreset[]>(loadFibPresets());
+function TemplateManageModal({ drawingKey, onClose }: { drawingKey: string; onClose: () => void }) {
+  const [presets, setPresets] = useState<NamedTemplate[]>(loadTemplates(drawingKey));
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
   const [delId, setDelId] = useState<string | null>(null);
-  const refresh = () => setPresets(loadFibPresets());
+  const refresh = () => setPresets(loadTemplates(drawingKey));
 
-  const startRename = (p: FibPreset) => { setEditId(p.id); setEditVal(p.name); setDelId(null); };
-  const commitRename = () => { if (editId) { renameFibPreset(editId, editVal); setEditId(null); refresh(); } };
-  const confirmDelete = () => { if (delId) { deleteFibPreset(delId); setDelId(null); refresh(); } };
+  const startRename = (p: NamedTemplate) => { setEditId(p.id); setEditVal(p.name); setDelId(null); };
+  const commitRename = () => { if (editId) { renameTemplate(drawingKey, editId, editVal); setEditId(null); refresh(); } };
+  const confirmDelete = () => { if (delId) { deleteTemplate(drawingKey, delId); setDelId(null); refresh(); } };
 
   return (
     <div className="fib-manage-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
