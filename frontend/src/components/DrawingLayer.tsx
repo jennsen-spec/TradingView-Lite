@@ -78,6 +78,27 @@ export default function DrawingLayer({
   const dragRef = useRef<DragState | null>(null);
   const optionsSnapRef = useRef<Drawing | null>(null);
   const clipboardRef = useRef<Drawing[]>([]); // copier/coller
+  // Historique (undo/redo) : piles de snapshots de `drawings`.
+  const undoRef = useRef<Drawing[][]>([]);
+  const redoRef = useRef<Drawing[][]>([]);
+  const optionsCommittedRef = useRef(false); // 1 seule entrée d'historique par session de réglages
+  const pushUndo = () => {
+    undoRef.current.push(drawingsRef.current);
+    if (undoRef.current.length > 100) undoRef.current.shift();
+    redoRef.current = [];
+  };
+  const undo = () => {
+    if (!undoRef.current.length) return;
+    redoRef.current.push(drawingsRef.current);
+    setDrawings(undoRef.current.pop()!);
+    setSelectedIds([]);
+  };
+  const redo = () => {
+    if (!redoRef.current.length) return;
+    undoRef.current.push(drawingsRef.current);
+    setDrawings(redoRef.current.pop()!);
+    setSelectedIds([]);
+  };
 
   // Temps des bougies (secondes) pour l'interpolation temps <-> logical (ancrage cross-intervalle).
   const candleTimes = useMemo(() => candles.map((c) => tsOf(c.time)), [candles]);
@@ -259,6 +280,7 @@ export default function DrawingLayer({
       if (!d) return;
       setSelectedIds([id]);
       optionsSnapRef.current = d;
+      optionsCommittedRef.current = false;
       setOptionsId(id);
     };
     // Double-clic sur un dessin → ouvre ses paramètres.
@@ -297,6 +319,7 @@ export default function DrawingLayer({
             d = applyDrawingDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
             if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
           }
+          pushUndo();
           setDrawings((prev) => [...prev, d]);
           setDraft(null);
           setActiveTool("cursor");
@@ -310,6 +333,7 @@ export default function DrawingLayer({
         if (!pt) return;
         e.preventDefault(); e.stopPropagation();
         const d = applyDrawingDefault(newVline(pt.time, pt.pane));
+        pushUndo();
         setDrawings((prev) => [...prev, d]);
         setActiveTool("cursor");
         setSelectedIds([d.id]);
@@ -339,6 +363,7 @@ export default function DrawingLayer({
         else {
           const offset = pt.price - basePriceAt(cd.p0, cd.p1, pt.time);
           const d = applyDrawingDefault(newChannel(cd.p0, cd.p1, offset, cd.pane));
+          pushUndo();
           setDrawings((prev) => [...prev, d]);
           setChanDraft(null);
           setActiveTool("cursor");
@@ -365,6 +390,7 @@ export default function DrawingLayer({
       const pane = target?.pane ?? 0;
       const pt = pxToData(e.clientX, e.clientY, pane); // conversion dans le panneau du dessin
       if (!pt || !target || target.locked) return;
+      pushUndo(); // le déplacement/reshape qui suit = 1 entrée d'historique
       if (hit.part === "width" || hit.part === "baseh") {
         dragRef.current = { mode: hit.part, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]), origOffset: target.channelOffset };
       } else if (hit.part === "endp") {
@@ -431,6 +457,7 @@ export default function DrawingLayer({
         setActiveTool("cursor");
         if (pts.length >= 2) {
           const d = applyDrawingDefault(newBrush(pts, brushPaneRef.current));
+          pushUndo();
           setDrawings((prev) => [...prev, d]);
           setSelectedIds([d.id]);
         }
@@ -464,6 +491,9 @@ export default function DrawingLayer({
       const el = document.activeElement;
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
       const mod = e.metaKey || e.ctrlKey;
+      // Annuler / Rétablir (dessins).
+      if (mod && (e.key === "z" || e.key === "Z") && !e.shiftKey) { e.preventDefault(); undo(); return; }
+      if (mod && ((e.key === "y" || e.key === "Y") || ((e.key === "z" || e.key === "Z") && e.shiftKey))) { e.preventDefault(); redo(); return; }
       // Copier la sélection.
       if (mod && (e.key === "c" || e.key === "C")) {
         const sel = selRef.current;
@@ -500,6 +530,7 @@ export default function DrawingLayer({
             points: clone.points.map((p) => ({ time: logicalToTime(timeToLogical(p.time) + dLogical), price: p.price + dPrice })),
           };
         });
+        pushUndo();
         setDrawings((prev) => [...prev, ...pasted]);
         setSelectedIds(pasted.map((p) => p.id));
         clipboardRef.current = pasted.map((p) => JSON.parse(JSON.stringify(p))); // collages successifs en cascade
@@ -513,6 +544,7 @@ export default function DrawingLayer({
         else if (selRef.current.length) setSelectedIds([]);
       } else if ((e.key === "Delete" || e.key === "Backspace") && selRef.current.length) {
         const sel = selRef.current;
+        pushUndo();
         setDrawings((prev) => prev.filter((d) => !(sel.includes(d.id) && !d.locked)));
         setSelectedIds([]);
       }
@@ -538,15 +570,18 @@ export default function DrawingLayer({
   // --- Mutations groupées (barre contextuelle) ---
   const styleSelected = (patch: Partial<DrawingStyle>) => {
     const clean = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) as Partial<DrawingStyle>;
+    pushUndo();
     setDrawings((prev) => prev.map((d) => (selRef.current.includes(d.id) ? { ...d, style: { ...d.style, ...clean } } : d)));
   };
   const toggleLockSelected = () => {
     const sel = selRef.current;
     const lockAll = drawings.some((d) => sel.includes(d.id) && !d.locked); // au moins un déverrouillé → verrouille tout
+    pushUndo();
     setDrawings((prev) => prev.map((d) => (sel.includes(d.id) ? { ...d, locked: lockAll } : d)));
   };
   const deleteSelected = () => {
     const sel = selRef.current;
+    pushUndo();
     setDrawings((prev) => prev.filter((d) => !(sel.includes(d.id) && !d.locked)));
     setSelectedIds([]);
   };
@@ -565,10 +600,14 @@ export default function DrawingLayer({
     const id = [...selectedIds].reverse().find((i) => drawings.some((d) => d.id === i));
     if (!id) return;
     optionsSnapRef.current = drawings.find((d) => d.id === id) ?? null;
+    optionsCommittedRef.current = false;
     setOptionsId(id);
   };
   const optionsDrawing = optionsId ? drawings.find((d) => d.id === optionsId) ?? null : null;
-  const changeOptions = (nd: Drawing) => setDrawings((prev) => prev.map((d) => (d.id === nd.id ? nd : d)));
+  const changeOptions = (nd: Drawing) => {
+    if (!optionsCommittedRef.current) { pushUndo(); optionsCommittedRef.current = true; } // 1 entrée par session
+    setDrawings((prev) => prev.map((d) => (d.id === nd.id ? nd : d)));
+  };
   const cancelOptions = () => {
     const snap = optionsSnapRef.current;
     if (snap) setDrawings((prev) => prev.map((d) => (d.id === snap.id ? snap : d)));
@@ -905,6 +944,7 @@ export default function DrawingLayer({
             <button
               className="dcm-item"
               onClick={() => {
+                pushUndo();
                 setDrawings((prev) => prev.filter((d) => d.locked)); // les verrouillés sont épargnés
                 setSelectedIds([]);
                 setChartMenu(null);
