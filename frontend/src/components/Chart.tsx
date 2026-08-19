@@ -415,9 +415,12 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
     // Pane 0 : bougies (les SMA sont créées dynamiquement, cf. effet données).
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#26a69a",
-      downColor: "#ef5350",
-      borderVisible: false,
+      // Corps rempli à 30 % ; bordure + mèche à 100 %.
+      upColor: "rgba(38, 166, 154, 0.3)",
+      downColor: "rgba(239, 83, 80, 0.3)",
+      borderVisible: true,
+      borderUpColor: "#26a69a",
+      borderDownColor: "#ef5350",
       wickUpColor: "#26a69a",
       wickDownColor: "#ef5350",
     });
