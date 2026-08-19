@@ -345,10 +345,10 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const paneStateRef = useRef(paneState);
   paneStateRef.current = paneState;
 
-  // Nouveau titre → tout repasse en « Automatique » (échelles auto de tous les panneaux)
-  // et on recadre entièrement le nouveau symbole (le changement d'intervalle, lui, garde le cadre).
+  // Nouveau titre → échelles de prix en « Automatique » (le prix du nouveau titre reste visible),
+  // MAIS on garde le cadre horizontal (zoom/position) : LWC conserve le bar spacing + l'ancrage
+  // à droite, donc on retrouve le même scope sur le nouveau titre.
   useEffect(() => {
-    hasFittedRef.current = false;
     setPaneState((prev) => prev.map((s) => ({ ...s, auto: true })));
   }, [symbol]);
 
