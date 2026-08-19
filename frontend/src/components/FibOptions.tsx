@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Drawing, FibConfig } from "../lib/drawings";
 import VisibilityEditor from "./VisibilityEditor";
+import FibTemplateMenu from "./FibTemplateMenu";
 
 type Tab = "style" | "coords" | "visibility";
 
@@ -28,7 +29,11 @@ export default function FibOptions({ drawing: d, onChange, onCancel, onOk }: Pro
     return (
       <div className={`fib-lv${l.on ? "" : " off"}`} key={l.ratio}>
         <input type="checkbox" checked={l.on} onChange={(e) => setLevel(i, { on: e.target.checked })} />
-        <span className="fib-ratio">{l.ratio}</span>
+        <input
+          className="fib-ratio-input" type="number" step="any" value={l.ratio}
+          onChange={(e) => { const n = e.target.valueAsNumber; if (!Number.isNaN(n)) setLevel(i, { ratio: n }); }}
+          title="Valeur du niveau (modifiable)"
+        />
         <label className="fib-swatch" style={{ background: l.color }} title="Couleur">
           <input type="color" value={l.color} onChange={(e) => setLevel(i, { color: e.target.value })} />
         </label>
@@ -121,7 +126,8 @@ export default function FibOptions({ drawing: d, onChange, onCancel, onOk }: Pro
         )}
       </div>
 
-      <div className="is-foot">
+      <div className="is-foot is-foot-split">
+        <FibTemplateMenu config={fib} onApply={(c) => onChange({ ...d, fib: c })} />
         <div className="is-foot-right">
           <button className="is-btn" onClick={onCancel}>Annuler</button>
           <button className="is-btn primary" onClick={onOk}>D'accord</button>

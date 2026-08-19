@@ -183,6 +183,18 @@ export function newChannel(p0: DPoint, p1: DPoint, offset: number, pane = 0): Dr
   };
 }
 
+// Config Fibonacci « d'usine » (thème d'origine) — base de newFib et du menu Modèles.
+export const factoryFibConfig = (): FibConfig => ({
+  levels: FIB_LEVELS.map((l) => ({ ...l })),
+  trendLineOn: false,
+  extendRight: false,
+  bgOn: true,
+  bgOpacity: 12,
+  reverse: false,
+  showLabels: true,
+  fontSize: 12,
+});
+
 export function newFib(p0: DPoint, p1: DPoint, pane = 0): Drawing {
   return {
     id: genId(),
@@ -190,16 +202,7 @@ export function newFib(p0: DPoint, p1: DPoint, pane = 0): Drawing {
     points: [p0, p1],
     pane,
     style: { ...defaultTrendStyle(), color: "#787b86", width: 1 },
-    fib: {
-      levels: FIB_LEVELS.map((l) => ({ ...l })),
-      trendLineOn: false,
-      extendRight: false,
-      bgOn: true,
-      bgOpacity: 12,
-      reverse: false,
-      showLabels: true,
-      fontSize: 12,
-    },
+    fib: factoryFibConfig(),
     text: defaultText(),
     visibility: defaultVisibility(),
     locked: false,

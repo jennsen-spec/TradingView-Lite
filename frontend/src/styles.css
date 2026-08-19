@@ -1036,6 +1036,82 @@ body {
 .fib-ratio { flex: 1; font-size: 13px; font-variant-numeric: tabular-nums; }
 .fib-swatch { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0; }
 .fib-swatch input[type="color"] { position: absolute; inset: -4px; width: 130%; height: 130%; opacity: 0; cursor: pointer; }
+/* Ratio éditable (valeur du niveau modifiable manuellement). */
+.fib-ratio-input {
+  flex: 1; min-width: 0; width: 100%;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+  background: transparent; color: var(--text);
+  border: 1px solid transparent; border-radius: 5px;
+  padding: 3px 5px;
+}
+.fib-ratio-input:hover { border-color: var(--border); }
+.fib-ratio-input:focus { border-color: var(--accent, #3f8cff); background: var(--bg); outline: none; }
+/* masque les flèches natives du number pour rester compact */
+.fib-ratio-input::-webkit-outer-spin-button,
+.fib-ratio-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.fib-ratio-input { -moz-appearance: textfield; }
+
+/* --- Menu Modèles (drop-up) --- */
+.fib-tpl { position: relative; display: flex; align-items: center; gap: 8px; }
+.fib-tpl-btn { display: inline-flex; align-items: center; gap: 6px; }
+.fib-tpl-caret { font-size: 10px; line-height: 1; opacity: 0.8; }
+.fib-tpl-flash { font-size: 12px; color: var(--accent, #3f8cff); white-space: nowrap; }
+.fib-tpl-menu {
+  z-index: 3000;
+  min-width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  padding: 6px; display: flex; flex-direction: column;
+}
+.fib-tpl-item {
+  text-align: left; background: none; border: none; color: var(--text);
+  font-size: 13px; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fib-tpl-item:hover:not(:disabled) { background: var(--hover, rgba(127, 127, 127, 0.14)); }
+.fib-tpl-item:disabled { opacity: 0.4; cursor: default; }
+.fib-tpl-preset { color: var(--text); }
+.fib-tpl-sep { height: 1px; background: var(--border); margin: 6px 4px; }
+.fib-tpl-empty { font-size: 12px; color: var(--text-muted); padding: 6px 10px; }
+.fib-tpl-name { display: flex; flex-direction: column; gap: 8px; padding: 6px; min-width: 220px; }
+.fib-tpl-name input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); padding: 7px 9px; font-size: 13px;
+}
+.fib-tpl-name input:focus { border-color: var(--accent, #3f8cff); outline: none; }
+.fib-tpl-name-row { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* --- Fenêtre « Modèles enregistrés » (renommer / supprimer) --- */
+.fib-manage-backdrop {
+  position: fixed; inset: 0; z-index: 3100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.fib-manage {
+  width: 380px; max-width: calc(100vw - 32px); max-height: 80vh;
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.fib-manage-body { padding: 10px 14px; overflow-y: auto; }
+.fib-manage-tbl { width: 100%; border-collapse: collapse; }
+.fib-manage-tbl td { padding: 8px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.fmt-name { font-size: 13px; color: var(--text); width: 100%; }
+.fmt-name input {
+  width: 100%; background: var(--bg); border: 1px solid var(--accent, #3f8cff);
+  border-radius: 6px; color: var(--text); padding: 5px 7px; font-size: 13px;
+}
+.fmt-name input:focus { outline: none; }
+.fmt-actions { white-space: nowrap; text-align: right; }
+.fmt-ico {
+  background: none; border: none; cursor: pointer; font-size: 15px;
+  padding: 4px 6px; border-radius: 6px; color: var(--text-muted);
+}
+.fmt-ico:hover { background: var(--hover, rgba(127, 127, 127, 0.14)); color: var(--text); }
+.fmt-confirm { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
+.fmt-confirm .is-btn { padding: 4px 10px; }
+.is-btn.danger { background: #e5484d; color: #fff; border-color: #e5484d; }
+.is-btn.danger:hover { background: #d13b40; }
 
 .is-swatch {
   width: 100%;

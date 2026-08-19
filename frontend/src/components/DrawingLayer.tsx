@@ -8,6 +8,7 @@ import {
   type Drawing, type DPoint, type DrawingStyle,
   newTrend, newVline, newChannel, newBrush, newFib, applyDrawingDefault, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
+import { defaultOrFactoryFib } from "../lib/fibTemplates";
 
 // Prix sur la droite de base (p0→p1) au temps `time` (interpolation linéaire).
 const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
@@ -328,6 +329,7 @@ export default function DrawingLayer({
           let d: Drawing;
           if (tool === "fib") {
             d = newFib(dr.p0, pt, dr.pane);
+            d = { ...d, fib: defaultOrFactoryFib() }; // applique le thème par défaut s'il existe
           } else {
             d = applyDrawingDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
             if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
@@ -742,17 +744,17 @@ export default function DrawingLayer({
           return <rect key={`bg${i}`} x={left} y={Math.min(y1, y2)} width={right - left} height={Math.abs(y2 - y1)} fill={rgba(l.color, fib.bgOpacity)} />;
         })}
         {fib.trendLineOn && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={rgba(s.color, s.opacity)} strokeWidth={1} strokeDasharray="4 3" />}
-        {on.map((l) => {
+        {on.map((l, i) => {
           const y = yOf(l.ratio);
           if (y == null) return null;
-          return <line key={`ln${l.ratio}`} x1={left} y1={y} x2={right} y2={y} stroke={rgba(l.color, s.opacity)} strokeWidth={s.width} strokeDasharray={dashOf(s.lineStyle)} />;
+          return <line key={`ln${i}`} x1={left} y1={y} x2={right} y2={y} stroke={rgba(l.color, s.opacity)} strokeWidth={s.width} strokeDasharray={dashOf(s.lineStyle)} />;
         })}
-        {fib.showLabels && on.map((l) => {
+        {fib.showLabels && on.map((l, i) => {
           const y = yOf(l.ratio);
           if (y == null) return null;
           const price = base0 + (base1 - base0) * l.ratio;
           return (
-            <text key={`lb${l.ratio}`} x={left - 4} y={y - 2} textAnchor="end" fontSize={fib.fontSize} fill={rgba(l.color, s.opacity)} style={{ pointerEvents: "none" }}>
+            <text key={`lb${i}`} x={left - 4} y={y - 2} textAnchor="end" fontSize={fib.fontSize} fill={rgba(l.color, s.opacity)} style={{ pointerEvents: "none" }}>
               {l.ratio} ({price.toFixed(2)})
             </text>
           );
