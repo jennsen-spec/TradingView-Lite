@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { PALETTE, LINE_STYLES } from "../lib/indicatorSettings";
-import type { Drawing, DrawingStyle, CapStyle, DPoint, TextConfig } from "../lib/drawings";
-import { CHANNEL_LEVELS, BRUSH_WIDTHS, saveDrawingDefault, loadDrawingDefaults, drawingDefaultKey } from "../lib/drawings";
+import type { Drawing, DrawingStyle, CapStyle, DPoint, TextConfig, MeasureConfig } from "../lib/drawings";
+import { CHANNEL_LEVELS, BRUSH_WIDTHS, defaultMeasure, saveDrawingDefault, loadDrawingDefaults, drawingDefaultKey } from "../lib/drawings";
 import VisibilityEditor from "./VisibilityEditor";
 import ColorButton from "./ColorButton";
 
-type Tab = "style" | "text" | "coords" | "visibility";
+type Tab = "style" | "text" | "measure" | "coords" | "visibility";
 type Dropdown = "lcap" | "rcap" | "ext" | null;
 
 interface Props {
@@ -130,8 +130,12 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
     return () => document.removeEventListener("mousedown", onDoc);
   }, [dd]);
 
+  // Flèche = trait à embout droit « flèche » ; seul cas où l'onglet Mesure apparaît.
+  const isArrow = d.type === "trend" && s.rightCap === "arrow";
+  const m: MeasureConfig = d.measure ?? defaultMeasure();
   const setStyle = (patch: Partial<DrawingStyle>) => onChange({ ...d, style: { ...s, ...patch } });
   const setText = (patch: Partial<TextConfig>) => onChange({ ...d, text: { ...d.text, ...patch } });
+  const setMeasure = (patch: Partial<MeasureConfig>) => onChange({ ...d, measure: { ...m, ...patch } });
   const setPoint = (i: number, patch: Partial<DPoint>) =>
     onChange({ ...d, points: d.points.map((p, idx) => (idx === i ? { ...p, ...patch } : p)) });
 
@@ -150,6 +154,7 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
       <div className="is-tabs">
         <button className={tab === "style" ? "active" : ""} onClick={() => setTab("style")}>Style</button>
         {d.type !== "brush" && <button className={tab === "text" ? "active" : ""} onClick={() => setTab("text")}>Texte</button>}
+        {isArrow && <button className={tab === "measure" ? "active" : ""} onClick={() => setTab("measure")}>Mesure</button>}
         {d.type !== "brush" && <button className={tab === "coords" ? "active" : ""} onClick={() => setTab("coords")}>Coordonnées</button>}
         <button className={tab === "visibility" ? "active" : ""} onClick={() => setTab("visibility")}>Visibilité</button>
       </div>
@@ -352,6 +357,50 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
                 </select>
               </div>
             )}
+          </>
+        )}
+
+        {tab === "measure" && (
+          <>
+            <div className="do-vchecks">
+              <label className="is-check">
+                <input type="checkbox" checked={m.percent} onChange={(e) => setMeasure({ percent: e.target.checked })} />
+                Variation en %
+              </label>
+              <label className="is-check">
+                <input type="checkbox" checked={m.duration} onChange={(e) => setMeasure({ duration: e.target.checked })} />
+                Durée
+              </label>
+              {m.duration && (
+                <div className="do-sub-checks">
+                  <label className="is-check">
+                    <input type="checkbox" checked={m.durTime} onChange={(e) => setMeasure({ durTime: e.target.checked })} />
+                    Échelle de temps
+                  </label>
+                  <label className="is-check">
+                    <input type="checkbox" checked={m.durBars} onChange={(e) => setMeasure({ durBars: e.target.checked })} />
+                    Valeur du graphe (barres)
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="do-align-row">
+              <label>Position</label>
+              <select value={m.position} onChange={(e) => setMeasure({ position: e.target.value as MeasureConfig["position"] })}>
+                <option value="top">En haut</option>
+                <option value="middle">Au milieu</option>
+                <option value="bottom">En bas</option>
+              </select>
+            </div>
+            <div className="do-align-row">
+              <label>Alignement</label>
+              <select value={m.align} onChange={(e) => setMeasure({ align: e.target.value as MeasureConfig["align"] })}>
+                <option value="left">À gauche</option>
+                <option value="center">Au milieu</option>
+                <option value="right">À droite</option>
+              </select>
+            </div>
           </>
         )}
 

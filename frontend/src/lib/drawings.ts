@@ -51,6 +51,24 @@ export const FIB_LEVELS: FibLevel[] = [
   { ratio: 4.764, on: false, color: "#80cbc4" },
 ];
 
+// --- Mesure d'une flèche (variation % + durée), façon TradingView ---
+export interface MeasureConfig {
+  percent: boolean;   // afficher la variation en %
+  duration: boolean;  // afficher la durée (interrupteur maître)
+  durTime: boolean;   // durée : échelle de temps (temps réel écoulé)
+  durBars: boolean;   // durée : valeur du graphe (nombre de barres)
+  position: "top" | "middle" | "bottom"; // le long de la flèche
+  align: "left" | "center" | "right";    // alignement horizontal du bloc
+}
+export const defaultMeasure = (): MeasureConfig => ({
+  percent: true,
+  duration: false,
+  durTime: true,
+  durBars: true,
+  position: "top",
+  align: "center",
+});
+
 export interface DPoint {
   time: number; // UTCTimestamp (secondes)
   price: number;
@@ -104,6 +122,7 @@ export interface Drawing {
   points: DPoint[]; // trend/channel = 2 points (base) ; vline = 1 point
   channelOffset?: number; // canal : décalage de prix définissant la parallèle
   fib?: FibConfig; // retracement de Fibonacci
+  measure?: MeasureConfig; // flèche : mesure (variation % + durée)
   pane?: number; // panneau d'ancrage (0=prix, 1=volume, 2=RSI) ; absent = 0 (compat)
   style: DrawingStyle;
   text: TextConfig;
@@ -141,6 +160,7 @@ export function newTrend(p0: DPoint, p1: DPoint, rightCap: CapStyle = "normal", 
     points: [p0, p1],
     pane,
     style: { ...defaultTrendStyle(), rightCap },
+    ...(rightCap === "arrow" ? { measure: defaultMeasure() } : {}),
     text: defaultText(),
     visibility: defaultVisibility(),
     locked: false,

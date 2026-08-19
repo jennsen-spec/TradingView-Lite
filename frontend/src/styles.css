@@ -1734,6 +1734,21 @@ body {
   gap: 8px;
   cursor: pointer;
 }
+/* Sous-cases (ex. Durée → Échelle de temps / Valeur du graphe) : indentées sous leur parent. */
+.do-sub-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 24px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+.do-sub-checks .is-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
 
 /* --- Watchlist / Collections (#2) --- */
 .wl-btn {

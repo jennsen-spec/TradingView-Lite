@@ -23,6 +23,18 @@ const HANDLE_HIT = 9; // rayon (px) de capture d'une extrémité
 const SEG_HIT = 6; // distance (px) de capture d'un segment
 const dashOf = (k: string) => LINE_STYLES.find((l) => l.key === k)?.dash || "";
 
+// Durée lisible (temps réel écoulé) : « 3 j 4 h », « 5 h 12 min », « 42 min », « 30 s ».
+function fmtDuration(sec: number): string {
+  sec = Math.round(sec);
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const min = Math.floor((sec % 3600) / 60);
+  if (d >= 1) return h ? `${d} j ${h} h` : `${d} j`;
+  if (h >= 1) return min ? `${h} h ${min} min` : `${h} h`;
+  if (min >= 1) return `${min} min`;
+  return `${sec} s`;
+}
+
 interface PaneBox { top: number; height: number; }
 
 interface Props {
@@ -778,6 +790,56 @@ export default function DrawingLayer({
     );
   };
 
+  // Mesure d'une flèche (variation % + durée), placée le long du trait.
+  const measureLabel = (d: Drawing, a: PxPt, b: PxPt) => {
+    const m = d.measure;
+    if (d.style.rightCap !== "arrow" || !m) return null;
+    const hasDur = m.duration && (m.durTime || m.durBars);
+    if (!m.percent && !hasDur) return null;
+    const p0 = d.points[0], p1 = d.points[1];
+
+    const lines: string[] = [];
+    if (m.percent && p0.price !== 0) {
+      const pct = ((p1.price - p0.price) / Math.abs(p0.price)) * 100;
+      lines.push(`${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`);
+    }
+    if (hasDur) {
+      const parts: string[] = [];
+      if (m.durTime) parts.push(fmtDuration(Math.abs(p1.time - p0.time)));
+      if (m.durBars) {
+        const bars = Math.round(Math.abs(timeToLogical(p1.time) - timeToLogical(p0.time)));
+        parts.push(`${bars} ${bars <= 1 ? "barre" : "barres"}`);
+      }
+      if (parts.length) lines.push(parts.join("  ·  "));
+    }
+    if (!lines.length) return null;
+
+    // Position (le long de la flèche) : haut = extrémité la plus haute, bas = la plus basse.
+    const top = a.y <= b.y ? a : b;
+    const bot = a.y <= b.y ? b : a;
+    const anchor =
+      m.position === "top" ? top
+        : m.position === "bottom" ? bot
+          : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const textAnchor = m.align === "left" ? "start" : m.align === "right" ? "end" : "middle";
+    const dy = m.position === "top" ? -8 : m.position === "bottom" ? 8 : 0;
+    const baseline = m.position === "top" ? "auto" : m.position === "bottom" ? "hanging" : "central";
+    const lineH = 15;
+    return (
+      <text
+        x={anchor.x} y={anchor.y + dy}
+        textAnchor={textAnchor} dominantBaseline={baseline}
+        fill={rgba(d.style.color, d.style.opacity)} fontSize={12} fontWeight="600"
+        stroke="var(--surface)" strokeWidth={3} paintOrder="stroke"
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
+        {lines.map((ln, i) => (
+          <tspan key={i} x={anchor.x} dy={i === 0 ? 0 : lineH}>{ln}</tspan>
+        ))}
+      </text>
+    );
+  };
+
   const renderTrend = (d: Drawing) => {
     if (!visibleForInterval(interval, d.visibility)) return null;
     const a = dataToPx(d.points[0], d.pane); const b = dataToPx(d.points[1], d.pane);
@@ -801,6 +863,7 @@ export default function DrawingLayer({
         {s.leftCap === "arrow" && <polygon points={arrowPts(a, b)} fill={col} />}
         {s.rightCap === "arrow" && <polygon points={arrowPts(b, a)} fill={col} />}
         {textAlongLine(d, a, b)}
+        {measureLabel(d, a, b)}
         {sel && (
           <>
             <circle cx={a.x} cy={a.y} r={5} className="draw-handle" />
