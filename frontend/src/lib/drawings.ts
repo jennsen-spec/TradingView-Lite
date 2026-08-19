@@ -3,13 +3,53 @@
 import type { Visibility, LineStyleName } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
-export type DrawingType = "trend" | "vline" | "channel" | "brush";
+export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib";
 export type CapStyle = "normal" | "arrow"; // embout d'un trait
 
 // Niveaux d'offset optionnels d'un canal (fractions de la largeur ; 0 et 1 = les 2 bords).
 export const CHANNEL_LEVELS = [-0.25, 0.25, 0.5, 0.75, 1.25] as const;
 // Épaisseurs du surligneur (px).
 export const BRUSH_WIDTHS = [8, 12, 20, 32, 48, 64, 80, 96] as const;
+
+// --- Retracement de Fibonacci ---
+export interface FibLevel { ratio: number; on: boolean; color: string; }
+export interface FibConfig {
+  levels: FibLevel[];      // niveaux (ratio + activé + couleur)
+  trendLineOn: boolean;    // ligne de tendance (base p0→p1)
+  extendRight: boolean;    // prolonger les niveaux jusqu'au bord droit
+  bgOn: boolean;           // bandes ombrées entre niveaux
+  bgOpacity: number;       // 0-100
+  reverse: boolean;        // inverse (0 ↔ 1)
+  showLabels: boolean;     // étiquettes « ratio (prix) »
+  fontSize: number;        // px
+}
+// Ensemble complet des niveaux (couleurs façon TradingView) ; `on` = activés par défaut.
+export const FIB_LEVELS: FibLevel[] = [
+  { ratio: 0, on: true, color: "#787b86" },
+  { ratio: 0.236, on: true, color: "#ef5350" },
+  { ratio: 0.382, on: true, color: "#ff9800" },
+  { ratio: 0.5, on: true, color: "#4caf50" },
+  { ratio: 0.618, on: true, color: "#26a69a" },
+  { ratio: 0.786, on: true, color: "#26c6da" },
+  { ratio: 1, on: true, color: "#787b86" },
+  { ratio: 1.272, on: false, color: "#f5c07a" },
+  { ratio: 1.414, on: false, color: "#f48fb1" },
+  { ratio: 1.618, on: true, color: "#3f8cff" },
+  { ratio: 2, on: false, color: "#80cbc4" },
+  { ratio: 2.272, on: false, color: "#f5c07a" },
+  { ratio: 2.414, on: false, color: "#a5d6a7" },
+  { ratio: 2.618, on: true, color: "#ef5350" },
+  { ratio: 3, on: false, color: "#b3e5fc" },
+  { ratio: 3.272, on: false, color: "#bdbdbd" },
+  { ratio: 3.414, on: false, color: "#9fa8da" },
+  { ratio: 3.618, on: true, color: "#9c27b0" },
+  { ratio: 4, on: false, color: "#ef9a9a" },
+  { ratio: 4.236, on: true, color: "#ec407a" },
+  { ratio: 4.272, on: false, color: "#ce93d8" },
+  { ratio: 4.414, on: false, color: "#f48fb1" },
+  { ratio: 4.618, on: false, color: "#f5c07a" },
+  { ratio: 4.764, on: false, color: "#80cbc4" },
+];
 
 export interface DPoint {
   time: number; // UTCTimestamp (secondes)
@@ -63,6 +103,7 @@ export interface Drawing {
   type: DrawingType;
   points: DPoint[]; // trend/channel = 2 points (base) ; vline = 1 point
   channelOffset?: number; // canal : décalage de prix définissant la parallèle
+  fib?: FibConfig; // retracement de Fibonacci
   pane?: number; // panneau d'ancrage (0=prix, 1=volume, 2=RSI) ; absent = 0 (compat)
   style: DrawingStyle;
   text: TextConfig;
@@ -119,6 +160,30 @@ export function newChannel(p0: DPoint, p1: DPoint, offset: number, pane = 0): Dr
     visibility: defaultVisibility(),
     locked: false,
     title: "Canal parallèle",
+  };
+}
+
+export function newFib(p0: DPoint, p1: DPoint, pane = 0): Drawing {
+  return {
+    id: genId(),
+    type: "fib",
+    points: [p0, p1],
+    pane,
+    style: { ...defaultTrendStyle(), color: "#787b86", width: 1 },
+    fib: {
+      levels: FIB_LEVELS.map((l) => ({ ...l })),
+      trendLineOn: false,
+      extendRight: false,
+      bgOn: true,
+      bgOpacity: 12,
+      reverse: false,
+      showLabels: true,
+      fontSize: 12,
+    },
+    text: defaultText(),
+    visibility: defaultVisibility(),
+    locked: false,
+    title: "Retracement de Fibonacci",
   };
 }
 

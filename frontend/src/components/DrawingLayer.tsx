@@ -6,7 +6,7 @@ import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings"
 import { fmtTimeByInterval } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle,
-  newTrend, newVline, newChannel, newBrush, applyDrawingDefault, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  newTrend, newVline, newChannel, newBrush, newFib, applyDrawingDefault, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
 
 // Prix sur la droite de base (p0→p1) au temps `time` (interpolation linéaire).
@@ -189,6 +189,24 @@ export default function DrawingLayer({
         }
         continue;
       }
+      if (d.type === "fib") {
+        const fib = d.fib;
+        const a = dataToPx(d.points[0], d.pane); const b = dataToPx(d.points[1], d.pane);
+        if (!a || !b || !fib) continue;
+        if (Math.hypot(mx - a.x, my - a.y) <= HANDLE_HIT) return { id: d.id, part: "end", endIdx: 0 };
+        if (Math.hypot(mx - b.x, my - b.y) <= HANDLE_HIT) return { id: d.id, part: "end", endIdx: 1 };
+        // Boîte des niveaux → déplacement.
+        const base0 = fib.reverse ? d.points[0].price : d.points[1].price;
+        const base1 = fib.reverse ? d.points[1].price : d.points[0].price;
+        const ys = fib.levels.filter((l) => l.on)
+          .map((l) => dataToPx({ time: d.points[0].time, price: base0 + (base1 - base0) * l.ratio }, d.pane)?.y)
+          .filter((y): y is number => y != null);
+        if (ys.length) {
+          const left = Math.min(a.x, b.x), right = Math.max(a.x, b.x);
+          if (mx >= left - SEG_HIT && mx <= right + SEG_HIT && my >= Math.min(...ys) - SEG_HIT && my <= Math.max(...ys) + SEG_HIT) return { id: d.id, part: "seg" };
+        }
+        continue;
+      }
       if (d.type === "channel") {
         const off = d.channelOffset ?? 0;
         const a = dataToPx(d.points[0], d.pane); const b = dataToPx(d.points[1], d.pane);
@@ -258,8 +276,8 @@ export default function DrawingLayer({
       if (chartMenuRef.current) setChartMenu(null); // un clic ailleurs ferme le menu contextuel
 
       const tool = toolRef.current;
-      // Mode dessin (Trait ou Flèche) : 1er clic démarre, 2e clic finalise.
-      if (tool === "trend" || tool === "arrow") {
+      // Mode dessin 2 points (Trait / Flèche / Fibonacci) : 1er clic démarre, 2e clic finalise.
+      if (tool === "trend" || tool === "arrow" || tool === "fib") {
         const dr = draftRef.current;
         // 2e clic : on verrouille le panneau du 1er point pour rester dans le même sous-graphe.
         const pt = pxToData(e.clientX, e.clientY, dr ? dr.pane : undefined);
@@ -267,8 +285,13 @@ export default function DrawingLayer({
         e.preventDefault(); e.stopPropagation();
         if (!dr) { setDraft({ p0: pt, p1: pt, pane: pt.pane }); }
         else {
-          let d = applyDrawingDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
-          if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
+          let d: Drawing;
+          if (tool === "fib") {
+            d = newFib(dr.p0, pt, dr.pane);
+          } else {
+            d = applyDrawingDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
+            if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
+          }
           setDrawings((prev) => [...prev, d]);
           setDraft(null);
           setActiveTool("cursor");
@@ -635,6 +658,56 @@ export default function DrawingLayer({
     );
   };
 
+  // Retracement de Fibonacci : niveaux horizontaux entre 2 prix, étiquettes + bandes ombrées.
+  const renderFib = (d: Drawing) => {
+    if (!visibleForInterval(interval, d.visibility)) return null;
+    const fib = d.fib;
+    if (!fib) return null;
+    const p0 = d.points[0], p1 = d.points[1];
+    const a = dataToPx(p0, d.pane), b = dataToPx(p1, d.pane);
+    if (!a || !b) return null;
+    const s = d.style;
+    const left = Math.min(a.x, b.x);
+    const right = fib.extendRight ? wrapW : Math.max(a.x, b.x);
+    // niveau 0 = 2e point (p1), niveau 1 = 1er point (p0) ; « Inverse » échange.
+    const base0 = fib.reverse ? p0.price : p1.price;
+    const base1 = fib.reverse ? p1.price : p0.price;
+    const yOf = (r: number) => dataToPx({ time: p0.time, price: base0 + (base1 - base0) * r }, d.pane)?.y ?? null;
+    const on = fib.levels.filter((l) => l.on);
+    const sel = selectedSet.has(d.id);
+    return (
+      <g key={d.id}>
+        {fib.bgOn && on.slice(0, -1).map((l, i) => {
+          const y1 = yOf(l.ratio), y2 = yOf(on[i + 1].ratio);
+          if (y1 == null || y2 == null) return null;
+          return <rect key={`bg${i}`} x={left} y={Math.min(y1, y2)} width={right - left} height={Math.abs(y2 - y1)} fill={rgba(l.color, fib.bgOpacity)} />;
+        })}
+        {fib.trendLineOn && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={rgba(s.color, s.opacity)} strokeWidth={1} strokeDasharray="4 3" />}
+        {on.map((l) => {
+          const y = yOf(l.ratio);
+          if (y == null) return null;
+          return <line key={`ln${l.ratio}`} x1={left} y1={y} x2={right} y2={y} stroke={rgba(l.color, s.opacity)} strokeWidth={s.width} strokeDasharray={dashOf(s.lineStyle)} />;
+        })}
+        {fib.showLabels && on.map((l) => {
+          const y = yOf(l.ratio);
+          if (y == null) return null;
+          const price = base0 + (base1 - base0) * l.ratio;
+          return (
+            <text key={`lb${l.ratio}`} x={left - 4} y={y - 2} textAnchor="end" fontSize={fib.fontSize} fill={rgba(l.color, s.opacity)} style={{ pointerEvents: "none" }}>
+              {l.ratio} ({price.toFixed(2)})
+            </text>
+          );
+        })}
+        {sel && (
+          <>
+            <circle cx={a.x} cy={a.y} r={5} className="draw-handle" />
+            <circle cx={b.x} cy={b.y} r={5} className="draw-handle" />
+          </>
+        )}
+      </g>
+    );
+  };
+
   // Aperçu du canal pendant le tracé (3 clics).
   const renderChanDraft = () => {
     if (!chanDraft) return null;
@@ -778,6 +851,7 @@ export default function DrawingLayer({
           {layout.map((_box, i) => (
             <g key={i} clipPath={`url(#draw-clip-pane${i})`}>
               {drawings.filter((d) => d.type === "channel" && (d.pane ?? 0) === i).map(renderChannel)}
+              {drawings.filter((d) => d.type === "fib" && (d.pane ?? 0) === i).map(renderFib)}
               {drawings.filter((d) => d.type === "brush" && (d.pane ?? 0) === i).map(renderBrush)}
               {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === i).map(renderTrend)}
               {draft && draft.pane === i && (() => {
