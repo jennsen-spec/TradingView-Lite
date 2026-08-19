@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Outils de la barre (concept UI : "arrow" = trait à embout flèche ; le reste = types de dessin).
-export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib";
+export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib" | "longpos";
 
 interface ToolDef {
   key: Tool;
@@ -69,6 +69,18 @@ const TOOLS: ToolDef[] = [
         <line x1="3" y1="10" x2="21" y2="10" />
         <line x1="3" y1="15" x2="21" y2="15" />
         <line x1="3" y1="20" x2="21" y2="20" />
+      </svg>
+    ),
+  },
+  {
+    key: "longpos",
+    label: "Position longue",
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="1.5" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="9" y1="8" x2="15" y2="8" strokeWidth="1.5" opacity="0.6" />
+        <line x1="9" y1="16" x2="15" y2="16" strokeWidth="1.5" opacity="0.6" />
       </svg>
     ),
   },

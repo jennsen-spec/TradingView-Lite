@@ -3,7 +3,7 @@
 import type { Visibility, LineStyleName } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
-export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib";
+export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib" | "longpos";
 export type CapStyle = "normal" | "arrow"; // embout d'un trait
 
 // Niveaux d'offset optionnels d'un canal (fractions de la largeur ; 0 et 1 = les 2 bords).
@@ -71,6 +71,65 @@ export const defaultMeasure = (percent = true): MeasureConfig => ({
   orientation: "h",
 });
 
+// --- Position longue (outil de dimensionnement entrée / objectif / stop) ---
+export interface LongPosConfig {
+  entry: number;
+  stop: number;    // en dessous de l'entrée (long)
+  target: number;  // au-dessus de l'entrée (long)
+  account: number;      // taille du compte
+  lot: number;          // taille du lot (arrondi de la quantité)
+  riskMode: "pct" | "amount"; // risque en % du compte ou en montant
+  risk: number;
+  leverage: number;     // effet de levier (marge requise)
+  tickSize: number;     // pas de cotation (pour les « ticks »)
+  stopColor: string;
+  targetColor: string;
+  priceLabels: boolean; // étiquettes de prix
+  compact: boolean;     // stats compactes (une ligne)
+  alwaysStats: boolean; // afficher les stats même non sélectionné
+}
+export const defaultLongPos = (entry: number): LongPosConfig => ({
+  entry,
+  stop: +(entry * 0.95).toFixed(2),
+  target: +(entry * 1.1).toFixed(2),
+  account: 10000,
+  lot: 1,
+  riskMode: "pct",
+  risk: 1,
+  leverage: 1,
+  tickSize: 0.01,
+  stopColor: "#ef5350",
+  targetColor: "#26a69a",
+  priceLabels: true,
+  compact: true,
+  alwaysStats: false,
+});
+
+export interface LongPosStats {
+  rr: number; targetPct: number; stopPct: number;
+  targetTicks: number; stopTicks: number;
+  riskAmount: number; qty: number; profitAmount: number; margin: number;
+}
+export function longPosStats(c: LongPosConfig): LongPosStats {
+  const riskPerUnit = Math.max(c.entry - c.stop, 0);
+  const rewardPerUnit = Math.max(c.target - c.entry, 0);
+  const ts = c.tickSize || 0.01;
+  const riskAmount = c.riskMode === "pct" ? c.account * (c.risk / 100) : c.risk;
+  const qtyRaw = riskPerUnit > 0 ? riskAmount / riskPerUnit : 0;
+  const qty = c.lot > 0 ? Math.floor(qtyRaw / c.lot) * c.lot : qtyRaw;
+  return {
+    rr: riskPerUnit > 0 ? rewardPerUnit / riskPerUnit : 0,
+    targetPct: c.entry ? (rewardPerUnit / c.entry) * 100 : 0,
+    stopPct: c.entry ? (riskPerUnit / c.entry) * 100 : 0,
+    targetTicks: Math.round(rewardPerUnit / ts),
+    stopTicks: Math.round(riskPerUnit / ts),
+    riskAmount,
+    qty,
+    profitAmount: qty * rewardPerUnit,
+    margin: c.leverage > 0 ? (qty * c.entry) / c.leverage : qty * c.entry,
+  };
+}
+
 export interface DPoint {
   time: number; // UTCTimestamp (secondes)
   price: number;
@@ -124,6 +183,7 @@ export interface Drawing {
   points: DPoint[]; // trend/channel = 2 points (base) ; vline = 1 point
   channelOffset?: number; // canal : décalage de prix définissant la parallèle
   fib?: FibConfig; // retracement de Fibonacci
+  long?: LongPosConfig; // position longue (entrée / objectif / stop)
   measure?: MeasureConfig; // flèche : mesure (variation % + durée)
   pane?: number; // panneau d'ancrage (0=prix, 1=volume, 2=RSI) ; absent = 0 (compat)
   style: DrawingStyle;
@@ -209,6 +269,21 @@ export function newFib(p0: DPoint, p1: DPoint, pane = 0): Drawing {
     visibility: defaultVisibility(),
     locked: false,
     title: "Retracement de Fibonacci",
+  };
+}
+
+export function newLongPos(startTime: number, endTime: number, entry: number, pane = 0): Drawing {
+  return {
+    id: genId(),
+    type: "longpos",
+    points: [{ time: startTime, price: entry }, { time: endTime, price: entry }],
+    pane,
+    long: defaultLongPos(entry),
+    style: { ...defaultTrendStyle(), color: "#787b86", width: 1 },
+    text: { ...defaultText(), color: "#787b86", size: 12 },
+    visibility: defaultVisibility(),
+    locked: false,
+    title: "Position longue",
   };
 }
 

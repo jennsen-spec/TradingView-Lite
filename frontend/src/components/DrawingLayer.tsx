@@ -5,8 +5,8 @@ import type { Candle, Time } from "../lib/indicators";
 import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings";
 import { fmtTimeByInterval } from "../lib/timeFormat";
 import {
-  type Drawing, type DPoint, type DrawingStyle,
-  newTrend, newVline, newChannel, newBrush, newFib, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
+  newTrend, newVline, newChannel, newBrush, newFib, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
 import { applyTemplateDefault } from "../lib/templates";
 
@@ -17,6 +17,7 @@ import DrawingToolbar, { type Tool } from "./DrawingToolbar";
 import DrawingContextBar from "./DrawingContextBar";
 import DrawingOptions from "./DrawingOptions";
 import FibOptions from "./FibOptions";
+import LongPosOptions from "./LongPosOptions";
 
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
 
@@ -50,9 +51,10 @@ interface Props {
 }
 
 interface PxPt { x: number; y: number; }
-interface Hit { id: string; part: "end" | "endp" | "seg" | "width" | "baseh"; endIdx?: number; }
+type LpPart = "lp-move" | "lp-target" | "lp-stop" | "lp-right" | "lp-left";
+interface Hit { id: string; part: "end" | "endp" | "seg" | "width" | "baseh" | LpPart; endIdx?: number; }
 interface DragState {
-  mode: "move" | "end" | "endp" | "width" | "baseh";
+  mode: "move" | "end" | "endp" | "width" | "baseh" | LpPart;
   endIdx?: number;
   ids: string[];
   startTime: number;
@@ -60,6 +62,7 @@ interface DragState {
   pane: number; // panneau du dessin manipulé (verrouille la conversion pendant le drag)
   orig: Record<string, DPoint[]>;
   origOffset?: number; // canal : offset initial (pour le drag de largeur)
+  origLong?: LongPosConfig; // position longue : config initiale (drag d'entrée/stop/objectif)
 }
 
 export default function DrawingLayer({
@@ -262,6 +265,22 @@ export default function DrawingLayer({
         if (distToSegment(mx, my, a.x, a.y, b.x, b.y) <= SEG_HIT || distToSegment(mx, my, a2.x, a2.y, b2.x, b2.y) <= SEG_HIT) return { id: d.id, part: "seg" };
         continue;
       }
+      if (d.type === "longpos") {
+        const L = d.long; if (!L) continue;
+        const le = dataToPx({ time: d.points[0].time, price: L.entry }, d.pane);
+        const re = dataToPx({ time: d.points[1].time, price: L.entry }, d.pane);
+        const yT = dataToPx({ time: d.points[0].time, price: L.target }, d.pane)?.y;
+        const yS = dataToPx({ time: d.points[0].time, price: L.stop }, d.pane)?.y;
+        if (!le || !re || yT == null || yS == null) continue;
+        const x0 = Math.min(le.x, re.x), x1 = Math.max(le.x, re.x), yE = le.y;
+        if (Math.hypot(mx - x1, my - yE) <= HANDLE_HIT) return { id: d.id, part: "lp-right" };
+        if (Math.hypot(mx - x0, my - yE) <= HANDLE_HIT) return { id: d.id, part: "lp-left" };
+        const within = mx >= x0 - SEG_HIT && mx <= x1 + SEG_HIT;
+        if (within && Math.abs(my - yT) <= SEG_HIT) return { id: d.id, part: "lp-target" };
+        if (within && Math.abs(my - yS) <= SEG_HIT) return { id: d.id, part: "lp-stop" };
+        if (within && my >= Math.min(yT, yS) - SEG_HIT && my <= Math.max(yT, yS) + SEG_HIT) return { id: d.id, part: "lp-move" };
+        continue;
+      }
       const a = dataToPx(d.points[0], d.pane); const b = dataToPx(d.points[1], d.pane);
       if (!a || !b) continue;
       if (Math.hypot(mx - a.x, my - a.y) <= HANDLE_HIT) return { id: d.id, part: "end", endIdx: 0 };
@@ -341,6 +360,19 @@ export default function DrawingLayer({
         }
         return;
       }
+      // Position longue : 1 clic pose une position par défaut (~40 barres de large).
+      if (tool === "longpos") {
+        const pt = pxToData(e.clientX, e.clientY);
+        if (!pt) return;
+        e.preventDefault(); e.stopPropagation();
+        const endTime = logicalToTime(timeToLogical(pt.time) + 40);
+        const d = applyTemplateDefault(newLongPos(pt.time, endTime, pt.price, pt.pane));
+        pushUndo();
+        setDrawings((prev) => [...prev, d]);
+        setActiveTool("cursor");
+        setSelectedIds([d.id]);
+        return;
+      }
       // Trait vertical : 1 clic pose la ligne.
       if (tool === "vline") {
         const pt = pxToData(e.clientX, e.clientY);
@@ -411,6 +443,8 @@ export default function DrawingLayer({
         dragRef.current = { mode: "endp", endIdx: hit.endIdx, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]), origOffset: target.channelOffset };
       } else if (hit.part === "end" && sel.length <= 1) {
         dragRef.current = { mode: "end", endIdx: hit.endIdx, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]) };
+      } else if (hit.part.startsWith("lp-")) {
+        dragRef.current = { mode: hit.part as LpPart, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]), origLong: target.long };
       } else {
         const ids = sel.filter((id) => { const d = drawingsRef.current.find((x) => x.id === id); return d && !d.locked; });
         dragRef.current = { mode: "move", ids, startTime: pt.time, startPrice: pt.price, pane, orig: snapshot(ids) };
@@ -458,6 +492,21 @@ export default function DrawingLayer({
         }
         if (dg.mode === "end") {
           return { ...d, points: orig.map((p, idx) => (idx === dg.endIdx ? { time: pt.time, price: pt.price } : { ...p })) };
+        }
+        // --- Position longue ---
+        if (dg.origLong && d.long) {
+          const L = dg.origLong;
+          if (dg.mode === "lp-target") return { ...d, long: { ...d.long, target: pt.price } };
+          if (dg.mode === "lp-stop") return { ...d, long: { ...d.long, stop: pt.price } };
+          if (dg.mode === "lp-right") return { ...d, points: [orig[0], { time: pt.time, price: orig[1].price }] };
+          if (dg.mode === "lp-left") return { ...d, points: [{ time: pt.time, price: orig[0].price }, orig[1]] };
+          if (dg.mode === "lp-move") {
+            return {
+              ...d,
+              points: orig.map((p) => ({ time: p.time + dT, price: p.price + dP })),
+              long: { ...d.long, entry: L.entry + dP, stop: L.stop + dP, target: L.target + dP },
+            };
+          }
         }
         return { ...d, points: orig.map((p) => ({ time: p.time + dT, price: p.price + dP })) };
       }));
@@ -768,6 +817,70 @@ export default function DrawingLayer({
     );
   };
 
+  // Position longue : zone objectif (verte) + zone stop (rouge) + lignes + stats.
+  const renderLongPos = (d: Drawing) => {
+    if (!visibleForInterval(interval, d.visibility)) return null;
+    const L = d.long;
+    if (!L) return null;
+    const le = dataToPx({ time: d.points[0].time, price: L.entry }, d.pane);
+    const re = dataToPx({ time: d.points[1].time, price: L.entry }, d.pane);
+    if (!le || !re) return null;
+    const yE = le.y;
+    const yT = dataToPx({ time: d.points[0].time, price: L.target }, d.pane)?.y;
+    const yS = dataToPx({ time: d.points[0].time, price: L.stop }, d.pane)?.y;
+    if (yT == null || yS == null) return null;
+    const x0 = Math.min(le.x, re.x), x1 = Math.max(le.x, re.x), midX = (x0 + x1) / 2;
+    const st = longPosStats(L);
+    const sel = selectedSet.has(d.id);
+    const line = rgba(d.style.color, d.style.opacity);
+    const num = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+    const statLines = L.compact
+      ? [`R:R ${st.rr.toFixed(2)} · Qté ${num(st.qty)} · Risque ${num(st.riskAmount)}`]
+      : [
+          `Risque / Récompense : ${st.rr.toFixed(2)}`,
+          `Quantité : ${num(st.qty)} (lot ${num(L.lot)})`,
+          `Risque : ${num(st.riskAmount)} · Gain : ${num(st.profitAmount)}`,
+          `Marge : ${num(st.margin)} (levier ${num(L.leverage)}×)`,
+        ];
+    const showStats = sel || L.alwaysStats;
+    const txt = d.text.color || "var(--text)";
+    return (
+      <g key={d.id}>
+        <rect x={x0} y={Math.min(yT, yE)} width={x1 - x0} height={Math.abs(yE - yT)} fill={rgba(L.targetColor, 16)} />
+        <rect x={x0} y={Math.min(yE, yS)} width={x1 - x0} height={Math.abs(yS - yE)} fill={rgba(L.stopColor, 16)} />
+        <line x1={x0} y1={yT} x2={x1} y2={yT} stroke={rgba(L.targetColor, 100)} strokeWidth={1.5} />
+        <line x1={x0} y1={yS} x2={x1} y2={yS} stroke={rgba(L.stopColor, 100)} strokeWidth={1.5} />
+        <line x1={x0} y1={yE} x2={x1} y2={yE} stroke={line} strokeWidth={2} />
+        <text x={midX} y={yT - 4} textAnchor="middle" fontSize={11} fontWeight="600" fill={rgba(L.targetColor, 100)} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" style={{ pointerEvents: "none", userSelect: "none" }}>
+          Objectif +{st.targetPct.toFixed(2)}%
+        </text>
+        <text x={midX} y={yS + 13} textAnchor="middle" fontSize={11} fontWeight="600" fill={rgba(L.stopColor, 100)} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" style={{ pointerEvents: "none", userSelect: "none" }}>
+          Stop −{st.stopPct.toFixed(2)}%
+        </text>
+        {L.priceLabels && (
+          <>
+            <text x={x1 + 5} y={yT + 4} fontSize={10} fill={rgba(L.targetColor, 100)} style={{ pointerEvents: "none" }}>{L.target.toFixed(2)}</text>
+            <text x={x1 + 5} y={yE + 4} fontSize={10} fill={line} style={{ pointerEvents: "none" }}>{L.entry.toFixed(2)}</text>
+            <text x={x1 + 5} y={yS + 4} fontSize={10} fill={rgba(L.stopColor, 100)} style={{ pointerEvents: "none" }}>{L.stop.toFixed(2)}</text>
+          </>
+        )}
+        {showStats && (
+          <text x={x0 + 5} y={yE - 6 - (statLines.length - 1) * 13} fontSize={11} fill={txt} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" style={{ pointerEvents: "none", userSelect: "none" }}>
+            {statLines.map((ln, i) => <tspan key={i} x={x0 + 5} dy={i === 0 ? 0 : 13}>{ln}</tspan>)}
+          </text>
+        )}
+        {sel && (
+          <>
+            <rect x={midX - 4} y={yT - 4} width={8} height={8} rx={1.5} className="draw-handle" />
+            <rect x={midX - 4} y={yS - 4} width={8} height={8} rx={1.5} className="draw-handle" />
+            <circle cx={x1} cy={yE} r={5} className="draw-handle" />
+            <circle cx={x0} cy={yE} r={5} className="draw-handle" />
+          </>
+        )}
+      </g>
+    );
+  };
+
   // Aperçu du canal pendant le tracé (3 clics).
   const renderChanDraft = () => {
     if (!chanDraft) return null;
@@ -969,6 +1082,7 @@ export default function DrawingLayer({
               {drawings.filter((d) => d.type === "channel" && (d.pane ?? 0) === i).map(renderChannel)}
               {drawings.filter((d) => d.type === "fib" && (d.pane ?? 0) === i).map(renderFib)}
               {drawings.filter((d) => d.type === "brush" && (d.pane ?? 0) === i).map(renderBrush)}
+              {drawings.filter((d) => d.type === "longpos" && (d.pane ?? 0) === i).map(renderLongPos)}
               {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === i).map(renderTrend)}
               {draft && draft.pane === i && (() => {
                 const a = dataToPx(draft.p0, draft.pane); const b = dataToPx(draft.p1, draft.pane);
@@ -1005,7 +1119,9 @@ export default function DrawingLayer({
           <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={okOptions} />
           {optionsDrawing.type === "fib"
             ? <FibOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />
-            : <DrawingOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />}
+            : optionsDrawing.type === "longpos"
+              ? <LongPosOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />
+              : <DrawingOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />}
         </>
       )}
 

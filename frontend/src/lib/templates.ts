@@ -1,8 +1,8 @@
 // Modèles (« thèmes ») génériques pour tous les dessins : défaut + enregistrements nommés,
 // PROPRES À CHAQUE TYPE (clé = drawingDefaultKey → trend / arrow / vline / channel / brush / fib).
 // Persistés en localStorage et synchronisés dans le cloud (clés tvlike:).
-import type { Drawing, DrawingStyle, TextConfig, MeasureConfig, FibConfig } from "./drawings";
-import { drawingDefaultKey, newTrend, newVline, newChannel, newBrush, newFib } from "./drawings";
+import type { Drawing, DrawingStyle, TextConfig, MeasureConfig, FibConfig, LongPosConfig } from "./drawings";
+import { drawingDefaultKey, newTrend, newVline, newChannel, newBrush, newFib, newLongPos } from "./drawings";
 import type { Visibility } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
@@ -13,6 +13,7 @@ export interface DrawingTemplate {
   visibility: Visibility;
   measure?: MeasureConfig; // trait / flèche
   fib?: FibConfig;         // retracement de Fibonacci
+  long?: LongPosConfig;    // position longue (réglages, hors géométrie entrée/stop/objectif)
 }
 export interface NamedTemplate { id: string; name: string; template: DrawingTemplate; }
 
@@ -25,13 +26,15 @@ export function templateFromDrawing(d: Drawing): DrawingTemplate {
     visibility: d.visibility,
     ...(d.measure ? { measure: d.measure } : {}),
     ...(d.fib ? { fib: d.fib } : {}),
+    ...(d.long ? { long: d.long } : {}),
   });
 }
 
 // Applique un modèle en gardant la géométrie (points, pane, id, titre, verrou).
+// Pour la position longue, on préserve aussi entrée/stop/objectif (= géométrie sur l'axe des prix).
 export function applyTemplate(d: Drawing, t: DrawingTemplate): Drawing {
   const tt = clone(t);
-  return {
+  const out: Drawing = {
     ...d,
     style: tt.style,
     text: tt.text,
@@ -39,6 +42,10 @@ export function applyTemplate(d: Drawing, t: DrawingTemplate): Drawing {
     ...(tt.measure ? { measure: tt.measure } : {}),
     ...(tt.fib ? { fib: tt.fib } : {}),
   };
+  if (tt.long) {
+    out.long = { ...tt.long, entry: d.long?.entry ?? tt.long.entry, stop: d.long?.stop ?? tt.long.stop, target: d.long?.target ?? tt.long.target };
+  }
+  return out;
 }
 
 // Modèle « d'origine » (usine) pour le type du dessin — reconstruit via les fabriques new*.
@@ -50,6 +57,7 @@ export function factoryTemplate(d: Drawing): DrawingTemplate {
     case "channel": fresh = newChannel(p, p, 0); break;
     case "brush": fresh = newBrush([p, p]); break;
     case "fib": fresh = newFib(p, p); break;
+    case "longpos": fresh = newLongPos(0, 1, d.long?.entry ?? 100); break;
     default: fresh = newTrend(p, p, d.style.rightCap === "arrow" ? "arrow" : "normal");
   }
   return templateFromDrawing(fresh);
