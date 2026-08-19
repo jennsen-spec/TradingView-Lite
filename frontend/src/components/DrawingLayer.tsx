@@ -15,6 +15,7 @@ const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
 import DrawingToolbar, { type Tool } from "./DrawingToolbar";
 import DrawingContextBar from "./DrawingContextBar";
 import DrawingOptions from "./DrawingOptions";
+import FibOptions from "./FibOptions";
 
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
 
@@ -933,7 +934,9 @@ export default function DrawingLayer({
         <>
           {/* Fond bloquant : le panel passe au-dessus de tout et empêche d'agir sur le graphe (redimensionnement des panneaux, etc.). */}
           <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={okOptions} />
-          <DrawingOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />
+          {optionsDrawing.type === "fib"
+            ? <FibOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />
+            : <DrawingOptions drawing={optionsDrawing} onChange={changeOptions} onCancel={cancelOptions} onOk={okOptions} />}
         </>
       )}
 
