@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**46**](docs/backlog/46-refonte-visuelle.md) | **Refonte visuelle** (radius/surfaces/typo + volet redimensionnable + onglet live + logo) | 🎨 | 8 | L | ⭐ | 🏗️ |
+| [**46**](docs/backlog/46-refonte-visuelle.md) | **Refonte visuelle** (radius/surfaces/typo + volet redimensionnable + onglet live + logo) | 🎨 | 8 | L | ⭐ | 🧪 |
 | [**45**](docs/backlog/45-watchlist-v2-flags-colonnes.md) | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | ⭐ | 🧪 |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 

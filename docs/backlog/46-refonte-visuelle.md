@@ -1,6 +1,8 @@
 # #46 — Refonte visuelle (Phase D)
 
-**Statut** : 🏗️ En cours · **Points** : 8 · **Catégorie** : 🎨 Cosmetic · **Taille** : L · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 8 · **Catégorie** : 🎨 Cosmetic · **Taille** : L · **Priorité** : —
+
+> **UAT** : déployé + vérifié en ligne. **A** : favicon #10 (HTTP 200), titre onglet live (`AAPL 314,95 ▼ −0,59%`), volet redimensionnable (240–520, mémorisé), colonnes adaptatives (masquées <340/400px, ticker prioritaire). **B** : poids 700→600, entêtes de section allégées (transparentes + espace), lignes sans séparateur dur, ombres adoucies. Passe B volontairement mesurée (volet + menus/dialogues) → itérable selon retours.
 
 ## Objectif
 Rendre l'app plus « chaleureuse » façon TradingView (même fond, mais sections séparées + radius + typo légère) et livrer les demandes concrètes : volet watchlist redimensionnable + colonnes adaptatives (ticker prioritaire), titre d'onglet live, logo/favicon.
