@@ -12,8 +12,6 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**46**](docs/backlog/46-refonte-visuelle.md) | **Refonte visuelle** (radius/surfaces/typo + volet redimensionnable + onglet live + logo) | 🎨 | 8 | L | ⭐ | 🧪 |
-| [**45**](docs/backlog/45-watchlist-v2-flags-colonnes.md) | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | ⭐ | 🧪 |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
@@ -41,6 +39,8 @@
 ---
 
 ## ✅ Fait
+- **#46 Refonte visuelle** : logo/favicon (#10 bougies+loupe), **titre d'onglet live** (`SYM prix ▲/▼ %`), **volet redimensionnable** (240–520, mémorisé) + **colonnes adaptatives** (ticker prioritaire). Passe « chaleur » : radius adouci (8px), fond du volet allégé (`--bg`), **sélection bleu clair arrondie insérée**, pastille favori normale+sombre façon TradingView, entêtes de section légères, « Symbole » sans majuscules, séparateurs de tickers subtils, ombres douces, poids typo allégés. *(Fichiers : `styles.css`, `App.tsx`, `WatchlistPanel.tsx`, `index.html`, `public/favicon.svg`.)*
+- **#45 Watchlist v2 · Phase C** : **flags de couleur** (clic droit, persistants) + **colonnes optionnelles** Dernier/Volume (menu ⋯) ; `volume` ajouté à `/quotes`. *(Fichiers : `WatchlistPanel.tsx`, `lib/collections.ts`, `lib/api.ts`, Edge Function + backend.)*
 - **#44 Watchlist v2 · Phase B** : volet détail du symbole affiché (logo + nom, bourse · catégorie, prix + variation colorée, statut marché, **stats clés** Volume / Volume moyen (30) / Capitalisation, compact FR). Endpoint **`/quote-detail`** (v7 quote via **crumb** Yahoo + fallback v8 meta). *(Fichiers : `components/WatchlistDetail.tsx`, `WatchlistPanel.tsx`, `lib/api.ts`, Edge Function + backend `/quote-detail`.)*
 - **#43 Watchlist v2 · Phase A** : logos réels par symbole (fallback monogramme coloré, détection du placeholder par taille), **Chg% du jour** coloré + **tri par section**, ligne active accentuée. Endpoint **`/quotes`** groupé (Edge Function + backend local, Yahoo v8 meta, cache 60 s, polling 60 s). *(Fichiers : `lib/logos.ts`, `components/SymbolLogo.tsx`, `components/WatchlistPanel.tsx`, `lib/api.ts`, `supabase/functions/tvlite-api/index.ts`, `backend/src/yahoo.js`+`index.js`.)*
 - **Épopée Dessins** (#4 socle + Trait · #33 Flèche · #32 Trait vertical · #34 Canal parallèle · #35 Stabilo · #36 Supprimer-tous) : barre d'outils (6 outils), modèle ancré **temps+prix** (suit pan/zoom, cross-intervalle), sélection/multi-sélection/drag, poignées, **barre contextuelle** + **dialogue Options** (Style/Texte/Coordonnées/Visibilité, fenêtre déplaçable, panel au-dessus de tout + fond bloquant), **double-clic → Options**, **texte le long du trait** (pivoté), **canal** (3 clics, 4 coins + 2 poignées de hauteur, niveaux + remplissage), **surligneur** freehand, **copier/coller** décalé, **« Définir par défaut »** par outil (Trait/Flèche distincts), persistance par symbole. *(Fichiers : `lib/drawings.ts`, `components/Drawing*.tsx` + `VisibilityEditor.tsx`, câblage `Chart.tsx`/`App.tsx`, `styles.css`.)*
