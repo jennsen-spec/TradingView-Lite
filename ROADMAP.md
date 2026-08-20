@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**45**](docs/backlog/45-watchlist-v2-flags-colonnes.md) | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | ⭐ | 🏗️ |
+| [**45**](docs/backlog/45-watchlist-v2-flags-colonnes.md) | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | ⭐ | 🧪 |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*

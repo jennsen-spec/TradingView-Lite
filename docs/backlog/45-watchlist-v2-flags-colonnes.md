@@ -1,6 +1,8 @@
 # #45 — Watchlist v2 · flags & colonnes (Phase C)
 
-**Statut** : 🏗️ En cours · **Points** : 3 · **Catégorie** : 🎨 Cosmetic · **Taille** : S · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 3 · **Catégorie** : 🎨 Cosmetic · **Taille** : S · **Priorité** : —
+
+> **UAT** : déployé + vérifié en ligne. Flags (clic droit → 6 couleurs + retirer, rond coloré, persistant). Colonnes Dernier/Volume (menu ⋯), `/quotes` renvoie `volume`. **Compromis largeur** : les 2 colonnes + Chg% dans un volet ~300px → tickers longs ellipsés (« BTCX-… ») ; acceptable, mais candidat **Phase D** (volet redimensionnable / plus large, ou masquer le logo quand colonnes actives). Colonnes remises **off par défaut**.
 
 ## Objectif
 Deux finitions du volet watchlist : **marqueurs de couleur** (flags) pour taguer des symboles, et **colonnes optionnelles** (Dernier prix, Volume) en plus du Chg%.
