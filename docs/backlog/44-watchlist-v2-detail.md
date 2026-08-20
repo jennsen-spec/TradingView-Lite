@@ -1,6 +1,8 @@
 # #44 — Watchlist v2 · volet détail (Phase B)
 
-**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+
+> **UAT** : déployé + vérifié en ligne. `/quote-detail` (Edge Function v7, crumb OK). AAPL → Apple Inc. · NasdaqGS · Action · 311,30 USD · −1,75% · Après-bourse · Vol 32,92 M · Vol moyen 56,63 M · Cap 4,54 Bn. HXS.TO (ETF) → cap « — » (gracieux). Se met à jour au changement de symbole. Backend local `/api/quote-detail` ajouté (non redémarré ici).
 
 ## Objectif
 Ajouter en bas du volet watchlist un **panneau détail du symbole affiché** (façon TradingView) : logo + nom, bourse + catégorie, **prix + variation**, **statut du marché**, et **stats clés** (Volume, Volume moyen (30), Capitalisation).

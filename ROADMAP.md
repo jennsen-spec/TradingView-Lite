@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**44**](docs/backlog/44-watchlist-v2-detail.md) | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | ⭐ | 🏗️ |
+| [**44**](docs/backlog/44-watchlist-v2-detail.md) | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | ⭐ | 🧪 |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
