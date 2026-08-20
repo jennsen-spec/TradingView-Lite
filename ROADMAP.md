@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**43**](docs/backlog/43-watchlist-v2-logos-chg.md) | **Watchlist v2 · logos + Chg% live** (Phase A) | 🎨 | 5 | M | ⭐ | 🧪 |
+| [**44**](docs/backlog/44-watchlist-v2-detail.md) | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | ⭐ | 🏗️ |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
@@ -20,7 +20,6 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
-| 44 | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | | 📥 | Symbole sélectionné : nom, bourse, prix + variation, statut marché, **stats clés** (Volume, Volume moyen (30), Capitalisation). Étend l'endpoint quotes (#43) → v7/quoteSummary (crumb). |
 | 45 | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | | 📥 | Étiquettes de couleur (le « D » orange) pour tagger les symboles ; colonnes optionnelles (dernier prix, volume). |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
@@ -42,6 +41,7 @@
 ---
 
 ## ✅ Fait
+- **#43 Watchlist v2 · Phase A** : logos réels par symbole (fallback monogramme coloré, détection du placeholder par taille), **Chg% du jour** coloré + **tri par section**, ligne active accentuée. Endpoint **`/quotes`** groupé (Edge Function + backend local, Yahoo v8 meta, cache 60 s, polling 60 s). *(Fichiers : `lib/logos.ts`, `components/SymbolLogo.tsx`, `components/WatchlistPanel.tsx`, `lib/api.ts`, `supabase/functions/tvlite-api/index.ts`, `backend/src/yahoo.js`+`index.js`.)*
 - **Épopée Dessins** (#4 socle + Trait · #33 Flèche · #32 Trait vertical · #34 Canal parallèle · #35 Stabilo · #36 Supprimer-tous) : barre d'outils (6 outils), modèle ancré **temps+prix** (suit pan/zoom, cross-intervalle), sélection/multi-sélection/drag, poignées, **barre contextuelle** + **dialogue Options** (Style/Texte/Coordonnées/Visibilité, fenêtre déplaçable, panel au-dessus de tout + fond bloquant), **double-clic → Options**, **texte le long du trait** (pivoté), **canal** (3 clics, 4 coins + 2 poignées de hauteur, niveaux + remplissage), **surligneur** freehand, **copier/coller** décalé, **« Définir par défaut »** par outil (Trait/Flèche distincts), persistance par symbole. *(Fichiers : `lib/drawings.ts`, `components/Drawing*.tsx` + `VisibilityEditor.tsx`, câblage `Chart.tsx`/`App.tsx`, `styles.css`.)*
 - **Thème clair par défaut** (sombre mémorisable) · horodatage MàJ raccourci · bouton refresh : seule l'icône tourne.
 - Graphique bougies japonaises · SMA 50 (bleu) + SMA 200 (orange) · Volume · RSI 14 · Backend proxy Yahoo Finance + cache SQLite

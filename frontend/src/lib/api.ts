@@ -66,3 +66,25 @@ export function fetchQuotes(symbols: string[]) {
   if (API_BASE) return getJson<Quote[]>(`${API_BASE}/quotes?symbols=${encodeURIComponent(list)}`);
   return getJson<Quote[]>(`/api/quotes?symbols=${encodeURIComponent(list)}`);
 }
+
+export interface QuoteDetail {
+  symbol: string;
+  longName: string | null;
+  exchange: string | null;
+  quoteType: string | null;
+  currency: string | null;
+  price: number | null;
+  prevClose: number | null;
+  change: number | null;
+  changePct: number | null;
+  marketState: string | null;
+  volume: number | null;
+  avgVolume: number | null;
+  marketCap: number | null;
+}
+
+// Détail d'un symbole (volet watchlist) : nom, bourse, prix, stats clés.
+export function fetchQuoteDetail(symbol: string) {
+  if (API_BASE) return getJson<QuoteDetail>(`${API_BASE}/quote-detail?symbol=${encodeURIComponent(symbol)}`);
+  return getJson<QuoteDetail>(`/api/quote-detail?symbol=${encodeURIComponent(symbol)}`);
+}

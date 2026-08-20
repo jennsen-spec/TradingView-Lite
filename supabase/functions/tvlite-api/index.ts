@@ -207,6 +207,74 @@ async function getQuotes(symbols: string[]): Promise<any[]> {
   return results;
 }
 
+// --- Détail d'un symbole (volet watchlist) : v7 quote (crumb) + fallback v8 meta ---
+let crumbCache: { crumb: string; cookie: string; t: number } | null = null;
+const CRUMB_TTL_MS = 3600_000;
+
+async function getCrumb(): Promise<{ crumb: string; cookie: string } | null> {
+  if (crumbCache && Date.now() - crumbCache.t < CRUMB_TTL_MS) return crumbCache;
+  try {
+    const r1 = await fetch("https://fc.yahoo.com/", { headers: HEADERS });
+    const cookies = (r1.headers.getSetCookie?.() ?? []).map((c) => c.split(";")[0]).filter(Boolean);
+    const cookie = cookies.join("; ");
+    const r2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", { headers: { ...HEADERS, cookie } });
+    const crumb = (await r2.text()).trim();
+    if (!crumb || crumb.length > 40 || crumb.includes("<")) return null;
+    crumbCache = { crumb, cookie, t: Date.now() };
+    return crumbCache;
+  } catch {
+    return null;
+  }
+}
+
+async function detailFromV8(symbol: string): Promise<any> {
+  const url = `${CHART}/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+  const res = await fetch(url, { headers: HEADERS });
+  const meta = (await res.json())?.chart?.result?.[0]?.meta ?? {};
+  const price = meta.regularMarketPrice ?? null;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
+  return {
+    symbol, longName: meta.longName ?? meta.shortName ?? null,
+    exchange: meta.fullExchangeName ?? meta.exchangeName ?? null,
+    quoteType: meta.instrumentType ?? null, currency: meta.currency ?? null,
+    price, prevClose,
+    change: price != null && prevClose != null ? price - prevClose : null,
+    changePct: price != null && prevClose ? ((price - prevClose) / prevClose) * 100 : null,
+    marketState: meta.marketState ?? null,
+    volume: meta.regularMarketVolume ?? null, avgVolume: null, marketCap: null,
+  };
+}
+
+const detailCache = new Map<string, { t: number; d: any }>();
+async function getQuoteDetail(symbol: string): Promise<any> {
+  symbol = symbol.toUpperCase();
+  const hit = detailCache.get(symbol);
+  if (hit && Date.now() - hit.t < QUOTE_TTL_MS) return hit.d;
+  let d: any = null;
+  const c = await getCrumb();
+  if (c) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}&crumb=${encodeURIComponent(c.crumb)}`;
+      const res = await fetch(url, { headers: { ...HEADERS, cookie: c.cookie } });
+      const q = (await res.json())?.quoteResponse?.result?.[0];
+      if (q) {
+        d = {
+          symbol: q.symbol ?? symbol, longName: q.longName ?? q.shortName ?? null,
+          exchange: q.fullExchangeName ?? q.exchange ?? null, quoteType: q.quoteType ?? null,
+          currency: q.currency ?? null, price: q.regularMarketPrice ?? null,
+          prevClose: q.regularMarketPreviousClose ?? null,
+          change: q.regularMarketChange ?? null, changePct: q.regularMarketChangePercent ?? null,
+          marketState: q.marketState ?? null, volume: q.regularMarketVolume ?? null,
+          avgVolume: q.averageDailyVolume3Month ?? null, marketCap: q.marketCap ?? null,
+        };
+      }
+    } catch { /* fallback ci-dessous */ }
+  }
+  if (!d) d = await detailFromV8(symbol); // v7 KO (crumb, 401…) → dégradation gracieuse
+  detailCache.set(symbol, { t: Date.now(), d });
+  return d;
+}
+
 function mapType(quoteType: string) {
   switch ((quoteType || "").toLowerCase()) {
     case "equity": return { label: "Action", category: "action" };
@@ -318,6 +386,11 @@ Deno.serve(async (req: Request) => {
         .split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
       if (!symbols.length) return jsonResponse([]);
       return jsonResponse(await getQuotes(symbols.slice(0, 60)));
+    }
+    if (url.pathname.includes("/quote-detail")) {
+      const s = (url.searchParams.get("symbol") || "").trim();
+      if (!s) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);
+      return jsonResponse(await getQuoteDetail(s));
     }
     const symbol = url.searchParams.get("symbol");
     if (!symbol) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);

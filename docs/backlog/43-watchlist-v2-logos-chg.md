@@ -1,6 +1,6 @@
 # #43 — Watchlist v2 · logos + Chg% live (Phase A)
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
 
 > **UAT** : déployé et vérifié en ligne — `/quotes` (Edge Function v6) OK, logos réels (US) + fallback monogramme (ETF canadiens), Chg% coloré, tri par section. Backend local `/api/quotes` ajouté (non redémarré ici → à retester en dev au besoin).
 

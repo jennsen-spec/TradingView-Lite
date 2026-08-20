@@ -6,6 +6,7 @@ import {
 import { fetchQuotes, type Quote } from "../lib/api";
 import SymbolSearch from "./SymbolSearch";
 import SymbolLogo from "./SymbolLogo";
+import WatchlistDetail from "./WatchlistDetail";
 
 type SortDir = "none" | "asc" | "desc";
 // Variation formatée façon FR : « +1,23% » / « −0,64% ».
@@ -327,6 +328,8 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
       </div>
 
       <div className="wl-body">{body}</div>
+
+      <WatchlistDetail symbol={currentSymbol} />
 
       {secMenu && (
         <div
