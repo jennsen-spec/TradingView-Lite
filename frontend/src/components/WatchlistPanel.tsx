@@ -3,7 +3,13 @@ import {
   loadCollections, saveCollections, newSection, newSymbolItem, newCollection,
   type Collection,
 } from "../lib/collections";
+import { fetchQuotes, type Quote } from "../lib/api";
 import SymbolSearch from "./SymbolSearch";
+import SymbolLogo from "./SymbolLogo";
+
+type SortDir = "none" | "asc" | "desc";
+// Variation formatée façon FR : « +1,23% » / « −0,64% ».
+const fmtChg = (v: number) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(2).replace(".", ",")}%`;
 
 interface Props {
   onClose: () => void;
@@ -22,6 +28,8 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [secMenu, setSecMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
+  const [sortDir, setSortDir] = useState<SortDir>("none");
 
   useEffect(() => saveCollections(collections), [collections]);
 
@@ -41,6 +49,46 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
 
   const cur = collections.find((c) => c.id === currentId) ?? collections[0];
   const favorites = collections.filter((c) => c.favorite);
+
+  // Quotes de la collection courante (variation du jour) : chargées à l'ouverture + polling 60 s.
+  const symbolsKey = cur.items.filter((i) => i.type === "symbol").map((i) => i.sym).join(",");
+  useEffect(() => {
+    const syms = symbolsKey.split(",").filter(Boolean);
+    if (!syms.length) return;
+    let stop = false;
+    const load = () => fetchQuotes(syms)
+      .then((qs) => { if (!stop) setQuotes((prev) => { const m = { ...prev }; for (const q of qs) m[q.symbol] = q; return m; }); })
+      .catch(() => { /* ignore */ });
+    load();
+    const id = setInterval(load, 60000);
+    return () => { stop = true; clearInterval(id); };
+  }, [symbolsKey]);
+
+  const cycleSort = () => setSortDir((d) => (d === "none" ? "desc" : d === "desc" ? "asc" : "none"));
+  const chgOf = (sym: string) => quotes[sym.toUpperCase()]?.changePct ?? null;
+
+  // Ordre d'affichage : tri par variation À L'INTÉRIEUR de chaque section (sections figées).
+  const displayItems = (() => {
+    if (sortDir === "none") return cur.items;
+    const out: typeof cur.items = [];
+    let i = 0;
+    while (i < cur.items.length) {
+      if (cur.items[i].type === "section") { out.push(cur.items[i]); i++; continue; }
+      let j = i;
+      const run = [];
+      while (j < cur.items.length && cur.items[j].type === "symbol") { run.push(cur.items[j]); j++; }
+      run.sort((a, b) => {
+        const ca = chgOf(a.sym!), cb = chgOf(b.sym!);
+        if (ca == null && cb == null) return 0;
+        if (ca == null) return 1;
+        if (cb == null) return -1;
+        return sortDir === "desc" ? cb - ca : ca - cb;
+      });
+      out.push(...run);
+      i = j;
+    }
+    return out;
+  })();
 
   const updateCur = (fn: (c: Collection) => Collection) =>
     setCollections((prev) => prev.map((c) => (c.id === cur.id ? fn(c) : c)));
@@ -120,7 +168,7 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   // Corps : rendu des sections + symboles (symbole groupé sous la section au-dessus).
   const body: ReactNode[] = [];
   let secCollapsed = false;
-  for (const item of cur.items) {
+  for (const item of displayItems) {
     if (item.type === "section") {
       secCollapsed = !!collapsed[item.id];
       if (editingSectionId === item.id) {
@@ -168,7 +216,12 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
           onDragEnd={onDragEnd}
         >
           <button className="wl-row-main" onClick={() => onSelectSymbol(sym)} title={`Afficher ${sym}`}>
+            <SymbolLogo symbol={sym} />
             <span className="wl-sym">{sym}</span>
+            {(() => {
+              const c = chgOf(sym);
+              return <span className={`wl-chg${c == null ? "" : c >= 0 ? " up" : " dn"}`}>{c == null ? "" : fmtChg(c)}</span>;
+            })()}
           </button>
           <button className="wl-remove" title="Retirer de la collection" onClick={() => removeItem(item.id)}>−</button>
         </div>
@@ -268,6 +321,9 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
 
       <div className="wl-cols">
         <span>Symbole</span>
+        <button className="wl-col-chg" onClick={cycleSort} title="Trier par variation">
+          Chg%{sortDir !== "none" && <span>{sortDir === "desc" ? "▼" : "▲"}</span>}
+        </button>
       </div>
 
       <div className="wl-body">{body}</div>

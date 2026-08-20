@@ -172,6 +172,41 @@ async function getTimeSeries(symbol: string, interval = "1d", reqRange: string |
   return { symbol, interval: yInterval, cached: false, currency, name, candles, fetchedAt: Date.now() };
 }
 
+// --- Quotes (watchlist) : dernier prix + variation du jour, via meta v8 (pas de crumb) ---
+const quoteCache = new Map<string, { t: number; q: any }>();
+const QUOTE_TTL_MS = 60_000;
+
+async function getQuote(symbol: string): Promise<any> {
+  symbol = symbol.toUpperCase();
+  const hit = quoteCache.get(symbol);
+  if (hit && Date.now() - hit.t < QUOTE_TTL_MS) return hit.q;
+  const url = `${CHART}/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+  const res = await fetch(url, { headers: HEADERS });
+  const json: any = await res.json();
+  const meta = json?.chart?.result?.[0]?.meta;
+  if (!meta) return { symbol, price: null, prevClose: null, changePct: null, currency: null, marketState: null };
+  const price = meta.regularMarketPrice ?? null;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
+  const changePct = price != null && prevClose ? ((price - prevClose) / prevClose) * 100 : null;
+  const q = { symbol, price, prevClose, changePct, currency: meta.currency ?? null, marketState: meta.marketState ?? null };
+  quoteCache.set(symbol, { t: Date.now(), q });
+  return q;
+}
+
+async function getQuotes(symbols: string[]): Promise<any[]> {
+  const results: any[] = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < symbols.length) {
+      const s = symbols[i++];
+      try { results.push(await getQuote(s)); }
+      catch { results.push({ symbol: s, price: null, prevClose: null, changePct: null, currency: null, marketState: null }); }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(8, symbols.length) }, worker));
+  return results;
+}
+
 function mapType(quoteType: string) {
   switch ((quoteType || "").toLowerCase()) {
     case "equity": return { label: "Action", category: "action" };
@@ -277,6 +312,12 @@ Deno.serve(async (req: Request) => {
       const query = url.searchParams.get("q") || "";
       if (!query.trim()) return jsonResponse([]);
       return jsonResponse(await searchSymbols(query));
+    }
+    if (url.pathname.includes("/quotes")) {
+      const symbols = (url.searchParams.get("symbols") || "")
+        .split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+      if (!symbols.length) return jsonResponse([]);
+      return jsonResponse(await getQuotes(symbols.slice(0, 60)));
     }
     const symbol = url.searchParams.get("symbol");
     if (!symbol) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);

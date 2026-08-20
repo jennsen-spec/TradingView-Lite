@@ -49,3 +49,20 @@ export function searchSymbols(q: string) {
   if (API_BASE) return getJson<SymbolHit[]>(`${API_BASE}/search?q=${encodeURIComponent(q)}`);
   return getJson<SymbolHit[]>(`/api/search?q=${encodeURIComponent(q)}`);
 }
+
+export interface Quote {
+  symbol: string;
+  price: number | null;
+  prevClose: number | null;
+  changePct: number | null;
+  currency: string | null;
+  marketState: string | null;
+}
+
+// Quotes groupées (watchlist) : variation du jour par symbole.
+export function fetchQuotes(symbols: string[]) {
+  const list = symbols.map((s) => s.trim()).filter(Boolean).join(",");
+  if (!list) return Promise.resolve([] as Quote[]);
+  if (API_BASE) return getJson<Quote[]>(`${API_BASE}/quotes?symbols=${encodeURIComponent(list)}`);
+  return getJson<Quote[]>(`/api/quotes?symbols=${encodeURIComponent(list)}`);
+}

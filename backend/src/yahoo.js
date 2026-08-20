@@ -202,6 +202,42 @@ const EXCHANGE_COUNTRY = {
   TLV: "Israël", CCC: "Crypto", CCY: "Forex",
 };
 
+// --- Quotes (watchlist) : dernier prix + variation du jour, via meta v8 (pas de crumb) ---
+const quoteCache = new Map(); // symbol -> { t, q }
+const QUOTE_TTL_MS = 60_000;
+
+async function getQuote(symbol) {
+  symbol = symbol.toUpperCase();
+  const hit = quoteCache.get(symbol);
+  if (hit && Date.now() - hit.t < QUOTE_TTL_MS) return hit.q;
+  const url = `${CHART}/${encodeURIComponent(symbol)}?range=1d&interval=1d`;
+  const res = await fetch(url, { headers: HEADERS });
+  const json = await res.json();
+  const meta = json?.chart?.result?.[0]?.meta;
+  if (!meta) return { symbol, price: null, prevClose: null, changePct: null, currency: null, marketState: null };
+  const price = meta.regularMarketPrice ?? null;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
+  const changePct = price != null && prevClose ? ((price - prevClose) / prevClose) * 100 : null;
+  const q = { symbol, price, prevClose, changePct, currency: meta.currency ?? null, marketState: meta.marketState ?? null };
+  quoteCache.set(symbol, { t: Date.now(), q });
+  return q;
+}
+
+export async function getQuotes(symbols) {
+  const list = symbols.slice(0, 60);
+  const results = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < list.length) {
+      const s = list[i++];
+      try { results.push(await getQuote(s)); }
+      catch { results.push({ symbol: s, price: null, prevClose: null, changePct: null, currency: null, marketState: null }); }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(8, list.length) }, worker));
+  return results;
+}
+
 export async function searchSymbols(query) {
   const url =
     `${LOOKUP}?query=${encodeURIComponent(query)}&type=all&count=40&start=0` +

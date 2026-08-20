@@ -2012,23 +2012,72 @@ body {
 }
 .wl-row.active {
   background: var(--surface-3);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .wl-row-main {
   flex: 1;
   display: flex;
   align-items: center;
+  gap: 9px;
   min-width: 0;
   background: none;
   border: none;
   color: var(--text);
-  padding: 9px 14px;
+  padding: 8px 14px;
   cursor: pointer;
   text-align: left;
 }
 .wl-sym {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 400;
   color: var(--text-strong);
 }
+/* Logo / monogramme */
+.wl-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+  background: var(--surface-2);
+}
+.wl-logo-mono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 500;
+  border-radius: 50%;
+}
+/* Variation du jour */
+.wl-chg {
+  flex: none;
+  margin-left: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.wl-chg.up { color: #26a69a; }
+.wl-chg.dn { color: #ef5350; }
+/* Entête « Chg% » triable */
+.wl-col-chg {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+}
+.wl-col-chg:hover { color: var(--text); }
 .wl-remove {
   width: 34px;
   flex-shrink: 0;

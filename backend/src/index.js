@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { db } from "./db.js";
-import { getTimeSeries, searchSymbols } from "./yahoo.js";
+import { getTimeSeries, searchSymbols, getQuotes } from "./yahoo.js";
 
 const app = express();
 app.use(cors());
@@ -30,6 +30,17 @@ app.get("/api/search", async (req, res) => {
     const q = (req.query.q || "").toString();
     if (!q) return res.json([]);
     res.json(await searchSymbols(q));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/api/quotes", async (req, res) => {
+  try {
+    const symbols = (req.query.symbols || "").toString()
+      .split(",").map((s) => s.trim()).filter(Boolean);
+    if (!symbols.length) return res.json([]);
+    res.json(await getQuotes(symbols));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

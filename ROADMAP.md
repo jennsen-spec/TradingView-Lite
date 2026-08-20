@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**43**](docs/backlog/43-watchlist-v2-logos-chg.md) | **Watchlist v2 · logos + Chg% live** (Phase A) | 🎨 | 5 | M | ⭐ | 🔍 |
+| [**43**](docs/backlog/43-watchlist-v2-logos-chg.md) | **Watchlist v2 · logos + Chg% live** (Phase A) | 🎨 | 5 | M | ⭐ | 🏗️ |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*

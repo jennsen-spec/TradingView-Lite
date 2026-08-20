@@ -1,6 +1,6 @@
 # #43 — Watchlist v2 · logos + Chg% live (Phase A)
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
 
 ## Objectif
 Enrichir le volet watchlist (`WatchlistPanel.tsx`) façon TradingView : chaque ligne affiche un **logo**, le **ticker** et sa **variation du jour (Chg%)** colorée, avec **tri** par variation. C'est la 1ʳᵉ des 3 phases (B = volet détail #44, C = flags de couleur #45).
