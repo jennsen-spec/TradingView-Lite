@@ -12,6 +12,7 @@
   --grid: #1b2027;
   --accent: #3f8cff;
   --accent-2: #58a6ff;
+  --accent-soft: rgba(88, 166, 255, 0.16); /* sélection douce (fond bleu très léger) */
 }
 :root[data-theme="light"] {
   --bg: #ffffff;
@@ -26,6 +27,7 @@
   --grid: #eaecef;
   --accent: #2962ff;
   --accent-2: #2962ff;
+  --accent-soft: rgba(41, 98, 255, 0.10); /* sélection douce (fond bleu très léger) */
 }
 
 * {
@@ -68,7 +70,7 @@ body {
   align-items: baseline;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 14px;
   cursor: pointer;
   text-align: left;
@@ -90,7 +92,7 @@ body {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
 }
 .iv-bar button {
@@ -137,7 +139,7 @@ body {
 .iv-row {
   display: flex;
   align-items: center;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .iv-row.active,
 .iv-row:hover {
@@ -210,7 +212,7 @@ body {
   font-size: 16px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .search-close:hover {
   background: var(--surface-2);
@@ -288,7 +290,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 9px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   border-bottom: 1px solid var(--grid);
 }
@@ -398,7 +400,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   color: var(--text);
 }
@@ -440,7 +442,7 @@ body {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -468,7 +470,7 @@ body {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -580,7 +582,7 @@ body {
   pointer-events: none;
   z-index: 7;
   padding: 4px 9px;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #fff;
   text-align: center;
   white-space: nowrap;
@@ -633,7 +635,7 @@ body {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   background: var(--surface);
 }
@@ -692,7 +694,7 @@ body {
   color: var(--text);
   padding: 7px 8px;
   font-size: 13px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .icat-fav-row:hover {
@@ -775,7 +777,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .icat-row:hover {
   background: var(--surface-2);
@@ -935,7 +937,7 @@ body {
   font-size: 15px;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .is-close:hover {
   background: var(--surface-2);
@@ -985,7 +987,7 @@ body {
   width: 170px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-strong);
   padding: 7px 9px;
   font-size: 13px;
@@ -1065,7 +1067,7 @@ body {
 }
 .fib-tpl-item {
   text-align: left; background: none; border: none; color: var(--text);
-  font-size: 13px; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; padding: 8px 10px; border-radius: 8px; cursor: pointer;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .fib-tpl-item:hover:not(:disabled) { background: var(--hover, rgba(127, 127, 127, 0.14)); }
@@ -1075,7 +1077,7 @@ body {
 .fib-tpl-empty { font-size: 12px; color: var(--text-muted); padding: 6px 10px; }
 .fib-tpl-name { display: flex; flex-direction: column; gap: 8px; padding: 6px; min-width: 220px; }
 .fib-tpl-name input {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   color: var(--text); padding: 7px 9px; font-size: 13px;
 }
 .fib-tpl-name input:focus { border-color: var(--accent, #3f8cff); outline: none; }
@@ -1099,13 +1101,13 @@ body {
 .fmt-name { font-size: 13px; color: var(--text); width: 100%; }
 .fmt-name input {
   width: 100%; background: var(--bg); border: 1px solid var(--accent, #3f8cff);
-  border-radius: 6px; color: var(--text); padding: 5px 7px; font-size: 13px;
+  border-radius: 8px; color: var(--text); padding: 5px 7px; font-size: 13px;
 }
 .fmt-name input:focus { outline: none; }
 .fmt-actions { white-space: nowrap; text-align: right; }
 .fmt-ico {
   background: none; border: none; cursor: pointer; font-size: 15px;
-  padding: 4px 6px; border-radius: 6px; color: var(--text-muted);
+  padding: 4px 6px; border-radius: 8px; color: var(--text-muted);
 }
 .fmt-ico:hover { background: var(--hover, rgba(127, 127, 127, 0.14)); color: var(--text); }
 .fmt-confirm { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
@@ -1118,14 +1120,14 @@ body {
 .lp-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 .lp-row > label { flex: 1; font-size: 13px; color: var(--text); }
 .lp-row input[type="number"] {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   color: var(--text); padding: 6px 8px; font-size: 13px; width: 130px; text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .lp-pair { display: flex; gap: 6px; }
 .lp-pair input[type="number"] { width: 80px; }
 .lp-pair select {
-  width: 84px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  width: 84px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   color: var(--text); padding: 6px 8px; font-size: 13px; cursor: pointer;
 }
 .lp-row input:focus, .lp-pair select:focus { outline: none; border-color: var(--accent, #3f8cff); }
@@ -1178,7 +1180,7 @@ body {
   height: 34px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   cursor: pointer;
 }
@@ -1214,7 +1216,7 @@ body {
   width: 62px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-strong);
   padding: 6px 8px;
   font-size: 12px;
@@ -1237,7 +1239,7 @@ body {
   border: 1px solid var(--border);
   color: var(--text-strong);
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1282,7 +1284,7 @@ body {
   width: 52px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-strong);
   padding: 6px 8px;
   font-size: 12px;
@@ -1295,7 +1297,7 @@ body {
   gap: 4px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 3px 6px;
   cursor: pointer;
 }
@@ -1397,7 +1399,7 @@ body {
   align-items: center;
   gap: 2px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   padding: 2px;
   max-width: 40vw;
@@ -1435,7 +1437,7 @@ body {
   position: relative;
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   padding: 2px;
 }
@@ -1461,7 +1463,7 @@ body {
   color: var(--text);
   font-size: 12px;
   padding: 7px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   text-align: left;
 }
@@ -1510,7 +1512,7 @@ body {
   color: var(--text);
   font-size: 13px;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .dcm-item:hover {
@@ -1543,7 +1545,7 @@ body {
   border: none;
   color: var(--text-muted);
   padding: 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .dcb-btn:hover {
@@ -1633,7 +1635,7 @@ body {
   color: var(--text-strong);
   background: none;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 3px 6px;
   width: 60%;
 }
@@ -1668,7 +1670,7 @@ body {
   gap: 8px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   padding: 6px 10px;
   cursor: pointer;
@@ -1712,7 +1714,7 @@ body {
   color: var(--text);
   font-size: 13px;
   padding: 7px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   text-align: left;
 }
@@ -1757,7 +1759,7 @@ body {
   resize: vertical;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   padding: 8px 10px;
   font: inherit;
@@ -1776,7 +1778,7 @@ body {
   width: 62px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   padding: 6px 8px;
 }
@@ -1785,7 +1787,7 @@ body {
   height: 32px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   cursor: pointer;
   font-size: 14px;
@@ -1819,7 +1821,7 @@ body {
   min-width: 96px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   padding: 7px 10px;
   font-size: 13px;
@@ -1857,7 +1859,7 @@ body {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -1880,7 +1882,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--surface);
+  background: var(--bg);
   border-left: 1px solid var(--border);
   color: var(--text);
   font-size: 13px;
@@ -1917,7 +1919,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   padding: 4px 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: left;
 }
 .wl-title:hover {
@@ -1940,7 +1942,7 @@ body {
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-muted);
   font-size: 17px;
   line-height: 1;
@@ -1972,15 +1974,15 @@ body {
   cursor: pointer;
 }
 .wl-quick-dot.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  background: var(--text-strong);
+  color: var(--bg);
+  border-color: var(--text-strong);
 }
 
 .wl-cols {
   display: flex;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 8px 18px;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1992,6 +1994,7 @@ body {
   flex: 1 1 auto;
   overflow-y: auto;
   min-height: 0;
+  padding: 0 8px; /* insère les lignes → surbrillance arrondie détachée des bords */
 }
 .wl-cat-head {
   display: flex;
@@ -2005,7 +2008,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 15px 12px 5px;
+  padding: 15px 10px 5px;
   cursor: pointer;
   text-align: left;
 }
@@ -2019,13 +2022,13 @@ body {
 .wl-row {
   display: flex;
   align-items: center;
+  border-radius: 8px;
 }
 .wl-row:hover {
   background: var(--surface-2);
 }
 .wl-row.active {
-  background: var(--surface-3);
-  box-shadow: inset 2px 0 0 var(--accent);
+  background: var(--accent-soft);
 }
 .wl-row-main {
   flex: 1;
@@ -2282,7 +2285,7 @@ body {
   color: var(--text);
   font-size: 13px;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .wl-menu-item:hover {
@@ -2303,7 +2306,7 @@ body {
 .wl-menu-coll {
   display: flex;
   align-items: center;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .wl-menu-coll.active,
 .wl-menu-coll:hover {
@@ -2337,7 +2340,7 @@ body {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--accent);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-strong);
   font-size: 14px;
   font-weight: 600;
