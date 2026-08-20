@@ -43,6 +43,18 @@ export default function App() {
     syncToCloud("tvlike:theme");
   }, [theme]);
 
+  // Titre d'onglet façon TradingView : symbole + prix + variation du jour.
+  useEffect(() => {
+    const n = dailyCandles.length;
+    if (n === 0) { document.title = symbol ? `${symbol} · TV-Like` : "TV-Like"; return; }
+    const price = dailyCandles[n - 1].close;
+    const prev = n > 1 ? dailyCandles[n - 2].close : price;
+    const chg = prev ? ((price - prev) / prev) * 100 : 0;
+    const arrow = chg >= 0 ? "▲" : "▼";
+    const priceStr = price.toLocaleString("fr-FR", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+    document.title = `${symbol} ${priceStr} ${arrow} ${chg >= 0 ? "+" : "−"}${Math.abs(chg).toFixed(2).replace(".", ",")}%`;
+  }, [symbol, dailyCandles]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);

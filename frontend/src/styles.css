@@ -1874,6 +1874,7 @@ body {
 }
 
 .wl-panel {
+  position: relative;
   flex: 0 0 300px;
   width: 300px;
   display: flex;
@@ -1883,6 +1884,20 @@ body {
   border-left: 1px solid var(--border);
   color: var(--text);
   font-size: 13px;
+}
+/* Poignée de redimensionnement (bord gauche du volet). */
+.wl-resize {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 5;
+}
+.wl-resize:hover {
+  background: var(--accent);
+  opacity: 0.3;
 }
 .wl-head {
   display: flex;

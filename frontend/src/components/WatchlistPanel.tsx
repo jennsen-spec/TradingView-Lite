@@ -29,6 +29,13 @@ const loadCols = (): ColConfig => {
 };
 const saveCols = (c: ColConfig) => { try { localStorage.setItem(COLS_KEY, JSON.stringify(c)); syncToCloud(COLS_KEY); } catch { /* ignore */ } };
 
+// Largeur du volet (redimensionnable, mémorisée). Seuils d'apparition des colonnes.
+const WIDTH_KEY = "tvlike:wl-width";
+const W_MIN = 240, W_MAX = 520, W_DEF = 300;
+const W_LAST = 340, W_VOLUME = 400; // le ticker prime : colonnes révélées quand le volet s'élargit
+const loadWidth = (): number => { const n = Number(localStorage.getItem(WIDTH_KEY)); return n >= W_MIN && n <= W_MAX ? n : W_DEF; };
+const saveWidth = (w: number) => { try { localStorage.setItem(WIDTH_KEY, String(w)); syncToCloud(WIDTH_KEY); } catch { /* ignore */ } };
+
 interface Props {
   onClose: () => void;
   onSelectSymbol: (s: string) => void;
@@ -50,6 +57,23 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [sortDir, setSortDir] = useState<SortDir>("none");
   const [cols, setCols] = useState<ColConfig>(loadCols);
+  const [width, setWidth] = useState<number>(loadWidth);
+  const widthRef = useRef(width); widthRef.current = width;
+  const resizeRef = useRef<{ startX: number; startW: number } | null>(null);
+
+  // Redimensionnement du volet (poignée sur le bord gauche).
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      const r = resizeRef.current; if (!r) return;
+      setWidth(Math.min(W_MAX, Math.max(W_MIN, r.startW - (e.clientX - r.startX))));
+    };
+    const up = () => { if (resizeRef.current) { resizeRef.current = null; saveWidth(widthRef.current); } };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+  }, []);
+  // Colonnes effectives : le ticker prime → on masque si le volet est trop étroit.
+  const effCols: ColConfig = { last: cols.last && width >= W_LAST, volume: cols.volume && width >= W_VOLUME };
 
   useEffect(() => saveCollections(collections), [collections]);
 
@@ -254,8 +278,8 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
               const c = q?.changePct ?? null;
               return (
                 <>
-                  {cols.last && <span className="wl-cell">{q?.price != null ? fmtPrice(q.price) : ""}</span>}
-                  {cols.volume && <span className="wl-cell">{q?.volume != null ? fmtVol(q.volume) : ""}</span>}
+                  {effCols.last && <span className="wl-cell">{q?.price != null ? fmtPrice(q.price) : ""}</span>}
+                  {effCols.volume && <span className="wl-cell">{q?.volume != null ? fmtVol(q.volume) : ""}</span>}
                   <span className={`wl-chg${c == null ? "" : c >= 0 ? " up" : " dn"}`}>{c == null ? "" : fmtChg(c)}</span>
                 </>
               );
@@ -282,7 +306,12 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   }
 
   return (
-    <aside className="wl-panel">
+    <aside className="wl-panel" style={{ width, flexBasis: width }}>
+      <div
+        className="wl-resize"
+        onMouseDown={(e) => { resizeRef.current = { startX: e.clientX, startW: width }; e.preventDefault(); }}
+        title="Redimensionner"
+      />
       <div className="wl-head">
         {editingName ? (
           <input
@@ -364,8 +393,8 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
       <div className="wl-cols">
         <span>Symbole</span>
         <div className="wl-cols-right">
-          {cols.last && <span className="wl-colh">Dernier</span>}
-          {cols.volume && <span className="wl-colh">Volume</span>}
+          {effCols.last && <span className="wl-colh">Dernier</span>}
+          {effCols.volume && <span className="wl-colh">Volume</span>}
           <button className="wl-col-chg" onClick={cycleSort} title="Trier par variation">
             Chg%{sortDir !== "none" && <span>{sortDir === "desc" ? "▼" : "▲"}</span>}
           </button>
