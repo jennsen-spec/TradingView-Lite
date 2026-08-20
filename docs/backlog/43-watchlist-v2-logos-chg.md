@@ -19,11 +19,12 @@ Enrichir le volet watchlist (`WatchlistPanel.tsx`) façon TradingView : chaque l
 - **Chg% = version LIVE colorée** — supersède l'ancienne colonne « CHG% » retirée (elle était **statique/vide**, donc « désuète » ; ici elle est live et utile, comme TradingView). *(Décidé avec Jean.)*
 - **Source Chg% = Yahoo v8 `chart`** (`range=5d&interval=1d`), **sans `crumb`** — on prend les 2 derniers closes + `meta.currency` / `meta.marketState`. On **évite volontairement** l'API v7 `quote` (batch mais exige cookie+crumb, cf. galère GCR) ; les stats riches (volume moyen, capitalisation) qui *imposent* v7/quoteSummary sont repoussées en **Phase B (#44)**.
 - **Logos = vrais logos** *(choix Jean)* via `<img>` + **fallback monogramme** sur `onError`. Logique 100 % front (pas de proxy image).
+- **Fallback = monogramme** *(confirmé Jean)* : quand aucun logo n'est trouvé, afficher le **monogramme coloré de la maquette** (initiale(s) du ticker + couleur dérivée du ticker), pas d'icône générique. C'est le rendu par défaut garanti.
 - **Tri par section** : on ne mélange pas les sous-catégories ; on trie à l'intérieur. Défaut = ordre manuel conservé.
 - **Périmètre Phase A** = logos + Chg% + tri + polish ligne active. **Volet détail = #44**, **flags de couleur = #45**.
 
 ## Questions ouvertes
-- **Fournisseur de logos** : la couverture **TSX / ETF canadiens** (`.TO`, `.V`) est le vrai risque. Clearbit exige le **domaine** (pas le ticker). Pistes par ticker : FMP `image-stock`, CDN type `assets.parqet.com`… → **à évaluer** ; démarrer avec **1 fournisseur + fallback monogramme**, gérer le **suffixe de bourse** (retirer `.TO`/`.V` ou le mapper selon le fournisseur). Si couverture trop faible : monogramme d'abord, vrais logos en incrément.
+- **Fournisseur de logos** : la couverture **TSX / ETF canadiens** (`.TO`, `.V`) est le vrai risque. Clearbit exige le **domaine** (pas le ticker). Pistes par ticker : FMP `image-stock`, CDN type `assets.parqet.com`… → **à évaluer** ; démarrer avec **1 fournisseur + fallback monogramme** (fallback déjà tranché, cf. Décisions), gérer le **suffixe de bourse** (retirer `.TO`/`.V` ou le mapper selon le fournisseur). La couverture n'est plus bloquante grâce au fallback : là où le logo manque, monogramme.
 - **Cadence de rafraîchissement** : à l'ouverture du volet seulement, ou **polling ~60 s** tant qu'ouvert ? (proposition : polling 60 s, coupé quand le volet est fermé.)
 - **Devise** : afficher la devise près du Chg% ? (non en Phase A ; réservé au volet détail #44.)
 
