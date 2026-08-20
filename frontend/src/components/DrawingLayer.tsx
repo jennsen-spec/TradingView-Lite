@@ -355,8 +355,7 @@ export default function DrawingLayer({
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setDraft(null);
-          setActiveTool("cursor");
-          setSelectedIds([d.id]);
+          setSelectedIds([d.id]); // l'outil reste actif → on peut enchaîner un autre dessin
         }
         return;
       }
@@ -369,7 +368,6 @@ export default function DrawingLayer({
         const d = applyTemplateDefault(newLongPos(pt.time, endTime, pt.price, pt.pane));
         pushUndo();
         setDrawings((prev) => [...prev, d]);
-        setActiveTool("cursor");
         setSelectedIds([d.id]);
         return;
       }
@@ -381,7 +379,6 @@ export default function DrawingLayer({
         const d = applyTemplateDefault(newVline(pt.time, pt.pane));
         pushUndo();
         setDrawings((prev) => [...prev, d]);
-        setActiveTool("cursor");
         setSelectedIds([d.id]);
         return;
       }
@@ -412,7 +409,6 @@ export default function DrawingLayer({
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setChanDraft(null);
-          setActiveTool("cursor");
           setSelectedIds([d.id]);
         }
         return;
@@ -517,7 +513,6 @@ export default function DrawingLayer({
         brushingRef.current = null;
         const pts = brushDraftRef.current ?? [];
         setBrushDraft(null);
-        setActiveTool("cursor");
         if (pts.length >= 2) {
           const d = applyTemplateDefault(newBrush(pts, brushPaneRef.current));
           pushUndo();
@@ -600,11 +595,13 @@ export default function DrawingLayer({
         return;
       }
       if (e.key === "Escape") {
+        // Cascade : menu → tracé en cours (annulé, outil gardé) → sélection → retour au curseur.
         if (chartMenuRef.current) setChartMenu(null);
         else if (draftRef.current || chanDraftRef.current || brushingRef.current) {
-          brushingRef.current = null; setDraft(null); setChanDraft(null); setBrushDraft(null); setActiveTool("cursor");
+          brushingRef.current = null; setDraft(null); setChanDraft(null); setBrushDraft(null);
         }
         else if (selRef.current.length) setSelectedIds([]);
+        else if (toolRef.current !== "cursor") setActiveTool("cursor");
       } else if ((e.key === "Delete" || e.key === "Backspace") && selRef.current.length) {
         const sel = selRef.current;
         pushUndo();
