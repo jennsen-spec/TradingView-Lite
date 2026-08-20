@@ -25,9 +25,9 @@ const TOOLS: ToolDef[] = [
     label: "Trait (ligne de tendance)",
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <line x1="4" y1="20" x2="20" y2="4" />
-        <circle cx="4" cy="20" r="2" fill="currentColor" stroke="none" />
-        <circle cx="20" cy="4" r="2" fill="currentColor" stroke="none" />
+        <line x1="5" y1="19" x2="19" y2="5" />
+        <circle cx="5" cy="19" r="2.5" fill="var(--surface)" strokeWidth="1.7" />
+        <circle cx="19" cy="5" r="2.5" fill="var(--surface)" strokeWidth="1.7" />
       </svg>
     ),
   },
@@ -47,6 +47,7 @@ const TOOLS: ToolDef[] = [
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <line x1="12" y1="3" x2="12" y2="21" />
+        <circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -55,8 +56,10 @@ const TOOLS: ToolDef[] = [
     label: "Canal parallèle",
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <line x1="3" y1="15" x2="21" y2="7" />
-        <line x1="3" y1="20" x2="21" y2="12" />
+        <line x1="4" y1="15" x2="20" y2="7" />
+        <line x1="4" y1="20" x2="20" y2="12" />
+        <circle cx="4" cy="20" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
+        <circle cx="20" cy="7" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
       </svg>
     ),
   },
@@ -65,10 +68,13 @@ const TOOLS: ToolDef[] = [
     label: "Retracement de Fibonacci",
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <line x1="3" y1="5" x2="21" y2="5" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-        <line x1="3" y1="15" x2="21" y2="15" />
+        <line x1="3" y1="4" x2="21" y2="4" />
+        <line x1="3" y1="8" x2="15" y2="8" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="16" x2="15" y2="16" />
         <line x1="3" y1="20" x2="21" y2="20" />
+        <circle cx="3" cy="20" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
+        <circle cx="21" cy="4" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
       </svg>
     ),
   },
@@ -77,10 +83,9 @@ const TOOLS: ToolDef[] = [
     label: "Position longue",
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="4" width="16" height="16" rx="1.5" />
-        <line x1="4" y1="12" x2="20" y2="12" />
-        <line x1="9" y1="8" x2="15" y2="8" strokeWidth="1.5" opacity="0.6" />
-        <line x1="9" y1="16" x2="15" y2="16" strokeWidth="1.5" opacity="0.6" />
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <line x1="4" y1="13" x2="20" y2="13" />
+        <circle cx="12" cy="13" r="1.7" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -89,8 +94,9 @@ const TOOLS: ToolDef[] = [
     label: "Surligneur",
     icon: (
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 20c3-1 4-4 7-7l6-6" />
-        <path d="M14 4l6 6-3 3-6-6z" fill="currentColor" stroke="none" opacity="0.5" />
+        <line x1="19" y1="5" x2="12" y2="12" strokeWidth="4" />
+        <path d="M12 12 L8 16 L10 18 L14 14 Z" fill="currentColor" stroke="none" />
+        <line x1="4" y1="20" x2="10" y2="20" strokeWidth="3" opacity="0.4" />
       </svg>
     ),
   },
