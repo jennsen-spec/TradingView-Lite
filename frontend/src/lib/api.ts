@@ -57,6 +57,7 @@ export interface Quote {
   changePct: number | null;
   currency: string | null;
   marketState: string | null;
+  volume: number | null;
 }
 
 // Quotes groupées (watchlist) : variation du jour par symbole.

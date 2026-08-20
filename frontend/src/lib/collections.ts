@@ -6,6 +6,7 @@ export interface WLItem {
   type: "section" | "symbol";
   name?: string; // section
   sym?: string; // symbole
+  flag?: string; // marqueur de couleur (hex) — optionnel
 }
 
 export interface Collection {

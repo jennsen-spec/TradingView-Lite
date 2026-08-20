@@ -184,11 +184,11 @@ async function getQuote(symbol: string): Promise<any> {
   const res = await fetch(url, { headers: HEADERS });
   const json: any = await res.json();
   const meta = json?.chart?.result?.[0]?.meta;
-  if (!meta) return { symbol, price: null, prevClose: null, changePct: null, currency: null, marketState: null };
+  if (!meta) return { symbol, price: null, prevClose: null, changePct: null, currency: null, marketState: null, volume: null };
   const price = meta.regularMarketPrice ?? null;
   const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
   const changePct = price != null && prevClose ? ((price - prevClose) / prevClose) * 100 : null;
-  const q = { symbol, price, prevClose, changePct, currency: meta.currency ?? null, marketState: meta.marketState ?? null };
+  const q = { symbol, price, prevClose, changePct, currency: meta.currency ?? null, marketState: meta.marketState ?? null, volume: meta.regularMarketVolume ?? null };
   quoteCache.set(symbol, { t: Date.now(), q });
   return q;
 }
@@ -200,7 +200,7 @@ async function getQuotes(symbols: string[]): Promise<any[]> {
     while (i < symbols.length) {
       const s = symbols[i++];
       try { results.push(await getQuote(s)); }
-      catch { results.push({ symbol: s, price: null, prevClose: null, changePct: null, currency: null, marketState: null }); }
+      catch { results.push({ symbol: s, price: null, prevClose: null, changePct: null, currency: null, marketState: null, volume: null }); }
     }
   };
   await Promise.all(Array.from({ length: Math.min(8, symbols.length) }, worker));

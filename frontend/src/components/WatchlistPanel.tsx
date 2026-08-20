@@ -4,6 +4,7 @@ import {
   type Collection,
 } from "../lib/collections";
 import { fetchQuotes, type Quote } from "../lib/api";
+import { syncToCloud } from "../lib/cloudPrefs";
 import SymbolSearch from "./SymbolSearch";
 import SymbolLogo from "./SymbolLogo";
 import WatchlistDetail from "./WatchlistDetail";
@@ -11,6 +12,22 @@ import WatchlistDetail from "./WatchlistDetail";
 type SortDir = "none" | "asc" | "desc";
 // Variation formatée façon FR : « +1,23% » / « −0,64% ».
 const fmtChg = (v: number) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(2).replace(".", ",")}%`;
+const fmtPrice = (v: number) => v.toFixed(2).replace(".", ",");
+const fmtVol = (v: number) => {
+  const a = Math.abs(v);
+  const [d, s] = a >= 1e9 ? [1e9, "Md"] : a >= 1e6 ? [1e6, "M"] : a >= 1e3 ? [1e3, "K"] : [1, ""];
+  return s ? `${(v / d).toFixed(1).replace(".", ",")} ${s}` : String(Math.round(v));
+};
+
+// Marqueurs de couleur (flags) et colonnes optionnelles.
+const FLAG_COLORS = ["#ef5350", "#ff9800", "#26a69a", "#3f8cff", "#9c27b0", "#26c6da"];
+interface ColConfig { last: boolean; volume: boolean; }
+const COLS_KEY = "tvlike:wl-columns";
+const loadCols = (): ColConfig => {
+  try { return { last: false, volume: false, ...JSON.parse(localStorage.getItem(COLS_KEY) || "{}") }; }
+  catch { return { last: false, volume: false }; }
+};
+const saveCols = (c: ColConfig) => { try { localStorage.setItem(COLS_KEY, JSON.stringify(c)); syncToCloud(COLS_KEY); } catch { /* ignore */ } };
 
 interface Props {
   onClose: () => void;
@@ -29,24 +46,31 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [secMenu, setSecMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [flagMenu, setFlagMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [sortDir, setSortDir] = useState<SortDir>("none");
+  const [cols, setCols] = useState<ColConfig>(loadCols);
 
   useEffect(() => saveCollections(collections), [collections]);
 
   // Ferme les menus au clic en dehors.
   useEffect(() => {
-    if (!nameMenu && !dotsMenu && !secMenu) return;
+    if (!nameMenu && !dotsMenu && !secMenu && !flagMenu) return;
     const onDoc = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".wl-menu, .wl-title, .wl-dots-wrap")) {
         setNameMenu(false);
         setDotsMenu(false);
         setSecMenu(null);
+        setFlagMenu(null);
       }
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [nameMenu, dotsMenu, secMenu]);
+  }, [nameMenu, dotsMenu, secMenu, flagMenu]);
+
+  const setColumns = (c: ColConfig) => { setCols(c); saveCols(c); };
+  const setFlag = (itemId: string, color: string | null) =>
+    updateCur((coll) => ({ ...coll, items: coll.items.map((i) => (i.id === itemId ? { ...i, flag: color ?? undefined } : i)) }));
 
   const cur = collections.find((c) => c.id === currentId) ?? collections[0];
   const favorites = collections.filter((c) => c.favorite);
@@ -216,12 +240,25 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
           onDrop={(e) => onDropItem(e, item.id)}
           onDragEnd={onDragEnd}
         >
-          <button className="wl-row-main" onClick={() => onSelectSymbol(sym)} title={`Afficher ${sym}`}>
+          <button
+            className="wl-row-main"
+            onClick={() => onSelectSymbol(sym)}
+            onContextMenu={(e) => { e.preventDefault(); setFlagMenu({ id: item.id, x: e.clientX, y: e.clientY }); setNameMenu(false); setDotsMenu(false); setSecMenu(null); }}
+            title={`Afficher ${sym} · clic droit = marqueur`}
+          >
             <SymbolLogo symbol={sym} />
+            {item.flag && <span className="wl-flag" style={{ background: item.flag }} />}
             <span className="wl-sym">{sym}</span>
             {(() => {
-              const c = chgOf(sym);
-              return <span className={`wl-chg${c == null ? "" : c >= 0 ? " up" : " dn"}`}>{c == null ? "" : fmtChg(c)}</span>;
+              const q = quotes[sym.toUpperCase()];
+              const c = q?.changePct ?? null;
+              return (
+                <>
+                  {cols.last && <span className="wl-cell">{q?.price != null ? fmtPrice(q.price) : ""}</span>}
+                  {cols.volume && <span className="wl-cell">{q?.volume != null ? fmtVol(q.volume) : ""}</span>}
+                  <span className={`wl-chg${c == null ? "" : c >= 0 ? " up" : " dn"}`}>{c == null ? "" : fmtChg(c)}</span>
+                </>
+              );
             })()}
           </button>
           <button className="wl-remove" title="Retirer de la collection" onClick={() => removeItem(item.id)}>−</button>
@@ -287,6 +324,10 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setEditingName(true); }}>Renommer</button>
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setAddingSection(true); }}>Ajouter une section</button>
                 <button className="wl-menu-item" onClick={() => setDotsMenu(false)}>Effacer la liste</button>
+                <div className="wl-menu-sep" />
+                <div className="wl-menu-label">Colonnes</div>
+                <label className="wl-menu-check"><input type="checkbox" checked={cols.last} onChange={(e) => setColumns({ ...cols, last: e.target.checked })} /> Dernier prix</label>
+                <label className="wl-menu-check"><input type="checkbox" checked={cols.volume} onChange={(e) => setColumns({ ...cols, volume: e.target.checked })} /> Volume</label>
               </div>
             )}
           </div>
@@ -322,9 +363,13 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
 
       <div className="wl-cols">
         <span>Symbole</span>
-        <button className="wl-col-chg" onClick={cycleSort} title="Trier par variation">
-          Chg%{sortDir !== "none" && <span>{sortDir === "desc" ? "▼" : "▲"}</span>}
-        </button>
+        <div className="wl-cols-right">
+          {cols.last && <span className="wl-colh">Dernier</span>}
+          {cols.volume && <span className="wl-colh">Volume</span>}
+          <button className="wl-col-chg" onClick={cycleSort} title="Trier par variation">
+            Chg%{sortDir !== "none" && <span>{sortDir === "desc" ? "▼" : "▲"}</span>}
+          </button>
+        </div>
       </div>
 
       <div className="wl-body">{body}</div>
@@ -338,6 +383,17 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
         >
           <button className="wl-menu-item" onClick={() => { setEditingSectionId(secMenu.id); setSecMenu(null); }}>Renommer</button>
           <button className="wl-menu-item" onClick={() => { removeSection(secMenu.id); setSecMenu(null); }}>Supprimer</button>
+        </div>
+      )}
+
+      {flagMenu && (
+        <div className="wl-menu wl-ctx wl-flag-menu" style={{ position: "fixed", top: flagMenu.y, right: window.innerWidth - flagMenu.x }}>
+          <div className="wl-flag-swatches">
+            {FLAG_COLORS.map((c) => (
+              <button key={c} className="wl-flag-sw" style={{ background: c }} title="Marquer" onClick={() => { setFlag(flagMenu.id, c); setFlagMenu(null); }} />
+            ))}
+          </div>
+          <button className="wl-menu-item" onClick={() => { setFlag(flagMenu.id, null); setFlagMenu(null); }}>Retirer le marqueur</button>
         </div>
       )}
 

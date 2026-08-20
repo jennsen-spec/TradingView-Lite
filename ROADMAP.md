@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**44**](docs/backlog/44-watchlist-v2-detail.md) | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | ⭐ | 🧪 |
+| [**45**](docs/backlog/45-watchlist-v2-flags-colonnes.md) | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | ⭐ | 🏗️ |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
@@ -20,7 +20,6 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
-| 45 | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | | 📥 | Étiquettes de couleur (le « D » orange) pour tagger les symboles ; colonnes optionnelles (dernier prix, volume). |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
 | 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |
@@ -41,6 +40,7 @@
 ---
 
 ## ✅ Fait
+- **#44 Watchlist v2 · Phase B** : volet détail du symbole affiché (logo + nom, bourse · catégorie, prix + variation colorée, statut marché, **stats clés** Volume / Volume moyen (30) / Capitalisation, compact FR). Endpoint **`/quote-detail`** (v7 quote via **crumb** Yahoo + fallback v8 meta). *(Fichiers : `components/WatchlistDetail.tsx`, `WatchlistPanel.tsx`, `lib/api.ts`, Edge Function + backend `/quote-detail`.)*
 - **#43 Watchlist v2 · Phase A** : logos réels par symbole (fallback monogramme coloré, détection du placeholder par taille), **Chg% du jour** coloré + **tri par section**, ligne active accentuée. Endpoint **`/quotes`** groupé (Edge Function + backend local, Yahoo v8 meta, cache 60 s, polling 60 s). *(Fichiers : `lib/logos.ts`, `components/SymbolLogo.tsx`, `components/WatchlistPanel.tsx`, `lib/api.ts`, `supabase/functions/tvlite-api/index.ts`, `backend/src/yahoo.js`+`index.js`.)*
 - **Épopée Dessins** (#4 socle + Trait · #33 Flèche · #32 Trait vertical · #34 Canal parallèle · #35 Stabilo · #36 Supprimer-tous) : barre d'outils (6 outils), modèle ancré **temps+prix** (suit pan/zoom, cross-intervalle), sélection/multi-sélection/drag, poignées, **barre contextuelle** + **dialogue Options** (Style/Texte/Coordonnées/Visibilité, fenêtre déplaçable, panel au-dessus de tout + fond bloquant), **double-clic → Options**, **texte le long du trait** (pivoté), **canal** (3 clics, 4 coins + 2 poignées de hauteur, niveaux + remplissage), **surligneur** freehand, **copier/coller** décalé, **« Définir par défaut »** par outil (Trait/Flèche distincts), persistance par symbole. *(Fichiers : `lib/drawings.ts`, `components/Drawing*.tsx` + `VisibilityEditor.tsx`, câblage `Chart.tsx`/`App.tsx`, `styles.css`.)*
 - **Thème clair par défaut** (sombre mémorisable) · horodatage MàJ raccourci · bouton refresh : seule l'icône tourne.
