@@ -1,6 +1,8 @@
 # #43 — Watchlist v2 · logos + Chg% live (Phase A)
 
-**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🎨 Cosmetic · **Taille** : M · **Priorité** : —
+
+> **UAT** : déployé et vérifié en ligne — `/quotes` (Edge Function v6) OK, logos réels (US) + fallback monogramme (ETF canadiens), Chg% coloré, tri par section. Backend local `/api/quotes` ajouté (non redémarré ici → à retester en dev au besoin).
 
 ## Objectif
 Enrichir le volet watchlist (`WatchlistPanel.tsx`) façon TradingView : chaque ligne affiche un **logo**, le **ticker** et sa **variation du jour (Chg%)** colorée, avec **tri** par variation. C'est la 1ʳᵉ des 3 phases (B = volet détail #44, C = flags de couleur #45).
