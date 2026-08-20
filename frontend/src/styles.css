@@ -2027,11 +2027,9 @@ body {
   cursor: pointer;
   text-align: left;
 }
-/* Ticker : garde un minimum lisible même colonnes activées (ellipsis au-delà). */
-.wl-sym { min-width: 3.5em; }
 .wl-sym {
   flex: 1;
-  min-width: 0;
+  min-width: 3.5em; /* garde un ticker lisible même colonnes activées (ellipsis au-delà) */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
