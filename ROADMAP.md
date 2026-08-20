@@ -12,6 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
+| [**43**](docs/backlog/43-watchlist-v2-logos-chg.md) | **Watchlist v2 · logos + Chg% live** (Phase A) | 🎨 | 5 | M | ⭐ | 🔍 |
 | [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
@@ -19,6 +20,8 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
+| 44 | **Watchlist v2 · volet détail** (Phase B) | 🎨 | 5 | M | | 📥 | Symbole sélectionné : nom, bourse, prix + variation, statut marché, **stats clés** (Volume, Volume moyen (30), Capitalisation). Étend l'endpoint quotes (#43) → v7/quoteSummary (crumb). |
+| 45 | **Watchlist v2 · flags & colonnes** (Phase C) | 🎨 | 3 | S | | 📥 | Étiquettes de couleur (le « D » orange) pour tagger les symboles ; colonnes optionnelles (dernier prix, volume). |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
 | 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |
