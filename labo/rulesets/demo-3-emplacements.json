@@ -1,0 +1,18 @@
+{
+  "nom": "demo-3-emplacements",
+  "version": 1,
+  "description": "Démonstration des trois emplacements (pas une stratégie candidate) : tri momentum 12-1, filtre Weinstein-esque close>SMA150, interrupteur XIU au-dessus de sa SMA200.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": { "type": "decile", "rang": 1 }
+  },
+  "filtrer": [
+    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
+    { "indicateur": "historique", "op": ">=", "valeur": 253 },
+    { "indicateur": "dist_sma150", "op": ">", "valeur": 0 }
+  ],
+  "interrupteur": { "indicateur": "xiu_sur_sma200", "op": ">", "valeur": 1 },
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

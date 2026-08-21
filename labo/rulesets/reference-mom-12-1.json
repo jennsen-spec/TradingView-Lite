@@ -1,0 +1,17 @@
+{
+  "nom": "reference-mom-12-1",
+  "version": 1,
+  "description": "Protocole de référence : momentum 12-1, décile supérieur équipondéré, mensuel, exécution à l'ouverture du lendemain. Note : l'analyse d'origine exigeait en pratique ~253 barres d'historique (mom calculable), pas 260 — vérifié contre ta_ca_mom.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": { "type": "decile", "rang": 1 }
+  },
+  "filtrer": [
+    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
+    { "indicateur": "historique", "op": ">=", "valeur": 253 }
+  ],
+  "interrupteur": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}
