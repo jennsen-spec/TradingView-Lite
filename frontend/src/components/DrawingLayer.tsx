@@ -6,7 +6,7 @@ import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings"
 import { fmtTimeByInterval } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
-  newTrend, newVline, newChannel, newBrush, newFib, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  newTrend, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
 import { applyTemplateDefault } from "../lib/templates";
 
@@ -52,9 +52,9 @@ interface Props {
 
 interface PxPt { x: number; y: number; }
 type LpPart = "lp-move" | "lp-target" | "lp-stop" | "lp-right" | "lp-left";
-interface Hit { id: string; part: "end" | "endp" | "seg" | "width" | "baseh" | LpPart; endIdx?: number; }
+interface Hit { id: string; part: "end" | "endp" | "seg" | "width" | "baseh" | "rect" | LpPart; endIdx?: number; rectT?: number; rectP?: number; }
 interface DragState {
-  mode: "move" | "end" | "endp" | "width" | "baseh" | LpPart;
+  mode: "move" | "end" | "endp" | "width" | "baseh" | "rect" | LpPart;
   endIdx?: number;
   ids: string[];
   startTime: number;
@@ -63,6 +63,8 @@ interface DragState {
   orig: Record<string, DPoint[]>;
   origOffset?: number; // canal : offset initial (pour le drag de largeur)
   origLong?: LongPosConfig; // position longue : config initiale (drag d'entrée/stop/objectif)
+  rectT?: number; // rectangle : index du point dont on modifie le TEMPS (-1 = aucun)
+  rectP?: number; // rectangle : index du point dont on modifie le PRIX (-1 = aucun)
 }
 
 export default function DrawingLayer({
@@ -273,6 +275,27 @@ export default function DrawingLayer({
         if (distToSegment(mx, my, a.x, a.y, b.x, b.y) <= SEG_HIT || distToSegment(mx, my, a2.x, a2.y, b2.x, b2.y) <= SEG_HIT) return { id: d.id, part: "seg" };
         continue;
       }
+      if (d.type === "rect") {
+        const a = dataToPx(d.points[0], d.pane), b = dataToPx(d.points[1], d.pane);
+        if (!a || !b) continue;
+        const leftIdx = d.points[0].time <= d.points[1].time ? 0 : 1, rightIdx = 1 - leftIdx;
+        const topIdx = d.points[0].price >= d.points[1].price ? 0 : 1, botIdx = 1 - topIdx;
+        const xL = Math.min(a.x, b.x), xR = Math.max(a.x, b.x), yT = Math.min(a.y, b.y), yB = Math.max(a.y, b.y);
+        const xM = (xL + xR) / 2, yM = (yT + yB) / 2;
+        const near = (hx: number, hy: number) => Math.hypot(mx - hx, my - hy) <= HANDLE_HIT;
+        if (near(xL, yT)) return { id: d.id, part: "rect", rectT: leftIdx, rectP: topIdx };
+        if (near(xR, yT)) return { id: d.id, part: "rect", rectT: rightIdx, rectP: topIdx };
+        if (near(xL, yB)) return { id: d.id, part: "rect", rectT: leftIdx, rectP: botIdx };
+        if (near(xR, yB)) return { id: d.id, part: "rect", rectT: rightIdx, rectP: botIdx };
+        if (near(xM, yT)) return { id: d.id, part: "rect", rectT: -1, rectP: topIdx };
+        if (near(xM, yB)) return { id: d.id, part: "rect", rectT: -1, rectP: botIdx };
+        if (near(xL, yM)) return { id: d.id, part: "rect", rectT: leftIdx, rectP: -1 };
+        if (near(xR, yM)) return { id: d.id, part: "rect", rectT: rightIdx, rectP: -1 };
+        const onEdge = ((Math.abs(mx - xL) <= SEG_HIT || Math.abs(mx - xR) <= SEG_HIT) && my >= yT - SEG_HIT && my <= yB + SEG_HIT)
+          || ((Math.abs(my - yT) <= SEG_HIT || Math.abs(my - yB) <= SEG_HIT) && mx >= xL - SEG_HIT && mx <= xR + SEG_HIT);
+        if (onEdge || (mx >= xL && mx <= xR && my >= yT && my <= yB)) return { id: d.id, part: "seg" };
+        continue;
+      }
       if (d.type === "longpos") {
         const L = d.long; if (!L) continue;
         const le = dataToPx({ time: d.points[0].time, price: L.entry }, d.pane);
@@ -342,20 +365,22 @@ export default function DrawingLayer({
       if (chartMenuRef.current) setChartMenu(null); // un clic ailleurs ferme le menu contextuel
 
       const tool = toolRef.current;
-      // Mode dessin 2 points (Trait / Flèche / Fibonacci) : 1er clic démarre, 2e clic finalise.
-      if (tool === "trend" || tool === "arrow" || tool === "fib") {
+      // Mode dessin 2 points (Trait / Flèche / Fibonacci / Rectangle) : 1er clic démarre, 2e finalise.
+      if (tool === "trend" || tool === "arrow" || tool === "fib" || tool === "rect") {
         const dr = draftRef.current;
         // 2e clic : on verrouille le panneau du 1er point pour rester dans le même sous-graphe.
         const raw = pxToData(e.clientX, e.clientY, dr ? dr.pane : undefined);
         if (!raw) return;
         e.preventDefault(); e.stopPropagation();
-        // Shift pendant le tracé → 2e point au prix du 1er (ligne horizontale).
-        const pt = e.shiftKey && dr ? { ...raw, price: dr.p0.price } : raw;
+        // Shift pendant le tracé → 2e point au prix du 1er (ligne horizontale) ; pas pour le rectangle.
+        const pt = e.shiftKey && dr && tool !== "rect" ? { ...raw, price: dr.p0.price } : raw;
         if (!dr) { setDraft({ p0: pt, p1: pt, pane: pt.pane }); }
         else {
           let d: Drawing;
           if (tool === "fib") {
             d = applyTemplateDefault(newFib(dr.p0, pt, dr.pane));
+          } else if (tool === "rect") {
+            d = applyTemplateDefault(newRect(dr.p0, pt, dr.pane));
           } else {
             d = applyTemplateDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
             if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
@@ -453,6 +478,8 @@ export default function DrawingLayer({
         dragRef.current = { mode: "end", endIdx: hit.endIdx, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]) };
       } else if (hit.part.startsWith("lp-")) {
         dragRef.current = { mode: hit.part as LpPart, ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]), origLong: target.long };
+      } else if (hit.part === "rect") {
+        dragRef.current = { mode: "rect", ids: [hit.id], startTime: pt.time, startPrice: pt.price, pane, orig: snapshot([hit.id]), rectT: hit.rectT, rectP: hit.rectP };
       } else {
         const ids = sel.filter((id) => { const d = drawingsRef.current.find((x) => x.id === id); return d && !d.locked; });
         dragRef.current = { mode: "move", ids, startTime: pt.time, startPrice: pt.price, pane, orig: snapshot(ids) };
@@ -500,6 +527,13 @@ export default function DrawingLayer({
         }
         if (dg.mode === "end") {
           return { ...d, points: orig.map((p, idx) => (idx === dg.endIdx ? { time: pt.time, price: pt.price } : { ...p })) };
+        }
+        if (dg.mode === "rect") {
+          // Poignée du rectangle : modifie le temps d'un point et/ou le prix d'un point (coin/arête).
+          return { ...d, points: orig.map((p, idx) => ({
+            time: idx === dg.rectT ? pt.time : p.time,
+            price: idx === dg.rectP ? pt.price : p.price,
+          })) };
         }
         // --- Position longue ---
         if (dg.origLong && d.long) {
@@ -889,6 +923,43 @@ export default function DrawingLayer({
     );
   };
 
+  // Rectangle : fond + bordure + ligne médiane + texte centré + 8 poignées.
+  const renderRect = (d: Drawing) => {
+    if (!visibleForInterval(interval, d.visibility)) return null;
+    const a = dataToPx(d.points[0], d.pane), b = dataToPx(d.points[1], d.pane);
+    if (!a || !b) return null;
+    const s = d.style;
+    const oxL = Math.min(a.x, b.x), oxR = Math.max(a.x, b.x); // boîte de base (poignées)
+    const yT = Math.min(a.y, b.y), yB = Math.max(a.y, b.y);
+    const xL = s.extendLeft ? 0 : oxL, xR = s.extendRight ? wrapW : oxR; // + prolongation (visuel)
+    const yM = (yT + yB) / 2, xM = (oxL + oxR) / 2;
+    const t = d.text;
+    const sel = selectedSet.has(d.id);
+    return (
+      <g key={d.id}>
+        {s.bgOn !== false && <rect x={xL} y={yT} width={xR - xL} height={yB - yT} fill={rgba(s.bgColor ?? s.color, s.bgOpacity ?? 12)} />}
+        <rect x={xL} y={yT} width={xR - xL} height={yB - yT} fill="none" stroke={rgba(s.color, s.opacity)} strokeWidth={s.width} strokeDasharray={dashOf(s.lineStyle)} />
+        {s.midOn && <line x1={xL} y1={yM} x2={xR} y2={yM} stroke={rgba(s.midColor ?? "#9c27b0", s.opacity)} strokeWidth={1.5} strokeDasharray={dashOf(s.midStyle ?? "dashed")} />}
+        {t.value.trim() && (() => {
+          const ax = t.hAlign === "left" ? oxL + 6 : t.hAlign === "right" ? oxR - 6 : xM;
+          const ay = t.vAlign === "top" ? yT + 4 : t.vAlign === "bottom" ? yB - 4 : yM;
+          const anchor = t.hAlign === "left" ? "start" : t.hAlign === "right" ? "end" : "middle";
+          const baseline = t.vAlign === "top" ? "hanging" : t.vAlign === "bottom" ? "auto" : "central";
+          const lines = t.value.split("\n");
+          return (
+            <text x={ax} y={ay} textAnchor={anchor} dominantBaseline={baseline} fill={t.color} fontSize={t.size}
+              fontWeight={t.bold ? "bold" : "normal"} fontStyle={t.italic ? "italic" : "normal"}
+              style={{ pointerEvents: "none", userSelect: "none" }}>
+              {lines.map((ln, i) => <tspan key={i} x={ax} dy={i === 0 ? 0 : t.size * 1.25}>{ln || " "}</tspan>)}
+            </text>
+          );
+        })()}
+        {sel && ([[oxL, yT], [xM, yT], [oxR, yT], [oxL, yM], [oxR, yM], [oxL, yB], [xM, yB], [oxR, yB]] as const)
+          .map(([hx, hy], i) => <circle key={i} cx={hx} cy={hy} r={5} className="draw-handle" />)}
+      </g>
+    );
+  };
+
   // Aperçu du canal pendant le tracé (3 clics).
   const renderChanDraft = () => {
     if (!chanDraft) return null;
@@ -1091,10 +1162,14 @@ export default function DrawingLayer({
               {drawings.filter((d) => d.type === "fib" && (d.pane ?? 0) === i).map(renderFib)}
               {drawings.filter((d) => d.type === "brush" && (d.pane ?? 0) === i).map(renderBrush)}
               {drawings.filter((d) => d.type === "longpos" && (d.pane ?? 0) === i).map(renderLongPos)}
+              {drawings.filter((d) => d.type === "rect" && (d.pane ?? 0) === i).map(renderRect)}
               {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === i).map(renderTrend)}
               {draft && draft.pane === i && (() => {
                 const a = dataToPx(draft.p0, draft.pane); const b = dataToPx(draft.p1, draft.pane);
                 if (!a || !b) return null;
+                if (activeTool === "rect") {
+                  return <rect x={Math.min(a.x, b.x)} y={Math.min(a.y, b.y)} width={Math.abs(b.x - a.x)} height={Math.abs(b.y - a.y)} className="draw-preview" fill="none" />;
+                }
                 return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="draw-preview" />;
               })()}
               {chanDraft && chanDraft.pane === i && renderChanDraft()}

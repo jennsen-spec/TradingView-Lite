@@ -237,7 +237,7 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
               </>
             )}
 
-            {(d.type === "trend" || d.type === "channel") && (
+            {(d.type === "trend" || d.type === "channel" || d.type === "rect") && (
               <>
                 <div className="is-section">Prolonger</div>
                 <div className="do-extend">
@@ -283,6 +283,37 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
                       </label>
                     );
                   })}
+                </div>
+                <div className="is-section">Arrière-plan</div>
+                <div className="do-text-row">
+                  <label className="is-check">
+                    <input type="checkbox" checked={s.bgOn !== false} onChange={(e) => setStyle({ bgOn: e.target.checked })} />
+                    Remplissage
+                  </label>
+                  <ColorButton
+                    color={s.bgColor ?? "#3f8cff"} opacity={s.bgOpacity ?? 12}
+                    onChange={(p) => setStyle({ bgColor: p.color ?? s.bgColor, bgOpacity: p.opacity ?? s.bgOpacity })}
+                  />
+                </div>
+              </>
+            )}
+
+            {d.type === "rect" && (
+              <>
+                <div className="is-section">Ligne médiane</div>
+                <div className="do-text-row">
+                  <label className="is-check">
+                    <input type="checkbox" checked={!!s.midOn} onChange={(e) => setStyle({ midOn: e.target.checked })} />
+                    Afficher
+                  </label>
+                  <ColorButton color={s.midColor ?? "#9c27b0"} opacity={100} onChange={(p) => p.color && setStyle({ midColor: p.color })} />
+                  <div className="is-choices" style={{ marginBottom: 0 }}>
+                    {LINE_STYLES.map((ls) => (
+                      <button key={ls.key} className={`is-choice${(s.midStyle ?? "dashed") === ls.key ? " sel" : ""}`} title={ls.label} onClick={() => setStyle({ midStyle: ls.key })}>
+                        <svg width="28" height="12"><line x1="2" y1="6" x2="26" y2="6" stroke="currentColor" strokeWidth={2} strokeDasharray={ls.dash} /></svg>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="is-section">Arrière-plan</div>
                 <div className="do-text-row">

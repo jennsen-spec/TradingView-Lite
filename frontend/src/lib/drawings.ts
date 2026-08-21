@@ -3,7 +3,7 @@
 import type { Visibility, LineStyleName } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
-export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib" | "longpos";
+export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect";
 export type CapStyle = "normal" | "arrow"; // embout d'un trait
 
 // Niveaux d'offset optionnels d'un canal (fractions de la largeur ; 0 et 1 = les 2 bords).
@@ -148,11 +148,15 @@ export interface DrawingStyle {
   // Trait vertical (#32) :
   extend?: boolean; // prolonge la verticale au-delà de la zone des bougies
   timeLabel?: boolean; // étiquette date/heure au bas de la verticale
-  // Canal parallèle (#34) :
+  // Canal parallèle (#34) + Rectangle :
   levels?: number[]; // niveaux d'offset optionnels actifs (sous-ensemble de CHANNEL_LEVELS)
-  bgOn?: boolean; // remplissage entre les 2 bords
+  bgOn?: boolean; // remplissage (canal : entre les 2 bords ; rectangle : intérieur)
   bgColor?: string;
   bgOpacity?: number;
+  // Rectangle : ligne médiane horizontale (au milieu de la hauteur).
+  midOn?: boolean;
+  midColor?: string;
+  midStyle?: LineStyleName;
 }
 
 // Texte optionnel d'un dessin (partagé trend / vline / channel ; le stabilo n'en a pas).
@@ -256,6 +260,25 @@ export const factoryFibConfig = (): FibConfig => ({
   showLabels: true,
   fontSize: 12,
 });
+
+export function newRect(p0: DPoint, p1: DPoint, pane = 0): Drawing {
+  return {
+    id: genId(),
+    type: "rect",
+    points: [p0, p1],
+    pane,
+    style: {
+      ...defaultTrendStyle(),
+      color: "#3f8cff", width: 1, lineStyle: "solid",
+      bgOn: true, bgColor: "#3f8cff", bgOpacity: 12,
+      midOn: true, midColor: "#9c27b0", midStyle: "dashed",
+    },
+    text: defaultText(),
+    visibility: defaultVisibility(),
+    locked: false,
+    title: "Rectangle",
+  };
+}
 
 export function newFib(p0: DPoint, p1: DPoint, pane = 0): Drawing {
   return {

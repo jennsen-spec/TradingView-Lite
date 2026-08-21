@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Outils de la barre (concept UI : "arrow" = trait à embout flèche ; le reste = types de dessin).
-export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib" | "longpos";
+export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect";
 
 interface ToolDef {
   key: Tool;
@@ -75,6 +75,16 @@ const TOOLS: ToolDef[] = [
         <line x1="3" y1="20" x2="21" y2="20" />
         <circle cx="3" cy="20" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
         <circle cx="21" cy="4" r="2.4" fill="var(--surface)" strokeWidth="1.7" />
+      </svg>
+    ),
+  },
+  {
+    key: "rect",
+    label: "Rectangle",
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3.5" y="7" width="17" height="10" rx="1.5" />
+        <line x1="3.5" y1="12" x2="20.5" y2="12" strokeWidth="1.4" strokeDasharray="2 2" opacity="0.6" />
       </svg>
     ),
   },

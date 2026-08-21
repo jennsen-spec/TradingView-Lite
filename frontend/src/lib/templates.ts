@@ -2,7 +2,7 @@
 // PROPRES À CHAQUE TYPE (clé = drawingDefaultKey → trend / arrow / vline / channel / brush / fib).
 // Persistés en localStorage et synchronisés dans le cloud (clés tvlike:).
 import type { Drawing, DrawingStyle, TextConfig, MeasureConfig, FibConfig, LongPosConfig } from "./drawings";
-import { drawingDefaultKey, newTrend, newVline, newChannel, newBrush, newFib, newLongPos } from "./drawings";
+import { drawingDefaultKey, newTrend, newVline, newChannel, newBrush, newFib, newLongPos, newRect } from "./drawings";
 import type { Visibility } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
@@ -57,6 +57,7 @@ export function factoryTemplate(d: Drawing): DrawingTemplate {
     case "channel": fresh = newChannel(p, p, 0); break;
     case "brush": fresh = newBrush([p, p]); break;
     case "fib": fresh = newFib(p, p); break;
+    case "rect": fresh = newRect(p, p); break;
     case "longpos": fresh = newLongPos(0, 1, d.long?.entry ?? 100); break;
     default: fresh = newTrend(p, p, d.style.rightCap === "arrow" ? "arrow" : "normal");
   }
