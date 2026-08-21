@@ -10,9 +10,21 @@
 
 ## 🔍 Prêt (DoR)  *— affinés, priorisés par l'ordre*
 
+### 🎯 Épopée [**#47 — Un seul produit**](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)*
+> TVLite scrape la bourse canadienne, trie techniquement, dépose chaque mois une **collection** + des **positions longues justifiées**, et **Jean décide**.
+> Principe : **le momentum trie, la technique raconte** — trois emplacements distincts (**trier** / **filtrer** / **interrupteur**).
+> Absorbe **#39**, **#40**, **#41**, **#42**. Porte de validation en **#52** : rien d'exécutif avant l'accord.
+
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
-| [**41**](docs/backlog/41-golden-cross-screener.md) | **Screener Golden Cross** (TSX/TSX-V, scan quotidien) | 🧩 | 13 | XL | | 🔍 |
+| [**48**](docs/backlog/48-reconciliation-cloud.md) | **Réconciliation cloud ↔ local** (cloud-clobber) — *bloquant #54* | ⚙️ | 5 | M | ⭐ | 🔍 |
+| [**49**](docs/backlog/49-terrain-unifie.md) | **Terrain unifié** — 1 dépôt, 1 Supabase, 4 schémas ; GCR archivée | ⚙️ | 8 | L | ⭐ | 🔍 |
+| [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | 🔍 |
+| [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | 🔍 |
+| [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte, accord de Jean requis* | 💼 | 8 | L | ⭐ | 🔍 |
+| [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — `reco.runs` / `reco.items`, Weinstein en interrupteur | 💼 | 8 | L | | 🔍 |
+| [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection + dessins `longpos` **fusionnés** + panneau Reco | 🧩 | 8 | L | ⭐ | 🔍 |
+| [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** (HTML autonome archivé) | 🧩 | 5 | M | | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
 
@@ -29,8 +41,12 @@
 | 14 | **Données en temps réel** | ⚙️ | 13 | XL | | 📥 | Pas de flux gratuit fiable ; TSX licence payante ou API broker (IBKR/Questrade) — **spike**. |
 | 37 | **ETF explorer** | 🧩 | ? | — | | 📥 | Explorer les ETF par **pays & devise**, par **catégorie & thème**. À spécifier. |
 | 38 | **ETF breakdown** | 🧩 | ? | — | | 📥 | Afficher **toutes les actions d'un ETF** (composition), **heatmap**… À spécifier. |
-| 39 | **Momentum portfolio** | 💼 | ? | — | | 📥 | Se constituer une liste d'actions + **budget** → **recommandations d'achat, cibles, ventes intermédiaires générées par IA**. À spécifier. |
-| 40 | **Backtesting pro** | 💼 | ? | — | | 📥 | Ajouter des actions à un portefeuille + **représentation visuelle du portefeuille dans le temps** (format **bougies japonaises**). À spécifier. |
+| 39 | ~~Momentum portfolio~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #53 + #54 (et la phase Disnat). |
+| 40 | ~~Backtesting pro~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #50 + #51. |
+| [41](docs/backlog/41-golden-cross-screener.md) | ~~Screener Golden Cross~~ | 🧩 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : la détection quotidienne de figures est abandonnée **comme signal d'achat** (mesurée −5,03/trade, la pire des douze variantes). Le moteur de scan survit dans #49/#53. |
+| [42](docs/backlog/42-plateforme-data-supabase.md) | ~~Plateforme data partagée~~ | ⚙️ | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : Phase 1 livrée (TVLite en ligne). Sa décision « schéma DB possédé par `goldencross-radar` » **devient caduque** → passe à TVLite (#49). |
+| — | **Disnat — quantités réelles** (phase 5) | 💼 | ? | — | | 📥 | Après #55. Calcul **mécanique** à partir des paramètres de Jean (liquidités, risque accepté, distance au stop → quantité). **Pas** de recommandation d'investissement. À spécifier. |
+| — | **Délai de recherche de titre** | ⚙️ | ? | — | | 📥 | La recherche marque un temps désagréable. Hypothèse : lié à Yahoo, **pas** à Supabase — **à vérifier avant de spécifier**. Ne doit pas peser sur la décision de plan Supabase (#49). |
 | 22 | **Déploiement sur Vercel** | 🚀 | ? | — | | 📥 | Build front + hébergement du backend proxy ; domaine. À spécifier. |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | | 📥 | Auth (email / OAuth) ; base utilisateurs. |
 | 24 | **Espace membre** | 🚀 | ? | — | | 📥 | Zone connectée : préférences, contenus liés au compte. |
@@ -71,6 +87,13 @@
 ---
 
 ## Notes d'équipe
-- **⭐ Priorités actuelles** (2, dans l'ordre) : **#2** Watchlists · **#1** Comparaison. *(Épopée Dessins livrée.)* **#41** affiné (Golden Cross) — à prioriser.
-- **Dépendances** : #3 = **spike** API Lightweight Charts (moveToPane) · #13 pleinement utile avec #14 · **#41** montée en charge liée à #14/#22/#23/#25.
-- **Total restant** : **~59 pts** (hors Publication non estimée).
+- **⭐ Priorité actuelle** : **Épopée [#47](docs/backlog/47-epopee-un-seul-produit.md) — Un seul produit**, dans l'ordre **#48 → #49 → #50 → #51 → #52 (porte) → #53 → #54 → #55**. *(Épopée Dessins livrée.)*
+- **Dépendances** :
+  - **#48 bloque #54** — sans réconciliation, tout ce que le pipeline écrit meurt au rechargement suivant.
+  - **#49 précède #50** — le labo a besoin des deux univers de données en place.
+  - **#52 est une porte** : #53/#54/#55 ne figent aucun paramètre avant l'accord de Jean.
+  - **Parallélisation** : #52 est du *temps de Jean* → #53/#54 peuvent être construits pendant, à condition que la **sélection soit une interface remplaçable**.
+  - Hors épopée : #3 = **spike** API Lightweight Charts (moveToPane) · #13 pleinement utile avec #14.
+- **Statut de la stratégie** : ⚠️ **non validée**. Les 12 familles de figures techniques sont négatives sur la période de sélection ; seul le **momentum transversal** tient des deux côtés du découpage — et il **n'a jamais été testé avec un stop**. C'est l'objet de #52.
+- **Modèle** : **Fable** pour #50 et #52 (raisonnement statistique — une erreur de méthode ne lève pas d'exception, elle produit un joli tableau). Modèle plus léger suffisant pour le câblage une fois le ticket précis.
+- **Total restant** : **~106 pts** (dont ~60 pour l'épopée #47 ; hors Publication non estimée).

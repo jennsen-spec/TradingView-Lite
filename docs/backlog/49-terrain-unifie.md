@@ -1,0 +1,39 @@
+# #49 — Terrain unifié (un dépôt, un Supabase, quatre schémas)
+
+**Statut** : 🔍 Affiné · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Taille** : L
+Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis de #50
+
+## Objectif
+Supprimer l'éparpillement : **un dépôt**, **un projet Supabase**, des schémas nommés par **fonction** et non par produit.
+L'app Golden Cross Radar est retirée ; son moteur de scraping (déjà dans Postgres) est conservé et rapatrié sous gouvernance TVLite.
+
+## Critères d'acceptation
+- [ ] Les objets Supabase sont rangés en **4 schémas** : `market` (barres, tickers, file de backfill) · `research` (backtests) · `reco` (runs, items) · `app` (`tvlite_prefs`). Plus aucun objet ne porte un nom de produit.
+- [ ] Les **migrations SQL sont versionnées dans `TradingView-Lite`** (`supabase/migrations/`) — la propriété du schéma passe de `goldencross-radar` à TVLite (annule la décision 1 de [#42](42-plateforme-data-supabase.md)).
+- [ ] Le **backfill tourne toujours** après la réorganisation (pg_cron `backfill-ca`), avec son garde-fou de quota.
+- [ ] L'app en prod (GitHub Pages + `tvlite-api`) **fonctionne à l'identique** après migration — aucune régression de candles/search/quotes/prefs.
+- [ ] Le dépôt `goldencross-radar` et le worker sont **inventoriés puis archivés** ; ce qui méritait d'être gardé est dans TVLite.
+- [ ] `research` est **reconstructible par un script versionné** du dépôt (`npm run research:build`) — le vider n'est pas une perte.
+- [ ] La base reste **sous 450 Mo** en régime opérationnel, ou s'arrête proprement en le signalant.
+
+## Décisions
+- **Plan gratuit conservé.** `research` est un **schéma jetable** : on le remplit jusqu'à ~450 Mo pour #50/#52, puis on le **vide** en gardant les résultats (quelques Ko). Condition non négociable : la reconstruction est **du code**, pas une manip.
+- **Swing Mastery** (106 titres, 22 ans, ajusté dividendes) est rapatriée dans `research` : **c'est la seule donnée qui couvre 2008**.
+- Le **moteur de scraping reste en Postgres** (`backfill_ticker` + extension `http` + pg_cron) — il marche, il est serverless, on n'y touche pas.
+- Toucher volontairement le plafond de 500 Mo fait partie du plan : c'est ce qui tranchera la question Pro (voir Questions ouvertes).
+
+## Questions ouvertes
+- `daily_bars` (36 k lignes) fait-elle doublon avec `bars` ? Si oui → supprimer pour récupérer de la place.
+- Ajouter `adj_close` (dividendes) : quel coût réel en Mo ? À mesurer avant de trancher — l'écart est de 3 à 5 pts/an sur pipelines, télécoms et FPI, nombreux dans les résultats.
+- Le **délai de recherche de titre** dans TVLite est-il lié à Supabase ? Hypothèse : non (la recherche tape Yahoo). **À vérifier — ticket séparé**, ne doit pas peser sur la décision de plan.
+
+## Plan technique
+1. Inventaire : lister les objets des deux projets Supabase + le contenu de `goldencross-radar` et du worker. → vérif : un tableau « objet → schéma cible → sort ».
+2. Migrations `supabase/migrations/` créant les 4 schémas et déplaçant les objets. → vérif : `tvlite-api` répond toujours en prod.
+3. Script `research:build` (backfill profond + indicateurs) et `research:drop`. → vérif : drop puis rebuild redonne les mêmes lignes.
+4. Rapatrier Swing Mastery dans `research`. → vérif : 467 502 lignes présentes, prix ajustés dividendes.
+5. Archiver `goldencross-radar` + worker. → vérif : plus aucune écriture externe sur la base.
+
+## Notes / risques
+- **Dépassement de quota = base en lecture seule = app cassée.** Tout script qui écrit en masse doit avoir un garde-fou de taille avant la première insertion, pas après.
+- #42 avait prévu un **prune LRU** (purge des titres inactifs > 90 j) — à réactiver comme soupape opérationnelle.
