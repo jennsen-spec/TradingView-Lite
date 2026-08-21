@@ -302,7 +302,7 @@ export function newLongPos(startTime: number, endTime: number, entry: number, pa
     points: [{ time: startTime, price: entry }, { time: endTime, price: entry }],
     pane,
     long: defaultLongPos(entry),
-    style: { ...defaultTrendStyle(), color: "#787b86", width: 1 },
+    style: { ...defaultTrendStyle(), color: "#787b86", width: 2 },
     text: { ...defaultText(), color: "#787b86", size: 12 },
     visibility: defaultVisibility(),
     locked: false,

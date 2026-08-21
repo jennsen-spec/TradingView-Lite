@@ -541,7 +541,8 @@ export default function DrawingLayer({
           if (dg.mode === "lp-target") return { ...d, long: { ...d.long, target: pt.price } };
           if (dg.mode === "lp-stop") return { ...d, long: { ...d.long, stop: pt.price } };
           if (dg.mode === "lp-right") return { ...d, points: [orig[0], { time: pt.time, price: orig[1].price }] };
-          if (dg.mode === "lp-left") return { ...d, points: [{ time: pt.time, price: orig[0].price }, orig[1]] };
+          // Poignée milieu-gauche : déplace le prix d'entrée verticalement (stop & objectif inchangés → le R:R se recalcule).
+          if (dg.mode === "lp-left") return { ...d, long: { ...L, entry: pt.price }, points: orig.map((p) => ({ ...p, price: pt.price })) };
           if (dg.mode === "lp-move") {
             return {
               ...d,
@@ -890,9 +891,9 @@ export default function DrawingLayer({
       <g key={d.id}>
         <rect x={x0} y={Math.min(yT, yE)} width={x1 - x0} height={Math.abs(yE - yT)} fill={rgba(L.targetColor, 16)} />
         <rect x={x0} y={Math.min(yE, yS)} width={x1 - x0} height={Math.abs(yS - yE)} fill={rgba(L.stopColor, 16)} />
-        <line x1={x0} y1={yT} x2={x1} y2={yT} stroke={rgba(L.targetColor, 100)} strokeWidth={1.5} />
-        <line x1={x0} y1={yS} x2={x1} y2={yS} stroke={rgba(L.stopColor, 100)} strokeWidth={1.5} />
-        <line x1={x0} y1={yE} x2={x1} y2={yE} stroke={line} strokeWidth={2} />
+        <line x1={x0} y1={yT} x2={x1} y2={yT} stroke={rgba(L.targetColor, 100)} strokeWidth={d.style.width} />
+        <line x1={x0} y1={yS} x2={x1} y2={yS} stroke={rgba(L.stopColor, 100)} strokeWidth={d.style.width} />
+        <line x1={x0} y1={yE} x2={x1} y2={yE} stroke={line} strokeWidth={d.style.width} />
         <text x={midX} y={yT - 4} textAnchor="middle" fontSize={11} fontWeight="600" fill={rgba(L.targetColor, 100)} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" style={{ pointerEvents: "none", userSelect: "none" }}>
           Objectif +{st.targetPct.toFixed(2)}%
         </text>
@@ -1125,6 +1126,22 @@ export default function DrawingLayer({
         ctx = {
           left: Math.max(4, Math.min(midX - 70, wrapW - 150)),
           top: Math.max((p0?.top ?? 0) + 4, Math.min(...ys) - 42),
+          d,
+        };
+      }
+    } else if (d && d.type === "longpos" && d.long) {
+      // Position longue : barre au-dessus du haut de la boîte (objectif) → ne masque plus les stats posées sur la ligne d'entrée.
+      const le = dataToPx({ time: d.points[0].time, price: d.long.entry }, d.pane);
+      const re = dataToPx({ time: d.points[1].time, price: d.long.entry }, d.pane);
+      const yT = dataToPx({ time: d.points[0].time, price: d.long.target }, d.pane)?.y;
+      const yS = dataToPx({ time: d.points[0].time, price: d.long.stop }, d.pane)?.y;
+      if (le && re && yT != null && yS != null) {
+        const midX = (le.x + re.x) / 2;
+        const topBox = Math.min(yT, yS, le.y), botBox = Math.max(yT, yS, le.y);
+        const topY = topBox - 42;
+        ctx = {
+          left: Math.max(4, Math.min(midX - 70, wrapW - 150)),
+          top: topY < (p0?.top ?? 0) + 2 ? botBox + 12 : topY,
           d,
         };
       }

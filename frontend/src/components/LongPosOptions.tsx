@@ -99,6 +99,14 @@ export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }:
             <div className="do-text-row"><label className="lp-lbl">Couleur des lignes</label>
               <ColorButton color={d.style.color} opacity={d.style.opacity} onChange={(p) => setStyle({ color: p.color ?? d.style.color, opacity: p.opacity ?? d.style.opacity })} />
             </div>
+            <div className="is-section">Épaisseur des lignes</div>
+            <div className="is-choices">
+              {[1, 2, 3, 4].map((w) => (
+                <button key={w} className={`is-choice${d.style.width === w ? " sel" : ""}`} onClick={() => setStyle({ width: w })}>
+                  <svg width="34" height="12"><line x1="2" y1="6" x2="32" y2="6" stroke="currentColor" strokeWidth={w} /></svg>
+                </button>
+              ))}
+            </div>
             <div className="do-text-row"><label className="lp-lbl">Couleur du stop</label>
               <ColorButton color={L.stopColor} opacity={100} onChange={(p) => p.color && setL({ stopColor: p.color })} />
             </div>
