@@ -85,6 +85,7 @@ export default function DrawingLayer({
   const drawingsRef = useRef(drawings); drawingsRef.current = drawings;
   const chartMenuRef = useRef(chartMenu); chartMenuRef.current = chartMenu;
   const toolRef = useRef(activeTool); toolRef.current = activeTool;
+  const prevToolRef = useRef<Tool>("cursor"); // outil précédent (détecte la fin d'un dessin → curseur)
   const selRef = useRef(selectedIds); selRef.current = selectedIds;
   const draftRef = useRef(draft); draftRef.current = draft;
   const chanDraftRef = useRef(chanDraft); chanDraftRef.current = chanDraft;
@@ -126,11 +127,18 @@ export default function DrawingLayer({
 
   useEffect(() => { setSlot(document.getElementById("draw-toolbar-slot")); }, []);
 
-  // Curseur croix quand un outil de dessin est actif.
+  // Curseur croix quand un outil de dessin est actif. `data-draw-tool` / `data-draw-ts` = signaux
+  // lus par la mesure #27 (Chart) pour ne pas se déclencher pendant/juste après un tracé.
   useEffect(() => {
     const w = wrapRef.current;
-    if (w) w.style.cursor = activeTool === "cursor" ? "" : "crosshair";
-    return () => { if (w) w.style.cursor = ""; };
+    if (w) {
+      w.style.cursor = activeTool === "cursor" ? "" : "crosshair";
+      w.dataset.drawTool = activeTool === "cursor" ? "" : "1";
+      // Transition dessin → curseur = un dessin vient de se finir → court délai anti-mesure parasite.
+      if (activeTool === "cursor" && prevToolRef.current !== "cursor") w.dataset.drawTs = String(Date.now());
+    }
+    prevToolRef.current = activeTool;
+    return () => { if (w) { w.style.cursor = ""; w.dataset.drawTool = ""; } };
   }, [activeTool, wrapRef]);
 
   // --- Conversions temps<->logical (interpolation) puis logical<->pixel (continu, hors-écran) ---
@@ -355,7 +363,8 @@ export default function DrawingLayer({
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setDraft(null);
-          setSelectedIds([d.id]); // l'outil reste actif → on peut enchaîner un autre dessin
+          setActiveTool("cursor");
+          setSelectedIds([d.id]);
         }
         return;
       }
@@ -368,6 +377,7 @@ export default function DrawingLayer({
         const d = applyTemplateDefault(newLongPos(pt.time, endTime, pt.price, pt.pane));
         pushUndo();
         setDrawings((prev) => [...prev, d]);
+        setActiveTool("cursor");
         setSelectedIds([d.id]);
         return;
       }
@@ -379,6 +389,7 @@ export default function DrawingLayer({
         const d = applyTemplateDefault(newVline(pt.time, pt.pane));
         pushUndo();
         setDrawings((prev) => [...prev, d]);
+        setActiveTool("cursor");
         setSelectedIds([d.id]);
         return;
       }
@@ -409,6 +420,7 @@ export default function DrawingLayer({
           pushUndo();
           setDrawings((prev) => [...prev, d]);
           setChanDraft(null);
+          setActiveTool("cursor");
           setSelectedIds([d.id]);
         }
         return;
@@ -513,6 +525,7 @@ export default function DrawingLayer({
         brushingRef.current = null;
         const pts = brushDraftRef.current ?? [];
         setBrushDraft(null);
+        setActiveTool("cursor");
         if (pts.length >= 2) {
           const d = applyTemplateDefault(newBrush(pts, brushPaneRef.current));
           pushUndo();
@@ -595,13 +608,11 @@ export default function DrawingLayer({
         return;
       }
       if (e.key === "Escape") {
-        // Cascade : menu → tracé en cours (annulé, outil gardé) → sélection → retour au curseur.
         if (chartMenuRef.current) setChartMenu(null);
         else if (draftRef.current || chanDraftRef.current || brushingRef.current) {
-          brushingRef.current = null; setDraft(null); setChanDraft(null); setBrushDraft(null);
+          brushingRef.current = null; setDraft(null); setChanDraft(null); setBrushDraft(null); setActiveTool("cursor");
         }
         else if (selRef.current.length) setSelectedIds([]);
-        else if (toolRef.current !== "cursor") setActiveTool("cursor");
       } else if ((e.key === "Delete" || e.key === "Backspace") && selRef.current.length) {
         const sel = selRef.current;
         pushUndo();

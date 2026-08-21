@@ -656,6 +656,10 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       if (!e.shiftKey) return;
       const wrap = wrapRef.current;
       if (!wrap) return;
+      // Pas de mesure si un outil de dessin est actif, ou si un dessin vient d'être finalisé
+      // (le dernier clic d'un tracé au Shift ne doit pas enchaîner sur une mesure).
+      if (wrap.dataset.drawTool === "1") return;
+      if (Date.now() - Number(wrap.dataset.drawTs || 0) < 500) return;
       const rect = wrap.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
