@@ -26,7 +26,7 @@ Weinstein ne choisit pas de meilleurs titres ; **son seul apport est de faire so
 - **Un projet Supabase** (`cucshrxmtwwizzzqthcj`), schémas au lieu de noms de produits : `market` · `research` · `reco` · `app`.
 - **L'app Golden Cross Radar est abandonnée** ; le **moteur de scraping est conservé** (il est déjà dans Postgres, pas dans l'app).
 - **Curseur SQL/TS** : Postgres garde **l'ingestion** ; **backtest, sélection et génération passent en TypeScript** dans le dépôt, lancés par GitHub Action.
-- **Plan Supabase gratuit conservé** → `research` est un **schéma jetable** (voir #49).
+- **Plan Supabase gratuit conservé** → `research` est un **schéma jetable** (voir #49). **Mesuré le 21/08 : le gratuit tient** — le rapatriement ne coûte que **41 Mo** (467 502 barres CA), pas 760, car `ta_ca_daily` est dérivée et 238 Mo de barres ne sont pas canadiennes. Projection **≈ 375 Mo / 500**.
 - **Seuil de liquidité : 500 k$/jour**, appliqué **à l'identique** au backtest et au scan (+ plancher de prix, voir #52).
 - **Poche satellite : 30 000 $** · budget de risque par défaut **1 %** · plafond par ligne **20 %**.
 - **Labo** : CLI d'abord, page de lecture ensuite (#50 puis #51).

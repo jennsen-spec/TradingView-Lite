@@ -17,7 +17,7 @@ Un jeu de règles se déclare dans un fichier versionné, avec les **trois empla
 - [ ] `npm run labo -- <jeu-de-regles>` mesure un jeu de règles et écrit le résultat dans `research`.
 - [ ] Sortie par jeu de règles : nb de mois, **% du temps investi**, rendement mensuel moyen, croissance annualisée, volatilité, **pire baisse**, pire mois, **écart contre benchmark apparié** avec son *t*, et le **découpage sélection 2004-2015 / validation 2016-2026**.
 - [ ] **Le titre du résultat est l'écart contre benchmark apparié, jamais le rendement absolu** (le rendement absolu est biaisé par le survivant ; l'écart, non — il frappe numérateur et dénominateur).
-- [ ] **Chaque jeu de règles est mesuré sur les deux univers** : `research.swing` (106 titres, 22 ans, couvre 2008) et `market` pan-canadien (336 titres à ≥ 5 ans). Un **désaccord entre les deux est affiché comme tel**, pas moyenné.
+- [ ] **Chaque jeu de règles est mesuré sur les deux univers** : `research.swing` (106 titres, 22 ans, couvre 2008) et `market` pan-canadien (**505 titres à ≥ 5 ans**, mesuré le 21/08). Un **désaccord entre les deux est affiché comme tel**, pas moyenné.
 - [ ] **Cartouche de validation** : par défaut le labo n'affiche **que** 2004-2015. Voir la validation est un geste explicite, **journalisé et décompté** par jeu de règles (« 3 cartouches consommées »).
 - [ ] Un **compteur global de jeux testés** est affiché à chaque exécution (en testant 12 variantes, une gagnante apparaît par hasard).
 - [ ] Aucun **biais de look-ahead** : signal sur la clôture, **exécution à l'ouverture du lendemain**, vérifiable sur un cas tracé pas à pas.

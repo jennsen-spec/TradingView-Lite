@@ -21,7 +21,7 @@ Aucun paramètre n'est figé dans le pipeline avant cette porte.
 - **Weinstein et le filtre de régime avec le découpage sélection/validation** — le trou que Cowork a laissé (ils ont été choisis *après* avoir vu les données).
 
 ## Critères d'acceptation *(= la porte)*
-- [ ] Chaque jeu de règles retenu est mesuré **sur les deux univers** (106 titres/22 ans **et** pan-canadien).
+- [ ] Chaque jeu de règles retenu est mesuré **sur les deux univers** (106 titres/22 ans **et** pan-canadien : **505 titres à ≥ 5 ans, 450 à ≥ 8 ans** — mesuré le 21/08, le brief disait 336/299).
 - [ ] Le **stop** a été mesuré : on sait s'il protège ou s'il coupe la queue qui porte le rendement.
 - [ ] Weinstein et le régime ont reçu le **découpage sélection/validation**.
 - [ ] Un **seuil de liquidité unique** est arrêté (500 k$) **et** un **plancher de prix** est fixé — le volume seul ne protège pas des titres à moins de 1-2 $, où l'écart achat-vente est brutal.
@@ -38,6 +38,6 @@ Aucun paramètre n'est figé dans le pipeline avant cette porte.
 - Le seuil de liquidité videra le rapport certains mois. **Reco : rapport vide assumé** — un mois sans candidat est une information. À confirmer par Jean.
 
 ## Notes / risques
-- **Le pan-canadien ne couvre qu'un régime** (5-8 ans, pas 2008) : il dit si l'effet existe hors d'un univers atypique, **pas** comment ça se comporte en crise. Seul Swing Mastery répond à ça. Les deux sont complémentaires — ne pas remplacer l'un par l'autre.
+- **Le pan-canadien ne couvre qu'un régime** (35 titres seulement atteignent 10 ans — mesuré ; donc pas 2008) : il dit si l'effet existe hors d'un univers atypique, **pas** comment ça se comporte en crise. Seul Swing Mastery répond à ça. Les deux sont complémentaires — ne pas remplacer l'un par l'autre.
 - **La stratégie perd actuellement** (S1 2026 : décile 1 −31 % vs univers −2 %). Utile comme cas de test : le filtre de régime devrait sortir du marché — vérifier qu'il le fait.
 - **Modèle : Fable.**

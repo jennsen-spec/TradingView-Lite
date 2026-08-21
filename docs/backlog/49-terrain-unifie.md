@@ -22,9 +22,33 @@ L'app Golden Cross Radar est retirée ; son moteur de scraping (déjà dans Post
 - Le **moteur de scraping reste en Postgres** (`backfill_ticker` + extension `http` + pg_cron) — il marche, il est serverless, on n'y touche pas.
 - Toucher volontairement le plafond de 500 Mo fait partie du plan : c'est ce qui tranchera la question Pro (voir Questions ouvertes).
 
+## Inventaire mesuré — 21 août 2026  *(lecture seule, aucune modification)*
+
+**Le plan gratuit tient. Les 760 Mo de Swing Mastery étaient un mirage.**
+
+| | Mo | Détail |
+|---|---:|---|
+| Golden Cross — total base | **334** / 500 | dont `bars` 314 Mo (1,64 M lignes, 2 313 tickers) |
+| Golden Cross — `daily_bars` | 8 | 35 k lignes — **doublon présumé** de `bars` |
+| Swing Mastery — total | 760 | dont `ta_ca_daily` 466 Mo + `bars` 279 Mo |
+| Swing Mastery — **ce dont on a besoin** | **41** | les **467 502 barres des 106 titres canadiens** |
+| **Projection après rapatriement** | **≈ 375** / 500 | ~125 Mo de marge |
+
+Pourquoi 41 Mo et non 760 :
+- **`ta_ca_daily` (466 Mo) ne se migre pas.** C'est une table **dérivée** — 38 colonnes d'indicateurs recalculables depuis `bars`, stockées à ~800 octets/ligne (colonnes `text` répétées à chaque ligne). Le labo #50 calcule ses indicateurs **en TypeScript** : il n'en a pas l'usage.
+- **238 Mo des `bars` de Swing Mastery ne sont pas canadiens** (3,19 M lignes au total, 467 k pour les 106 titres CA). Hors sujet pour une stratégie canadienne.
+
+**Le backfill est TERMINÉ** — 604/604, file vide, dernière activité 19h12 le 21/08, données à jour au 21/08.
+*(Le brief annonçait « 406 faits, 198 restants » : il a fini depuis.)*
+
+**Univers réel — corrige le brief** : sur 2 313 tickers, **505 ont ≥ 5 ans** d'historique et **450 ≥ 8 ans**
+(le brief disait 336 et 299). En revanche **35 seulement atteignent 10 ans** → le pan-canadien
+ne couvre bien qu'un seul régime de marché, comme prévu.
+
 ## Questions ouvertes
-- `daily_bars` (36 k lignes) fait-elle doublon avec `bars` ? Si oui → supprimer pour récupérer de la place.
-- Ajouter `adj_close` (dividendes) : quel coût réel en Mo ? À mesurer avant de trancher — l'écart est de 3 à 5 pts/an sur pipelines, télécoms et FPI, nombreux dans les résultats.
+- **`cron.backfill-ca` tourne toutes les minutes sur une file vide** (no-op vérifié : plus aucune ligne dans `backfill_log` depuis 19h12). Le brief prévoyait de le désactiver une fois la file vide. **Non touché** — décision de Jean, réversible en une ligne.
+- `daily_bars` (35 k lignes, 8 Mo) fait-elle doublon avec `bars` ? Gain faible, mais à trancher.
+- Ajouter `adj_close` (dividendes) : coût en Mo à mesurer. Avec ~125 Mo de marge c'est désormais envisageable — l'écart est de 3 à 5 pts/an sur pipelines, télécoms et FPI, nombreux dans les résultats.
 - Le **délai de recherche de titre** dans TVLite est-il lié à Supabase ? Hypothèse : non (la recherche tape Yahoo). **À vérifier — ticket séparé**, ne doit pas peser sur la décision de plan.
 
 ## Plan technique
