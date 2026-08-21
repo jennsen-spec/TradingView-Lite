@@ -371,7 +371,13 @@ Deno.serve(async (req: Request) => {
         );
         return jsonResponse({ ok: true });
       }
-      const { data } = await supabase.from("tvlite_prefs").select("id,value");
+      // `?meta=1` → [{id,value,updated_at}] (réconciliation #48) ; sinon map {id: value} (forme historique).
+      // `?id=<clé>` → limite à une clé (lecture avant écriture, sans rapatrier tous les dessins).
+      const only = url.searchParams.get("id");
+      let q = supabase.from("tvlite_prefs").select("id,value,updated_at");
+      if (only) q = q.eq("id", only);
+      const { data } = await q;
+      if (url.searchParams.get("meta") === "1") return jsonResponse(data ?? []);
       const out: Record<string, string> = {};
       for (const row of data ?? []) out[row.id] = row.value;
       return jsonResponse(out);
