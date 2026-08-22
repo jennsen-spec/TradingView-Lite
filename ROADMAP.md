@@ -29,6 +29,7 @@
 | [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — `reco.runs` / `reco.items`, Weinstein en interrupteur | 💼 | 8 | L | | ⏸️ |
 | [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection + dessins `longpos` **fusionnés** + panneau Reco | 🧩 | 8 | L | ⭐ | ⏸️ |
 | [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** (HTML autonome archivé) | 🧩 | 5 | M | | ⏸️ |
+| [**56**](docs/backlog/56-rs-mansfield.md) | **Force relative (RS Mansfield)** — panneau dédié, référence réglable, cours ajustés | 🧩 | 8 | L | ⭐ | 🔍 |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
 
