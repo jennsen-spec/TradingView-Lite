@@ -45,6 +45,24 @@ Pourquoi 41 Mo et non 760 :
 (le brief disait 336 et 299). En revanche **35 seulement atteignent 10 ans** → le pan-canadien
 ne couvre bien qu'un seul régime de marché, comme prévu.
 
+## ⚠️ Risque découvert le 22/08 — la purge peut effacer l'univers du screener
+
+`cron.prune-bars-cache-weekly` exécute `prune_bars_cache(90)` : il supprime les barres des titres
+**non consultés depuis 90 jours**, en se fondant sur `bars_coverage.accessed_at` — qui n'est mis à jour
+que quand **TVLite affiche un graphique**.
+
+Or le backfill a chargé **2 313 titres que personne ne consultera jamais à l'écran** : ils existent pour
+le screener et le labo, pas pour être regardés. Aujourd'hui aucun n'est inactif (tous touchés entre le
+18 et le 22/08 par le backfill), mais **sans intervention, la purge hebdomadaire commencerait à détruire
+l'univers du screener vers la mi-novembre 2026** — silencieusement, un dimanche à 4 h.
+
+Deux corrections possibles (à trancher en #49 / #53) :
+- le run mensuel (#53) touche `accessed_at` des titres de son univers → ils ne sont jamais « inactifs » ;
+- ou `prune_bars_cache` exclut explicitement les titres de l'univers de scan.
+
+La purge LRU garde son sens pour les titres consultés une fois par curiosité dans TVLite. Le défaut,
+c'est de confondre « personne ne l'a regardé » et « personne n'en a besoin ».
+
 ## Questions ouvertes
 - **`cron.backfill-ca` tourne toutes les minutes sur une file vide** (no-op vérifié : plus aucune ligne dans `backfill_log` depuis 19h12). Le brief prévoyait de le désactiver une fois la file vide. **Non touché** — décision de Jean, réversible en une ligne.
 - `daily_bars` (35 k lignes, 8 Mo) fait-elle doublon avec `bars` ? Gain faible, mais à trancher.
