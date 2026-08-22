@@ -168,6 +168,28 @@ distribution, donc immunisés au biais dividende) : `HXT`, `HXS`, `HXQ`.
 ### Étape 5 — ANNULÉE
 Jean garde le projet Swing Mastery : 0,03 Go seulement, et il conserve des liens vers d'autres projets.
 
+### ⚠️ La troncature ne tient pas pour un titre consulté — comportement attendu
+
+Constaté le 22/08 : `MRD.TO`, tronqué à 8 ans (rang 651), est **remonté à 1996** dès que Jean l'a ouvert
+dans TVLite. Vérifié : `bars_coverage.fetched_at` = l'instant de la consultation, `max_range` = `30y`.
+
+**Cause** : dans l'Edge Function, les intervalles **hebdomadaire et mensuel** sont agrégés depuis le
+journalier avec `range: "30y"` (table `AGG`). Ouvrir un titre en hebdo/mensuel déclenche donc un
+téléchargement de **30 ans de barres journalières**, aussitôt rangées en base par le Flux A.
+
+**Ce n'est pas un bug** : c'est exactement le « cache-union gap-filling » voulu, et le comportement que
+Jean a demandé (« les titres appelés par TVLite, poids négligeable »). La formulation correcte est donc :
+les 113 titres tronqués gardent 8 ans **tant qu'on ne les ouvre pas**.
+
+**Conséquence sur l'espace** : ~0,5 Mo par titre reconsulté en profondeur (+5 530 barres pour `MRD.TO`,
+base 436,7 → 438,4 Mo). Avec ~60 Mo de marge, cela laisse de la place pour une **centaine** de
+consultations profondes. Auto-limitant en pratique — on ne consulte pas 113 titres illiquides.
+
+**Ce qu'il faut, c'est une alarme, pas une bride.** Brider TVLite à 10 ans ferait perdre la profondeur de
+graphique qu'on vient d'acquérir ; retronquer périodiquement reviendrait à défaire ce que l'utilisateur
+consulte. À faire : ajouter une **mesure de taille avec seuil d'alerte à 480 Mo** dans le futur cron de
+rafraîchissement des cours.
+
 ### Reste à faire (hors de ce ticket)
 - [ ] **Rafraîchissement des cours** — tous les robots sont coupés, les données sont figées au 21/08.
       À remettre avant toute analyse mensuelle. *Le plus urgent.*
