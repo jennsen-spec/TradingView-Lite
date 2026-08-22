@@ -191,8 +191,11 @@ consulte. À faire : ajouter une **mesure de taille avec seuil d'alerte à 480 M
 rafraîchissement des cours.
 
 ### Reste à faire (hors de ce ticket)
-- [ ] **Rafraîchissement des cours** — tous les robots sont coupés, les données sont figées au 21/08.
-      À remettre avant toute analyse mensuelle. *Le plus urgent.*
+- [x] **Rafraîchissement des cours** — ✅ fait le 22/08. `cron.rafraichissement-cours` :
+      `refresh_cours(200, 480)` chaque jour de bourse à 22h UTC (18h Toronto). Rotation par ancienneté,
+      les ~900 titres passent en ~5 jours ouvrables. Fetch d'**1 an** (comble les trous, coût espace nul
+      grâce au `on conflict do nothing`). **Alarme de taille à 480 Mo mesurée entre chaque titre.**
+      Suivi dans `public.refresh_state`. Migration : `supabase/migrations/0010_rafraichissement_cours.sql`.
 - [ ] Trancher `adj_close` (dividendes) — **avant** le RS, c'est lui qui en souffre le plus.
 - [ ] Ajouter le **RS** dans TVLite (données prêtes).
 - [ ] Rattraper `BLX.TO`, absent de `bars`.
