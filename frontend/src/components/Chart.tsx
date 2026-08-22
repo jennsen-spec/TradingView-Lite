@@ -211,11 +211,22 @@ const IcoTrash = (
 
 // Hauteurs de panneaux (stretch factors) persistées → conservées d'une session à l'autre.
 const LS_STRETCH = "tvlike:pane-stretch";
-const DEFAULT_STRETCH = [3, 1, 1, 1, 1]; // prix 60% ; volume, RSI, ATR, RS à 20% chacun
-const loadStretch = (): number[] | null => {
+// Hauteurs par SÉRIE, pas par position : depuis que l'ATR est placé en tête, une
+// persistance indexée par position réattribuerait la hauteur du prix au volume.
+const DEFAULT_STRETCH: Record<string, number> = { candle: 3, volume: 1, rsi: 1, atr: 1, rs: 1 };
+const ORDRE_HISTORIQUE = ["candle", "volume", "rsi", "atr", "rs"]; // migration de l'ancien format tableau
+const loadStretch = (): Record<string, number> | null => {
   try {
     const r = localStorage.getItem(LS_STRETCH);
-    if (r) return JSON.parse(r);
+    if (!r) return null;
+    const v = JSON.parse(r);
+    if (Array.isArray(v)) {
+      // Ancien format : tableau ordonné. On le relit dans l'ordre de création d'alors.
+      const out: Record<string, number> = {};
+      v.forEach((f: number, i: number) => { if (ORDRE_HISTORIQUE[i]) out[ORDRE_HISTORIQUE[i]] = f; });
+      return out;
+    }
+    return v && typeof v === "object" ? v : null;
   } catch {
     /* ignore */
   }
@@ -235,7 +246,23 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const seriesRef = useRef<Record<string, ISeriesApi<any>>>({});
   const paneScalesRef = useRef<IPriceScaleApi[]>([]);
   // Hauteurs enregistrées, relues par l'ATR et le RS à leur création (créés après le graphique).
-  const stretchRef = useRef<number[] | null>(null);
+  const stretchRef = useRef<Record<string, number> | null>(null);
+  // Outils de resolution par POSITION VISUELLE (l'ATR est deplace en tete, les index
+  // de creation ne correspondent donc plus aux positions affichees).
+  const seriesParPositionRef = useRef<(() => Record<number, any>) | null>(null);
+  const rebatirEchellesRef = useRef<(() => void) | null>(null);
+  // À appeler après toute création, suppression ou déplacement de panneau.
+  const majPositions = useCallback(() => {
+    rebatirEchellesRef.current?.();
+    const m = seriesParPositionRef.current?.() ?? {};
+    const pos: Record<string, number> = {};
+    for (const [i, serie] of Object.entries(m)) {
+      for (const cle of ["candle", "volume", "rsi", "atr", "rs"]) {
+        if ((seriesRef.current as any)[cle] === serie) pos[cle] = Number(i);
+      }
+    }
+    setPanePos(pos);
+  }, []);
   // Décorations RSI : lignes de niveau (upper/middle/lower) + bande ombrée (primitive).
   const rsiLinesRef = useRef<{ upper: any; middle: any; lower: any } | null>(null);
   const rsiBandRef = useRef<RsiBand | null>(null);
@@ -271,16 +298,18 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   // RS (#56) : série de la référence et dividendes, chargés à part du symbole affiché.
   const [rsRefData, setRsRefData] = useState<{ ref: string; byDate: Map<string, number> } | null>(null);
   const [rsDivs, setRsDivs] = useState<{ sym: string; divs: DividendRow[] } | null>(null);
-  const rsPaneRef = useRef<number>(-1); // index utilisé, lu dans les effets
-  // Le rendu en dépend (position de la légende) : une ref ne redéclenche pas le rendu, il faut un état.
-  const [rsPane, setRsPane] = useState(-1);
+  const rsPaneRef = useRef<number>(-1); // index de création du RS, lu dans les effets
+  // Position VISUELLE de chaque série. L'ATR est déplacé en tête, les positions ne
+  // correspondent donc plus aux index de création. Le rendu en dépend (légendes,
+  // fenêtre de dessin) : il faut un état, une ref ne redéclencherait pas le rendu.
+  const [panePos, setPanePos] = useState<Record<string, number>>({ candle: 0, volume: 1, rsi: 2 });
   // Incrémenté à chaque (re)création du chart → ré-attache l'ATR au nouveau chart.
   const [chartEpoch, setChartEpoch] = useState(0);
   const [favorites, setFavorites] = useState<IndType[]>(cfg0.favorites);
   const [settings, setSettings] = useState<Record<string, IndSettings>>(cfg0.settings);
   const [hidden, setHidden] = useState<Record<string, boolean>>({}); // œil (non persisté)
   // Provider d'auto-échelle (pane 0), stocké pour créer les SMA dynamiquement.
-  const providerRef = useRef<((pane: number) => (orig: () => any) => any) | null>(null);
+  const providerRef = useRef<((pane: number | (() => number)) => (orig: () => any) => any) | null>(null);
   // Compteur d'ids pour les nouvelles SMA (ne collisionne pas avec les ids persistés "sma-N").
   const smaIdCounterRef = useRef(
     Math.max(0, ...cfg0.smaOrder.map((id) => { const m = id.match(/^sma-(\d+)$/); return m ? Number(m[1]) : 0; })) + 1
@@ -483,8 +512,38 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     };
     // autoscaleInfoProvider : si une plage manuelle est définie pour le panneau,
     // on l'impose (zoom vertical illimité) ; sinon comportement par défaut.
-    const provider = (pane: number) => (orig: () => any) => {
-      const r = manualRangeRef.current[pane];
+    // `pane` peut etre un NUMERO (position figee) ou une FONCTION qui la resout au moment
+    // de l'appel. Necessaire depuis que l'ATR est deplace en tete : un panneau qui bouge
+    // gardait sinon la plage de zoom de son ancienne position.
+    // Position visuelle d'une serie, demandee a Lightweight Charts (et non supposee).
+    const posDe = (s: any): number => { try { return s?.getPane?.().paneIndex?.() ?? -1; } catch { return -1; } };
+    // Serie principale de chaque panneau, indexee par position visuelle.
+    const seriesParPosition = (): Record<number, any> => {
+      const sr = seriesRef.current as any;
+      const out: Record<number, any> = {};
+      for (const cle of ["candle", "volume", "rsi", "atr", "rs"]) {
+        const serie = sr[cle];
+        if (!serie) continue;
+        const i = posDe(serie);
+        if (i >= 0) out[i] = serie;
+      }
+      return out;
+    };
+    seriesParPositionRef.current = seriesParPosition;
+    // Les echelles doivent rester dans l'ORDRE VISUEL : les boutons A/L et le zoom
+    // les adressent par position.
+    const rebatirEchelles = () => {
+      const arr: IPriceScaleApi[] = [];
+      for (const [i, serie] of Object.entries(seriesParPosition())) {
+        try { arr[Number(i)] = serie.priceScale(); } catch { /* pas prete */ }
+      }
+      paneScalesRef.current = arr;
+    };
+    rebatirEchellesRef.current = rebatirEchelles;
+
+    const provider = (pane: number | (() => number)) => (orig: () => any) => {
+      const idx = typeof pane === "function" ? pane() : pane;
+      const r = manualRangeRef.current[idx];
       // Mode manuel/zoom : plage exacte (marges à 0 → pas de distorsion).
       if (r) return { priceRange: { minValue: r.min, maxValue: r.max } };
       // Mode auto : on ajoute un petit padding pour ne pas coller aux bords.
@@ -498,11 +557,12 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     };
     providerRef.current = provider; // pour créer les SMA dynamiquement avec la bonne échelle
     setChartEpoch((e) => e + 1); // signale un nouveau chart → ré-attache l'ATR
-    candleSeries.applyOptions({ autoscaleInfoProvider: provider(0) });
-    volumeSeries.applyOptions({ autoscaleInfoProvider: provider(1) });
-    volumeMaSeries.applyOptions({ autoscaleInfoProvider: provider(1) });
-    rsiSeries.applyOptions({ autoscaleInfoProvider: provider(2) });
-    rsiMaSeries.applyOptions({ autoscaleInfoProvider: provider(2) });
+    // Position résolue à l'appel : ces panneaux se décalent quand l'ATR passe en tête.
+    candleSeries.applyOptions({ autoscaleInfoProvider: provider(() => posDe(candleSeries)) });
+    volumeSeries.applyOptions({ autoscaleInfoProvider: provider(() => posDe(volumeSeries)) });
+    volumeMaSeries.applyOptions({ autoscaleInfoProvider: provider(() => posDe(volumeSeries)) });
+    rsiSeries.applyOptions({ autoscaleInfoProvider: provider(() => posDe(rsiSeries)) });
+    rsiMaSeries.applyOptions({ autoscaleInfoProvider: provider(() => posDe(rsiSeries)) });
     // Marges à 0 : la plage du provider correspond exactement à la vue → zoom exact.
     candleSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
     volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
@@ -522,24 +582,36 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     // On applique panneau par panneau. L'ancienne version exigeait `saved.length === panes.length`
     // et jetait TOUT sinon — or à cet instant seuls 3 panneaux existent, l'ATR et le RS étant
     // créés plus tard : dès qu'ils étaient actifs, les hauteurs enregistrées étaient perdues.
-    panes.forEach((p, i) => p.setStretchFactor(saved?.[i] ?? DEFAULT_STRETCH[i] ?? 1));
+    // Les 3 panneaux d'origine, dans leur ordre de création : prix, volume, RSI.
+    ["candle", "volume", "rsi"].forEach((cle, i) => {
+      if (panes[i]) panes[i].setStretchFactor(saved?.[cle] ?? DEFAULT_STRETCH[cle] ?? 1);
+    });
 
     // Sauvegarde (debouncée) des hauteurs après un redimensionnement de panneau.
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     const saveStretch = () => {
       const c = chartRef.current;
       if (!c) return;
-      const facs = c.panes().map((p) => p.getStretchFactor());
-      if (!facs.length) return;
+      // Enregistre la hauteur DE CHAQUE SÉRIE, en demandant sa position à Lightweight Charts.
+      const parSerie: Record<string, number> = { ...(stretchRef.current ?? {}) };
+      const sr = seriesRef.current as any;
+      let vu = false;
+      for (const cle of ["candle", "volume", "rsi", "atr", "rs"]) {
+        const serie = sr[cle];
+        if (!serie) continue;
+        try {
+          parSerie[cle] = serie.getPane().getStretchFactor();
+          vu = true;
+        } catch { /* panneau pas prêt */ }
+      }
+      if (!vu) return;
       // FUSION, jamais remplacement. Le ResizeObserver se declenche pendant la mise en
       // place de la page, souvent AVANT que l'ATR et le RS n'existent : un remplacement
       // enregistrait alors 3 hauteurs et effacait les 5 precedentes. Au rechargement
       // suivant, les panneaux dynamiques n'avaient plus rien et reprenaient celle du volume.
-      const fusion = [...(stretchRef.current ?? [])];
-      facs.forEach((f, i) => { fusion[i] = f; });
-      stretchRef.current = fusion;
+      stretchRef.current = parSerie;
       try {
-        localStorage.setItem(LS_STRETCH, JSON.stringify(fusion));
+        localStorage.setItem(LS_STRETCH, JSON.stringify(parSerie));
       } catch {
         /* ignore */
       }
@@ -608,13 +680,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       const ps = paneScalesRef.current[idx];
       // Les panneaux 0-2 sont fixes ; l'ATR et le RS sont créés dynamiquement et
       // n'étaient pas dans ce tableau — d'où l'absence de zoom vertical sur eux.
-      const sr = seriesRef.current;
-      const series =
-        idx === 0 ? sr.candle
-        : idx === 1 ? sr.volume
-        : idx === 2 ? sr.rsi
-        : idx === rsPaneRef.current ? sr.rs
-        : sr.atr;
+      // Résolution par POSITION VISUELLE : l'ATR est en tête, les index de création
+      // ne correspondent plus à l'ordre affiché.
+      const series = seriesParPositionRef.current?.()[idx];
       if (!ps || !series) return;
 
       // Zoom vertical UNIQUEMENT sur la colonne des prix ; ailleurs → zoom horizontal (temps) natif.
@@ -931,19 +999,23 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         3
       );
       const prov = providerRef.current;
-      if (prov) atrSeries.applyOptions({ autoscaleInfoProvider: prov(3) });
+      // Position résolue à l'appel : l'ATR est déplacé en tête juste après.
+      if (prov) atrSeries.applyOptions({ autoscaleInfoProvider: prov(() => { try { return atrSeries.getPane().paneIndex(); } catch { return 0; } }) });
       atrSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
       s.atr = atrSeries;
       paneScalesRef.current[3] = atrSeries.priceScale();
       const panes = chart.panes();
       // Hauteur enregistrée de CE panneau si elle existe, sinon celle du volume.
-      if (panes[3]) panes[3].setStretchFactor(stretchRef.current?.[3] ?? panes[1]?.getStretchFactor() ?? 1);
+      if (panes[3]) panes[3].setStretchFactor(stretchRef.current?.atr ?? DEFAULT_STRETCH.atr);
       atrSeries.setData(atr(candles, st?.length ?? 14).map((p) => ({ time: toTime(p.time), value: p.value })));
+      // DEMANDE DE JEAN : l'ATR se place AU-DESSUS du titre, en permanence.
+      try { atrSeries.getPane().moveTo(0); } catch { /* API absente — on laisse en bas */ }
+      majPositions();
       requestAnimationFrame(() => measure());
     } else if (!activeAtr && s.atr) {
       try { chart.removeSeries(s.atr); } catch { /* déjà retirée */ }
       delete s.atr;
-      paneScalesRef.current = paneScalesRef.current.slice(0, 3);
+      majPositions();
       requestAnimationFrame(() => measure());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -967,7 +1039,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       try { chart.removeSeries(sr.rs); } catch { /* déjà retirée */ }
       delete sr.rs;
       rsPaneRef.current = -1;
-      setRsPane(-1);
+      majPositions();
     }
     if (activeRs && !sr.rs) {
       const st = settings.rs;
@@ -983,7 +1055,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         idx
       );
       const prov = providerRef.current;
-      if (prov) rsSeries.applyOptions({ autoscaleInfoProvider: prov(idx) });
+      if (prov) rsSeries.applyOptions({ autoscaleInfoProvider: prov(() => { try { return rsSeries.getPane().paneIndex(); } catch { return idx; } }) });
       rsSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
       // Ligne ZÉRO : le repère qui donne tout son sens au Mansfield.
       if (st?.zeroOn !== false) {
@@ -994,17 +1066,17 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       }
       sr.rs = rsSeries;
       rsPaneRef.current = idx;
-      setRsPane(idx);
+      majPositions();
       paneScalesRef.current[idx] = rsSeries.priceScale();
       const panes = chart.panes();
-      if (panes[idx]) panes[idx].setStretchFactor(stretchRef.current?.[idx] ?? panes[1]?.getStretchFactor() ?? 1);
+      if (panes[idx]) panes[idx].setStretchFactor(stretchRef.current?.rs ?? DEFAULT_STRETCH.rs);
       requestAnimationFrame(() => measure());
     } else if (!activeRs && sr.rs) {
       try { chart.removeSeries(sr.rs); } catch { /* déjà retirée */ }
       delete sr.rs;
       if (rsPaneRef.current >= 0) paneScalesRef.current = paneScalesRef.current.slice(0, rsPaneRef.current);
       rsPaneRef.current = -1;
-      setRsPane(-1);
+      majPositions();
       requestAnimationFrame(() => measure());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1201,7 +1273,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const ptToXY = (pt: DataPt) => {
     const chart = chartRef.current;
     const s = seriesRef.current.candle;
-    const p0 = layout[0];
+    const p0 = layout[panePos.candle ?? 0];
     if (!chart || !s || !p0) return null;
     const x = chart.timeScale().logicalToCoordinate(pt.logical as any);
     const y = s.priceToCoordinate(pt.price);
@@ -1318,8 +1390,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             </div>
           </>
         )}
-        {legend && layout[0] && (
-          <div className="pane-legend" style={{ top: layout[0].top + 4 }}>
+        {legend && layout[panePos.candle ?? 0] && (
+          <div className="pane-legend" style={{ top: layout[panePos.candle ?? 0].top + 4 }}>
             <div className="lg-line">
               <span className="lg-sym">{symbol}</span>
               {name && <span className="lg-name">{name}</span>}
@@ -1335,8 +1407,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             )}
           </div>
         )}
-        {legend && layout[1] && activeVolume && (
-          <div className="pane-legend" style={{ top: layout[1].top + 4 }}>
+        {legend && layout[panePos.volume ?? 1] && activeVolume && (
+          <div className="pane-legend" style={{ top: layout[panePos.volume ?? 1].top + 4 }}>
             {indRow(
               "volume",
               "#8b949e",
@@ -1347,8 +1419,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             )}
           </div>
         )}
-        {legend && layout[2] && activeRsi && (
-          <div className="pane-legend" style={{ top: layout[2].top + 4 }}>
+        {legend && layout[panePos.rsi ?? 2] && activeRsi && (
+          <div className="pane-legend" style={{ top: layout[panePos.rsi ?? 2].top + 4 }}>
             {indRow(
               "rsi",
               settings.rsi?.color ?? "#7e57c2",
@@ -1358,19 +1430,19 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             )}
           </div>
         )}
-        {legend && layout[3] && activeAtr && (
-          <div className="pane-legend" style={{ top: layout[3].top + 4 }}>
+        {legend && panePos.atr != null && layout[panePos.atr] && activeAtr && (
+          <div className="pane-legend" style={{ top: layout[panePos.atr].top + 4 }}>
             {indRow("atr", settings.atr?.color ?? "#ef5350", <>ATR {settings.atr?.length ?? 14} {f2(legend.atr)}</>)}
           </div>
         )}
-        {legend && rsPane >= 0 && layout[rsPane] && activeRs && (
-          <div className="pane-legend" style={{ top: layout[rsPane].top + 4 }}>
+        {legend && panePos.rs != null && layout[panePos.rs] && activeRs && (
+          <div className="pane-legend" style={{ top: layout[panePos.rs].top + 4 }}>
             {indRow("rs", settings.rs?.color ?? "#26a69a",
               <>RS {settings.rs?.rsRef ?? "XIU.TO"} {f2(legend.rs)}</>)}
           </div>
         )}
-        {currency && layout[0] && (
-          <div className="currency-label" style={{ top: layout[0].top + 4, right: 6 }}>
+        {currency && layout[panePos.candle ?? 0] && (
+          <div className="currency-label" style={{ top: layout[panePos.candle ?? 0].top + 4, right: 6 }}>
             {currency}
           </div>
         )}
