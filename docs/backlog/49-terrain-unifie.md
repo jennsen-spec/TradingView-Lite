@@ -82,7 +82,8 @@ Momentum, moyennes mobiles, RSI, volume en dollars et exécution à l'ouverture 
 
 ## Questions ouvertes
 - **`cron.backfill-ca` tourne toutes les minutes sur une file vide** (no-op vérifié : plus aucune ligne dans `backfill_log` depuis 19h12). Le brief prévoyait de le désactiver une fois la file vide. **Non touché** — décision de Jean, réversible en une ligne.
-- `daily_bars` (35 k lignes, 8 Mo) fait-elle doublon avec `bars` ? Gain faible, mais à trancher.
+- ~~`daily_bars` fait-elle doublon ?~~ **Tranché le 22/08 : oui à 99,75 %** (35 975 lignes sur 36 066 retrouvées dans `bars`, 4 écarts de valeur). **Mais elle est vivante** : `cross_events` a reçu **528 lignes en 7 jours**, dernière le 21/08, et **aucun `pg_cron` ne fait cette détection** → un **worker externe tourne encore** et écrit dans cette base. La supprimer maintenant ne ferait que la voir repousser. Ordre correct : **arrêter le worker (archivage GCR) PUIS supprimer**. Gain 8 Mo — contre 77 Mo pour l'index redondant : ce n'est pas le bon levier.
+- **`BLX.TO` est absent de `bars`** (ses 91 barres n'existent que dans `daily_bars`) — seul ticker dans ce cas, à rattraper au prochain backfill.
 - Ajouter `adj_close` (dividendes) : coût en Mo à mesurer. Avec ~125 Mo de marge c'est désormais envisageable — l'écart est de 3 à 5 pts/an sur pipelines, télécoms et FPI, nombreux dans les résultats.
 - Le **délai de recherche de titre** dans TVLite est-il lié à Supabase ? Hypothèse : non (la recherche tape Yahoo). **À vérifier — ticket séparé**, ne doit pas peser sur la décision de plan.
 
