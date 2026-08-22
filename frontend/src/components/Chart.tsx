@@ -222,7 +222,7 @@ const loadStretch = (): number[] | null => {
   return null;
 };
 
-const N_PANES = 4; // principal, volume, RSI, ATR (ATR créé dynamiquement à l'activation)
+const N_PANES = 5; // principal, volume, RSI, ATR, RS (les deux derniers créés dynamiquement)
 const RIGHT_OFFSET = 20; // marge future visible par défaut (barres)
 const INITIAL_FUTURE = 120; // barres "whitespace" futures pré-générées au chargement
 const EXTEND_CHUNK = 300; // barres futures ajoutées quand on approche du bord
@@ -242,6 +242,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     0: null,
     1: null,
     2: null,
+    3: null, // ATR, ou RS quand l'ATR est éteint
+    4: null, // RS quand l'ATR est allumé
   });
   // Données alignées par bougie pour la légende dynamique + index par temps.
   const legendRowsRef = useRef<LegendRow[]>([]);
@@ -593,7 +595,15 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       }
       if (idx < 0) return;
       const ps = paneScalesRef.current[idx];
-      const series = [seriesRef.current.candle, seriesRef.current.volume, seriesRef.current.rsi][idx];
+      // Les panneaux 0-2 sont fixes ; l'ATR et le RS sont créés dynamiquement et
+      // n'étaient pas dans ce tableau — d'où l'absence de zoom vertical sur eux.
+      const sr = seriesRef.current;
+      const series =
+        idx === 0 ? sr.candle
+        : idx === 1 ? sr.volume
+        : idx === 2 ? sr.rsi
+        : idx === rsPaneRef.current ? sr.rs
+        : sr.atr;
       if (!ps || !series) return;
 
       // Zoom vertical UNIQUEMENT sur la colonne des prix ; ailleurs → zoom horizontal (temps) natif.
