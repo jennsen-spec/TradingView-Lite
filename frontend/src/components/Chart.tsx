@@ -732,9 +732,17 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     wheelEl?.addEventListener("wheel", onWheel, { passive: false, capture: true });
 
     // Outil de mesure : Shift + clic démarre ; clic fige ; clic ferme (façon TradingView).
+    // Boîte du panneau des prix. L'ATR occupant le panneau visuel 0, on ne peut pas
+    // supposer que le titre est en 0 : on demande sa position réelle à la série.
+    const boitePrix = () => {
+      const s = seriesRef.current.candle;
+      if (!s) return undefined;
+      const i = posDe(s);
+      return i >= 0 ? layoutRef.current[i] : undefined;
+    };
     // Point (prix + position logique) sous le curseur, borné au panneau des prix.
     const ptAt = (x: number, y: number): DataPt | null => {
-      const p0 = layoutRef.current[0];
+      const p0 = boitePrix();
       const s = seriesRef.current.candle;
       const chart = chartRef.current;
       if (!p0 || !s || !chart) return null;
@@ -768,7 +776,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       const rect = wrap.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const p0 = layoutRef.current[0];
+      const p0 = boitePrix();
       if (!p0 || y < p0.top || y > p0.top + p0.height) return; // hors panneau des prix
       const pt = ptAt(x, y);
       if (!pt) return;
