@@ -175,23 +175,38 @@ export default function DrawingLayer({
     return (xLo as number) + (logical - lo) * ((xHi as number) - (xLo as number));
   };
 
-  // Série servant d'échelle de prix pour un panneau (0=prix, 1=volume, 2=RSI).
-  const PANE_SERIES = ["candle", "volume", "rsi", "atr"];
+  // `d.pane` est un index LOGIQUE (0 = titre, 1 = volume, 2 = RSI, 3 = ATR) : c'est ce
+  // qui est enregistré avec chaque dessin. Il ne faut PAS s'en servir pour retrouver la
+  // boîte à l'écran — depuis que l'ATR est placé en tête, l'ordre affiché en diffère.
+  const PANE_SERIES = ["candle", "volume", "rsi", "atr", "rs"];
   const seriesForPane = (pane: number) => seriesRef.current[PANE_SERIES[pane] ?? "candle"] ?? seriesRef.current.candle;
-  // Panneau contenant l'ordonnée `yWrap` (relative au wrap) ; clampe au 1er/dernier hors zone.
+  // Position VISUELLE d'une série, demandée à Lightweight Charts.
+  const visuelDe = (s: any): number => { try { return s?.getPane?.().paneIndex?.() ?? 0; } catch { return 0; } };
+  // Position visuelle du panneau LOGIQUE demandé.
+  const boxOfPane = (pane: number) => layoutRef.current[visuelDe(seriesForPane(pane))];
+  // L'inverse : quelle série (donc quel panneau logique) occupe cette position à l'écran.
+  const paneLogiqueDeVisuel = (visuel: number): number => {
+    for (let i = 0; i < PANE_SERIES.length; i++) {
+      const serie = seriesRef.current[PANE_SERIES[i]];
+      if (serie && visuelDe(serie) === visuel) return i;
+    }
+    return 0;
+  };
+  // Panneau LOGIQUE contenant l'ordonnée `yWrap` ; clampe au 1er/dernier hors zone.
   const paneAtY = (yWrap: number): number => {
     const boxes = layoutRef.current;
     if (!boxes.length) return 0;
+    let visuel = yWrap < boxes[0].top ? 0 : boxes.length - 1;
     for (let i = 0; i < boxes.length; i++) {
       const b = boxes[i];
-      if (yWrap >= b.top && yWrap <= b.top + b.height) return i;
+      if (yWrap >= b.top && yWrap <= b.top + b.height) { visuel = i; break; }
     }
-    return yWrap < boxes[0].top ? 0 : boxes.length - 1;
+    return paneLogiqueDeVisuel(visuel);
   };
 
-  // Point de données -> pixel, dans le panneau `pane` (défaut = prix).
+  // Point de données -> pixel, dans le panneau LOGIQUE `pane` (défaut = titre).
   const dataToPx = (pt: DPoint, pane = 0): PxPt | null => {
-    const s = seriesForPane(pane); const box = layoutRef.current[pane];
+    const s = seriesForPane(pane); const box = boxOfPane(pane);
     if (!s || !box) return null;
     const x = logicalToX(timeToLogical(pt.time));
     const y = s.priceToCoordinate(pt.price);
@@ -205,7 +220,7 @@ export default function DrawingLayer({
     const rect = wrap.getBoundingClientRect();
     const yWrap = clientY - rect.top;
     const pane = forcePane != null ? forcePane : paneAtY(yWrap);
-    const box = layoutRef.current[pane]; const s = seriesForPane(pane);
+    const box = boxOfPane(pane); const s = seriesForPane(pane);
     if (!box || !s) return null;
     const yInPane = Math.max(0, Math.min(yWrap - box.top, box.height));
     const price = s.coordinateToPrice(yInPane);
@@ -728,7 +743,10 @@ export default function DrawingLayer({
   // --- Rendu SVG (recalculé à chaque render : suit pan/zoom via le tick du parent) ---
   const wrapW = wrapRef.current?.clientWidth ?? 0;
   const wrapH = wrapRef.current?.clientHeight ?? 0;
-  const p0 = layout[0];
+  // Boîte du panneau du TITRE — surtout pas layout[0] : depuis que l'ATR est placé
+  // en tête, le 0 est le sien. Sert de repère aux traits verticaux et à la barre
+  // contextuelle.
+  const p0 = boxOfPane(0);
   // Bas de la pile de panneaux (pour la ligne verticale qui traverse tous les panes).
   const chartBottom = layout.length ? layout[layout.length - 1].top + layout[layout.length - 1].height : wrapH;
   const selectedSet = new Set(selectedIds);
@@ -1177,15 +1195,18 @@ export default function DrawingLayer({
             ))}
           </defs>
           {/* Traits / flèches / canaux / surligneur : clippés à LEUR panneau (prix, volume ou RSI). */}
-          {layout.map((_box, i) => (
+          {layout.map((_box, i) => {
+            // `i` est une position VISUELLE ; les dessins portent un panneau LOGIQUE.
+            const logique = paneLogiqueDeVisuel(i);
+            return (
             <g key={i} clipPath={`url(#draw-clip-pane${i})`}>
-              {drawings.filter((d) => d.type === "channel" && (d.pane ?? 0) === i).map(renderChannel)}
-              {drawings.filter((d) => d.type === "fib" && (d.pane ?? 0) === i).map(renderFib)}
-              {drawings.filter((d) => d.type === "brush" && (d.pane ?? 0) === i).map(renderBrush)}
-              {drawings.filter((d) => d.type === "longpos" && (d.pane ?? 0) === i).map(renderLongPos)}
-              {drawings.filter((d) => d.type === "rect" && (d.pane ?? 0) === i).map(renderRect)}
-              {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === i).map(renderTrend)}
-              {draft && draft.pane === i && (() => {
+              {drawings.filter((d) => d.type === "channel" && (d.pane ?? 0) === logique).map(renderChannel)}
+              {drawings.filter((d) => d.type === "fib" && (d.pane ?? 0) === logique).map(renderFib)}
+              {drawings.filter((d) => d.type === "brush" && (d.pane ?? 0) === logique).map(renderBrush)}
+              {drawings.filter((d) => d.type === "longpos" && (d.pane ?? 0) === logique).map(renderLongPos)}
+              {drawings.filter((d) => d.type === "rect" && (d.pane ?? 0) === logique).map(renderRect)}
+              {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === logique).map(renderTrend)}
+              {draft && draft.pane === logique && (() => {
                 const a = dataToPx(draft.p0, draft.pane); const b = dataToPx(draft.p1, draft.pane);
                 if (!a || !b) return null;
                 if (activeTool === "rect") {
@@ -1193,10 +1214,11 @@ export default function DrawingLayer({
                 }
                 return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="draw-preview" />;
               })()}
-              {chanDraft && chanDraft.pane === i && renderChanDraft()}
-              {brushDraft && brushPaneRef.current === i && renderBrushDraft()}
+              {chanDraft && chanDraft.pane === logique && renderChanDraft()}
+              {brushDraft && brushPaneRef.current === logique && renderBrushDraft()}
             </g>
-          ))}
+            );
+          })}
           {/* Traits verticaux : pleine hauteur, non clippés. */}
           {drawings.filter((d) => d.type === "vline").map(renderVline)}
         </svg>
