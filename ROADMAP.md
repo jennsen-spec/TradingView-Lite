@@ -10,6 +10,10 @@
 
 ## 🔍 Prêt (DoR)  *— affinés, priorisés par l'ordre*
 
+> ⏸️ **#50 à #55 sont en pause** (décision du 22/08) : on remet l'analyse technique et le rapport mensuel de côté
+> le temps d'assainir le socle. Le code du labo reste dans `labo/`, inoffensif. Résultats archivés dans
+> [`docs/archive/labo-resultats-2026-08-22.md`](docs/archive/labo-resultats-2026-08-22.md).
+
 ### 🎯 Épopée [**#47 — Un seul produit**](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)*
 > TVLite scrape la bourse canadienne, trie techniquement, dépose chaque mois une **collection** + des **positions longues justifiées**, et **Jean décide**.
 > Principe : **le momentum trie, la technique raconte** — trois emplacements distincts (**trier** / **filtrer** / **interrupteur**).
@@ -18,13 +22,13 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
 | [**48**](docs/backlog/48-reconciliation-cloud.md) | **Réconciliation cloud ↔ local** (cloud-clobber) — *bloquant #54* | ⚙️ | 5 | M | ⭐ | ✅ |
-| [**49**](docs/backlog/49-terrain-unifie.md) | **Terrain unifié** — 1 dépôt, 1 Supabase, 4 schémas ; GCR archivée | ⚙️ | 8 | L | ⭐ | 🔍 |
-| [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | 🧪 |
-| [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | 🔍 |
-| [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte, accord de Jean requis* | 💼 | 8 | L | ⭐ | 🔍 |
-| [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — `reco.runs` / `reco.items`, Weinstein en interrupteur | 💼 | 8 | L | | 🔍 |
-| [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection + dessins `longpos` **fusionnés** + panneau Reco | 🧩 | 8 | L | ⭐ | 🔍 |
-| [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** (HTML autonome archivé) | 🧩 | 5 | M | | 🔍 |
+| [**49**](docs/backlog/49-terrain-unifie.md) | **Une seule base** — robots coupés, tables de l'ancien monde jetées, TSXV supprimé, remplissage TSX par volume sous 450 Mo | ⚙️ | 8 | L | ⭐ | 🏗️ |
+| [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | ⏸️ |
+| [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | ⏸️ |
+| [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte, accord de Jean requis* | 💼 | 8 | L | ⭐ | ⏸️ |
+| [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — `reco.runs` / `reco.items`, Weinstein en interrupteur | 💼 | 8 | L | | ⏸️ |
+| [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection + dessins `longpos` **fusionnés** + panneau Reco | 🧩 | 8 | L | ⭐ | ⏸️ |
+| [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** (HTML autonome archivé) | 🧩 | 5 | M | | ⏸️ |
 
 ## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
 

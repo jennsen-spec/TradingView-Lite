@@ -97,3 +97,46 @@ Momentum, moyennes mobiles, RSI, volume en dollars et exécution à l'ouverture 
 ## Notes / risques
 - **Dépassement de quota = base en lecture seule = app cassée.** Tout script qui écrit en masse doit avoir un garde-fou de taille avant la première insertion, pas après.
 - #42 avait prévu un **prune LRU** (purge des titres inactifs > 90 j) — à réactiver comme soupape opérationnelle.
+
+---
+
+## ✅ Exécution du 22 août 2026 — « une seule base »
+
+Décision de Jean : simplifier. Un dépôt TVLite, **une** base Supabase (renommée **« Yahoo Finance »**),
+contenant tous les titres du **TSX** possibles sous **450 Mo**, priorisés par volume, plus les titres
+consultés via TVLite. TSXV exclu. Analyse technique et rapport mensuel mis de côté.
+
+**Étape 1 — robots arrêtés**
+- GitHub Action `scan.yml` du dépôt `goldencross-radar` : `disabled_manually`. C'était **le « worker fantôme »** qui écrivait chaque jour dans la base — mystère résolu.
+- `pg_cron` : `backfill-ca` et `prune-bars-cache-weekly` désactivés (`cron.unschedule`).
+
+**Étape 2 — tables de l'ancien monde supprimées**
+`daily_bars`, `cross_events`, `scan_runs`, `instruments`, `devices`, `watchlist_items`, `profiles`,
+`alert_prefs`, et le schéma `research`. Résultats du labo archivés dans
+[`docs/archive/labo-resultats-2026-08-22.md`](../archive/labo-resultats-2026-08-22.md) avant suppression.
+**Il ne reste que 5 tables** : `bars`, `bars_coverage`, `backfill_queue`, `backfill_log`, `tvlite_prefs`.
+
+**Étape 3 — index redondant supprimé** · `bars_ticker_interval_date_idx` (doublon de la clé primaire,
+Postgres sachant lire un index à l'envers) : index de `bars` 137 → 61 Mo.
+
+**Étape 4 — remplissage**
+- TSXV supprimé : 1 659 571 → 1 113 299 barres.
+- **`VACUUM FULL`** (via un `pg_cron` ponctuel — impossible dans une transaction) : **336,7 → 166,4 Mo**.
+  ⚠️ Indispensable *avant* de remplir : `backfill_run` teste `pg_database_size`, qui compte l'espace mort ;
+  sans compactage, le garde-fou se serait déclenché beaucoup trop tôt.
+- `backfill_queue` reconstruite : **877 titres `.TO`**, `priority` = rang par volume $ moyen 50 séances,
+  `years = 40` (historique complet). RY.TO en tête — identique au classement de l'artefact.
+- `cron.remplissage-tsx` : `backfill_run(20, 450)` chaque minute, **s'arrête net à 450 Mo**.
+- Vérifié : RY.TO passe de 2 009 à **7 944 barres, depuis 1995-01-12**.
+
+**Le seuil de volume est un résultat, pas un réglage** : il sort de la course, au titre où le quota tombe.
+
+**Fonction temporaire** `public.suivi_remplissage()` (SECURITY DEFINER, exécutable par `anon`) créée
+pour suivre l'avancement depuis le terminal — **à supprimer une fois le remplissage terminé**.
+
+### Reste à faire
+- [ ] Supprimer le cron `remplissage-tsx` et la fonction `suivi_remplissage()` à la fin.
+- [ ] `VACUUM FULL` final.
+- [ ] **Étape 5** — supprimer le projet Swing Mastery (bouton côté Jean).
+- [ ] Rattraper `BLX.TO`, absent de `bars`.
+- [ ] Prévoir un rafraîchissement mensuel des cours (l'ancien `backfill-ca` est coupé) — sinon les données vieillissent.
