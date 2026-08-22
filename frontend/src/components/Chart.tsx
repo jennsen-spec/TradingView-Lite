@@ -530,13 +530,18 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       const c = chartRef.current;
       if (!c) return;
       const facs = c.panes().map((p) => p.getStretchFactor());
-      if (facs.length) {
-        stretchRef.current = facs;
-        try {
-          localStorage.setItem(LS_STRETCH, JSON.stringify(facs));
-        } catch {
-          /* ignore */
-        }
+      if (!facs.length) return;
+      // FUSION, jamais remplacement. Le ResizeObserver se declenche pendant la mise en
+      // place de la page, souvent AVANT que l'ATR et le RS n'existent : un remplacement
+      // enregistrait alors 3 hauteurs et effacait les 5 precedentes. Au rechargement
+      // suivant, les panneaux dynamiques n'avaient plus rien et reprenaient celle du volume.
+      const fusion = [...(stretchRef.current ?? [])];
+      facs.forEach((f, i) => { fusion[i] = f; });
+      stretchRef.current = fusion;
+      try {
+        localStorage.setItem(LS_STRETCH, JSON.stringify(fusion));
+      } catch {
+        /* ignore */
       }
     };
     const saveStretchDebounced = () => {
