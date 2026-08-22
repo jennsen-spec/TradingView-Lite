@@ -63,6 +63,23 @@ Deux corrections possibles (à trancher en #49 / #53) :
 La purge LRU garde son sens pour les titres consultés une fois par curiosité dans TVLite. Le défaut,
 c'est de confondre « personne ne l'a regardé » et « personne n'en a besoin ».
 
+## 🔴 22/08 — le ménage de Swing Mastery a vidé les données de recherche
+
+`bars` et `ta_ca_daily` sont à **0 ligne**. Seules survivent les tables de *résultats*
+(`ta_ca_trades`, `ta_ca_mom`, `ta_ca_index`, `ta_ca_mom_members`, `ta_ca_mom2`), `instruments` et `ingest_log`.
+C'était **la seule source couvrant 2008**, et l'univers `research` du labo (#50).
+
+**Ce n'est pas perdu** : les **467 502 barres des 106 titres (2004-01-02 → 2026-08-18)** sont dans
+`labo/.cache/research.ndjson` (23 Mo, sur la machine de Jean, non versionné car dans `.gitignore`).
+Le labo continue donc de tourner sur son cache ; c'est `--sans-cache` qui échouerait désormais.
+
+**Limite du cache** : il ne contient que `open`, `close`, `volume` — **pas `high`/`low`**.
+Momentum, moyennes mobiles, RSI, volume en dollars et exécution à l'ouverture restent calculables ;
+**l'ATR ne l'est pas**. Pour le récupérer il faudra retélécharger depuis Yahoo.
+
+**À faire** : sauvegarder ce cache hors du dépôt **avant tout `git clean`**, et écrire le script
+`research:build` (déjà un critère d'acceptation ci-dessus) pour que la reconstruction soit du code.
+
 ## Questions ouvertes
 - **`cron.backfill-ca` tourne toutes les minutes sur une file vide** (no-op vérifié : plus aucune ligne dans `backfill_log` depuis 19h12). Le brief prévoyait de le désactiver une fois la file vide. **Non touché** — décision de Jean, réversible en une ligne.
 - `daily_bars` (35 k lignes, 8 Mo) fait-elle doublon avec `bars` ? Gain faible, mais à trancher.
