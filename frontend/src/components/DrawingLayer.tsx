@@ -526,7 +526,11 @@ export default function DrawingLayer({
           return { ...d, points: orig.map((p, idx) => (idx === dg.endIdx ? { time: pt.time, price: pt.price - off } : { ...p })) };
         }
         if (dg.mode === "end") {
-          return { ...d, points: orig.map((p, idx) => (idx === dg.endIdx ? { time: pt.time, price: pt.price } : { ...p })) };
+          // Shift : garde le trait droit pendant l'édition — le prix reste celui de
+          // l'extrémité opposée, exactement comme au tracé (voir `draft` plus haut).
+          const other = orig[1 - (dg.endIdx ?? 0)];
+          const price = e.shiftKey && other ? other.price : pt.price;
+          return { ...d, points: orig.map((p, idx) => (idx === dg.endIdx ? { time: pt.time, price } : { ...p })) };
         }
         if (dg.mode === "rect") {
           // Poignée du rectangle : modifie le temps d'un point et/ou le prix d'un point (coin/arête).
