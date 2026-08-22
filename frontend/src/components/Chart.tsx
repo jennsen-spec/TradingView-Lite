@@ -1152,10 +1152,15 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             priceLineVisible: false,
             lastValueVisible: false,
           },
-          0
+          // Panneau du TITRE — surtout pas 0 en dur : depuis que l'ATR est placé
+          // en tête, le 0 est le sien et les SMA y atterrissaient.
+          (() => { try { return s.candle!.getPane().paneIndex(); } catch { return 0; } })()
         );
         const prov = providerRef.current;
-        if (prov) line.applyOptions({ autoscaleInfoProvider: prov(0) });
+        // Position résolue à l'appel, comme les autres séries.
+        if (prov) line.applyOptions({
+          autoscaleInfoProvider: prov(() => { try { return s.candle!.getPane().paneIndex(); } catch { return 0; } }),
+        });
         s[id] = line;
       }
     }
