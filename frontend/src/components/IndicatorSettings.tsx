@@ -85,15 +85,16 @@ export default function IndicatorSettings({ title, type, settings: s, onChange, 
               </select>
             </div>
             <div className="is-field">
-              <label>Longueur (séances)</label>
+              <label>Longueur (barres)</label>
               <input
                 type="number" min={2}
-                value={s.length ?? 252}
+                value={s.length ?? 52}
                 onChange={(e) => set({ length: Math.max(2, Number(e.target.value) || 2) })}
               />
             </div>
             <div className="is-hint">
-              252 séances ≈ 52 semaines. La longueur s'adapte seule en hebdomadaire (÷5) et en mensuel (÷21).
+              52 barres de l'intervalle affiché, comme l'indicateur d'origine. En hebdomadaire cela fait
+              52 semaines (la méthode de Weinstein) ; en journalier, ~10 semaines.
             </div>
             <label className="is-check">
               <input

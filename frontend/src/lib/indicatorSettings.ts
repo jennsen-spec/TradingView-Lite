@@ -92,8 +92,8 @@ export const DEFAULT_SETTINGS = (): Record<string, IndicatorSettings> => ({
     visibility: cloneVis(),
   },
   rs: {
-    // 252 séances ≈ 52 semaines en journalier ; adapté à l'intervalle au calcul.
-    length: 252, timeframe: "chart",
+    // 52 barres de l'intervalle affiché, comme l'indicateur d'origine (stageanalysis).
+    length: 52, timeframe: "chart",
     color: "#26a69a", opacity: 100, lineWidth: 2, lineStyle: "solid",
     rsRef: "XIU.TO", rsAdjusted: true,
     zeroOn: true, zeroColor: "#8b949e",

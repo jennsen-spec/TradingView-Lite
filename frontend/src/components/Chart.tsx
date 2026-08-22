@@ -884,11 +884,10 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     const ajuste = st?.rsAdjusted !== false;
     const divs = ajuste && rsDivs?.sym === symbol ? rsDivs.divs : [];
     const closes = ajuste ? adjustedCloses(candles, divs) : candles.map((c) => c.close);
-    // ~52 semaines quel que soit l'intervalle : 252 séances en jour, 52 en semaine, 12 en mois.
-    const base = st?.length ?? 252;
-    const per = interval === "1w" ? Math.max(2, Math.round(base / 5))
-              : interval === "1mo" ? Math.max(2, Math.round(base / 21))
-              : base;
+    // 52 BARRES DE L'INTERVALLE AFFICHÉ — comme l'indicateur d'origine de stageanalysis
+    // (`ta.sma(ratio, 52)`), et non 52 semaines converties. Sur un graphique journalier
+    // cela fait donc ~10 semaines, pas un an : c'est ce que montre TradingView.
+    const per = Math.max(2, st?.length ?? 52);
     return mansfieldRS(candles, closes, rsRefData.byDate, per);
   }, [activeRs, rsRefData, rsDivs, candles, symbol, interval, settings.rs?.length, settings.rs?.rsAdjusted]);
 
