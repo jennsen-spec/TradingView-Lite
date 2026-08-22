@@ -1,6 +1,6 @@
 # #48 — Réconciliation cloud ↔ local (cloud-clobber)
 
-**Statut** : 🧪 À valider (UAT) · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Taille** : M · **Priorité** : ⭐ (bloquant #54)
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Taille** : M · **Priorité** : ⭐ (bloquant #54)
 Épopée : [#47](47-epopee-un-seul-produit.md)
 
 ## Objectif
