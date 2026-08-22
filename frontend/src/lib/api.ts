@@ -89,3 +89,26 @@ export function fetchQuoteDetail(symbol: string) {
   if (API_BASE) return getJson<QuoteDetail>(`${API_BASE}/quote-detail?symbol=${encodeURIComponent(symbol)}`);
   return getJson<QuoteDetail>(`/api/quote-detail?symbol=${encodeURIComponent(symbol)}`);
 }
+
+// --- Dividendes (#56) ---
+// Lus directement chez Supabase dans les deux modes : le backend Node de dev
+// n'a pas cette table. Données de marché publiques, lecture seule (RLS `anon`).
+const DIV_URL = "https://cucshrxmtwwizzzqthcj.supabase.co/rest/v1/dividends";
+const DIV_KEY = "sb_publishable_mbSe0WzTCQixT5Do_WILRg_U2F6DgTE";
+
+export interface Dividend { ex_date: string; amount: number }
+
+const divCache = new Map<string, Promise<Dividend[]>>();
+
+export function fetchDividends(symbol: string): Promise<Dividend[]> {
+  const key = symbol.toUpperCase();
+  const hit = divCache.get(key);
+  if (hit) return hit;
+  const q = `?ticker=eq.${encodeURIComponent(key)}&select=ex_date,amount&order=ex_date.asc`;
+  const p = fetch(DIV_URL + q, { headers: { apikey: DIV_KEY } })
+    .then((r) => (r.ok ? r.json() : []))
+    .then((rows) => (Array.isArray(rows) ? (rows as Dividend[]) : []))
+    .catch(() => [] as Dividend[]);
+  divCache.set(key, p);
+  return p;
+}

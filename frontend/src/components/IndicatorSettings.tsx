@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PALETTE, LINE_STYLES } from "../lib/indicatorSettings";
+import { PALETTE, LINE_STYLES, RS_REFERENCES } from "../lib/indicatorSettings";
 import type { IndicatorSettings, Timeframe, Visibility } from "../lib/indicatorSettings";
 import ColorButton from "./ColorButton";
 
@@ -14,7 +14,7 @@ type Tab = "params" | "style" | "visibility";
 
 interface Props {
   title: string;
-  type: "sma" | "volume" | "rsi" | "atr";
+  type: "sma" | "volume" | "rsi" | "atr" | "rs";
   settings: IndicatorSettings;
   onChange: (s: IndicatorSettings) => void;
   onCancel: () => void;
@@ -74,6 +74,46 @@ export default function IndicatorSettings({ title, type, settings: s, onChange, 
           </div>
         )}
 
+        {tab === "params" && type === "rs" && (
+          <>
+            <div className="is-field">
+              <label>Référence</label>
+              <select value={s.rsRef ?? "XIU.TO"} onChange={(e) => set({ rsRef: e.target.value })}>
+                {RS_REFERENCES.map((r) => (
+                  <option key={r.ticker} value={r.ticker}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="is-field">
+              <label>Longueur (séances)</label>
+              <input
+                type="number" min={2}
+                value={s.length ?? 252}
+                onChange={(e) => set({ length: Math.max(2, Number(e.target.value) || 2) })}
+              />
+            </div>
+            <div className="is-hint">
+              252 séances ≈ 52 semaines. La longueur s'adapte seule en hebdomadaire (÷5) et en mensuel (÷21).
+            </div>
+            <label className="is-check">
+              <input
+                type="checkbox"
+                checked={s.rsAdjusted !== false}
+                onChange={(e) => set({ rsAdjusted: e.target.checked })}
+              />
+              Ajuster des dividendes (les deux séries)
+            </label>
+            <label className="is-check">
+              <input
+                type="checkbox"
+                checked={s.zeroOn !== false}
+                onChange={(e) => set({ zeroOn: e.target.checked })}
+              />
+              Afficher la ligne zéro
+            </label>
+          </>
+        )}
+
         {tab === "params" && type === "volume" && (
           <div className="is-field">
             <label>Longueur MA</label>
@@ -114,7 +154,7 @@ export default function IndicatorSettings({ title, type, settings: s, onChange, 
           </>
         )}
 
-        {tab === "style" && (type === "sma" || type === "atr") && (
+        {tab === "style" && (type === "sma" || type === "atr" || type === "rs") && (
           <>
             <div className="is-section">Couleur</div>
             <div className="is-swatches">

@@ -37,6 +37,10 @@ export interface IndicatorSettings {
   middleOn?: boolean; middleColor?: string; middleOpacity?: number; middleValue?: number;
   lowerOn?: boolean; lowerColor?: string; lowerOpacity?: number; lowerValue?: number;
   bgOn?: boolean; bgColor?: string; bgOpacity?: number; // RSI Background Fill (bande ombrée)
+  // RS de Mansfield (#56) — réutilise length = longueur de la moyenne du ratio :
+  rsRef?: string;        // ticker de référence (défaut XIU.TO)
+  rsAdjusted?: boolean;  // ajuster les deux séries des dividendes
+  zeroOn?: boolean; zeroColor?: string; // ligne zéro
   // Commun :
   visibility: Visibility;
 }
@@ -87,6 +91,14 @@ export const DEFAULT_SETTINGS = (): Record<string, IndicatorSettings> => ({
     color: "#ef5350", opacity: 100, lineWidth: 2, lineStyle: "solid",
     visibility: cloneVis(),
   },
+  rs: {
+    // 252 séances ≈ 52 semaines en journalier ; adapté à l'intervalle au calcul.
+    length: 252, timeframe: "chart",
+    color: "#26a69a", opacity: 100, lineWidth: 2, lineStyle: "solid",
+    rsRef: "XIU.TO", rsAdjusted: true,
+    zeroOn: true, zeroColor: "#8b949e",
+    visibility: cloneVis(),
+  },
 });
 
 // Fabrique de réglages SMA (pour les instances ajoutées dynamiquement, #9).
@@ -97,12 +109,13 @@ export const smaDefault = (length: number, color: string): IndicatorSettings => 
 export const SMA_COLORS = ["#a371f7", "#26c6da", "#ec407a", "#66bb6a", "#ffb300", "#5c6bc0", "#ef5350", "#00838f"];
 
 // Types d'indicateurs au catalogue (#9). mono = une seule instance possible.
-export type IndType = "sma" | "volume" | "rsi" | "atr";
+export type IndType = "sma" | "volume" | "rsi" | "atr" | "rs";
 export const IND_TYPES: { type: IndType; label: string; mono: boolean }[] = [
   { type: "sma", label: "Moyenne mobile simple (SMA)", mono: false },
   { type: "volume", label: "Volume", mono: true },
   { type: "rsi", label: "RSI — Indice de force relative", mono: true },
   { type: "atr", label: "ATR — Average True Range", mono: true },
+  { type: "rs", label: "RS — Force relative (Mansfield)", mono: true },
 ];
 
 export const LS_SETTINGS = "tvlike:indicator-settings";
@@ -143,6 +156,7 @@ export interface IndicatorsConfig {
   activeVolume: boolean;
   activeRsi: boolean;
   activeAtr: boolean;
+  activeRs: boolean;
   favorites: IndType[]; // types favoris (accès rapide au chevron)
   settings: Record<string, IndicatorSettings>; // réglages par id (sma*, volume, rsi, atr)
 }
@@ -154,6 +168,7 @@ export function loadIndicators(): IndicatorsConfig {
     activeVolume: true,
     activeRsi: true,
     activeAtr: false,
+    activeRs: false,
     favorites: ["sma", "volume", "rsi"],
     settings: loadSettings(), // défauts + migration de l'ancienne clé #7
   };
@@ -170,6 +185,7 @@ export function loadIndicators(): IndicatorsConfig {
         activeVolume: p.activeVolume ?? true,
         activeRsi: p.activeRsi ?? true,
         activeAtr: p.activeAtr ?? false,
+        activeRs: p.activeRs ?? false,
         favorites: Array.isArray(p.favorites) ? p.favorites : base.favorites,
         settings,
       };
@@ -220,3 +236,24 @@ export function visibleForInterval(interval: string, vis: Visibility): boolean {
   const cfg = vis[m.unit];
   return cfg.on && m.value >= cfg.min && m.value <= cfg.max;
 }
+
+// Références disponibles pour le RS (#56) — les ETF chargés dans la base.
+// Profondeur indiquée : c'est elle qui limite la longueur du RS calculable.
+export const RS_REFERENCES: { ticker: string; label: string }[] = [
+  { ticker: "XIU.TO", label: "XIU — TSX 60 (1999)" },
+  { ticker: "XIC.TO", label: "XIC — TSX Composite (2001)" },
+  { ticker: "HXT.TO", label: "HXT — TSX 60 rendement total (2010)" },
+  { ticker: "XSP.TO", label: "XSP — S&P 500 couvert (2002)" },
+  { ticker: "ZQQ.TO", label: "ZQQ — Nasdaq 100 couvert (2010)" },
+  { ticker: "VFV.TO", label: "VFV — S&P 500 non couvert (2012)" },
+  { ticker: "XWD.TO", label: "XWD — MSCI World (2009)" },
+  { ticker: "XFN.TO", label: "XFN — Financières (2001)" },
+  { ticker: "XEG.TO", label: "XEG — Énergie (2001)" },
+  { ticker: "XGD.TO", label: "XGD — Or (2001)" },
+  { ticker: "XIT.TO", label: "XIT — Technologie (2001)" },
+  { ticker: "XMA.TO", label: "XMA — Matériaux (2005)" },
+  { ticker: "XRE.TO", label: "XRE — FPI (2002)" },
+  { ticker: "XUT.TO", label: "XUT — Services publics (2012)" },
+  { ticker: "XST.TO", label: "XST — Consommation de base (2012)" },
+  { ticker: "XHC.TO", label: "XHC — Santé (2012)" },
+];

@@ -99,3 +99,81 @@ export function atr(candles: Candle[], period = 14): LinePoint[] {
   }
   return out;
 }
+
+// --- Force relative de Mansfield / Weinstein (#56) ---
+
+export interface Dividend { ex_date: string; amount: number }
+
+/**
+ * Cours ajusté des dividendes.
+ *   adj(t) = close(t) × Π (1 − montant_i / clôture de la veille de l'ex-date_i)
+ *   pour tous les dividendes dont l'ex-date est POSTÉRIEURE à t.
+ * Méthode vérifiée contre l'`adjclose` de Yahoo : exacte sur 126 événements
+ * sur 127 pour RY.TO (cf. migration 0011). Le `close` d'origine n'est pas modifié :
+ * une bougie ajustée ne correspond à aucun prix auquel on a pu traiter.
+ */
+export function adjustedCloses(candles: Candle[], divs: Dividend[]): number[] {
+  const out = candles.map((c) => c.close);
+  if (divs.length === 0 || candles.length === 0) return out;
+
+  const dates = candles.map((c) => String(c.time));
+  // Facteur de chaque dividende, à partir de la clôture de la veille de l'ex-date.
+  const facteurs: { d: string; f: number }[] = [];
+  for (const dv of divs) {
+    const ex = String(dv.ex_date);
+    let lo = 0, hi = dates.length - 1, prev = -1;
+    while (lo <= hi) {
+      const m = (lo + hi) >> 1;
+      if (dates[m] < ex) { prev = m; lo = m + 1; } else hi = m - 1;
+    }
+    if (prev < 0) continue;                       // ex-date antérieure à notre historique
+    const cv = candles[prev].close, amt = Number(dv.amount);
+    if (!(cv > 0) || !(amt > 0) || amt >= cv) continue;
+    facteurs.push({ d: ex, f: 1 - amt / cv });
+  }
+
+  // Produit cumulatif à rebours : chaque barre porte le produit des facteurs qui la suivent.
+  let cum = 1, k = facteurs.length - 1;
+  for (let i = candles.length - 1; i >= 0; i--) {
+    while (k >= 0 && facteurs[k].d > dates[i]) { cum *= facteurs[k].f; k--; }
+    out[i] = candles[i].close * cum;
+  }
+  return out;
+}
+
+/**
+ * RS de Mansfield : (ratio / sa moyenne mobile − 1) × 100.
+ * Oscille autour de ZÉRO — au-dessus, le titre bat sa référence.
+ * `refByDate` doit porter le cours (ajusté) de la référence ; si elle n'a pas de
+ * barre à une date, on reporte la dernière connue plutôt que de trouer la série.
+ */
+export function mansfieldRS(
+  candles: Candle[],
+  closes: number[],
+  refByDate: Map<string, number>,
+  period: number,
+): LinePoint[] {
+  // 1. Ratio titre / référence, avec report de la dernière valeur de référence connue.
+  const ratios: { time: Time; r: number }[] = [];
+  let dernier: number | null = null;
+  for (let i = 0; i < candles.length; i++) {
+    const v = refByDate.get(String(candles[i].time));
+    if (v != null && v > 0) dernier = v;
+    if (dernier == null) continue;               // pas encore de référence : on n'invente rien
+    ratios.push({ time: candles[i].time, r: closes[i] / dernier });
+  }
+  if (ratios.length < period) return [];
+
+  // 2. Moyenne mobile du ratio, puis écart relatif à cette moyenne.
+  const out: LinePoint[] = [];
+  let somme = 0;
+  for (let i = 0; i < ratios.length; i++) {
+    somme += ratios[i].r;
+    if (i >= period) somme -= ratios[i - period].r;
+    if (i < period - 1) continue;
+    const moy = somme / period;
+    if (!(moy > 0)) continue;
+    out.push({ time: ratios[i].time, value: (ratios[i].r / moy - 1) * 100 });
+  }
+  return out;
+}

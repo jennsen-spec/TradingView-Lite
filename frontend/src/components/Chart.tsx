@@ -14,7 +14,9 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle, LinePoint, Time } from "../lib/indicators";
-import { sma, rsi, atr, smaOfPoints } from "../lib/indicators";
+import { sma, rsi, atr, smaOfPoints, adjustedCloses, mansfieldRS } from "../lib/indicators";
+import type { Dividend as DividendRow } from "../lib/indicators";
+import { fetchDividends, fetchCandles as fetchCandlesApi } from "../lib/api";
 import IndicatorSettings from "./IndicatorSettings";
 import IndicatorCatalog from "./IndicatorCatalog";
 import DrawingLayer from "./DrawingLayer";
@@ -137,6 +139,7 @@ interface LegendRow {
   sma: Record<string, number | null>; // valeur par id de SMA
   vol: number; volMa: number | null; rsi: number | null; rsiMa: number | null;
   atr: number | null;
+  rs: number | null;
 }
 
 // Outil de mesure (Shift + clic). Points ancrés aux données (prix + position logique)
@@ -149,7 +152,7 @@ interface Measure {
 }
 
 // Type d'un id d'instance. Les SMA ont un id commençant par "sma" (sma9/sma50/sma200/sma-<n>).
-const typeOf = (id: string): IndType => (id === "volume" ? "volume" : id === "rsi" ? "rsi" : id === "atr" ? "atr" : "sma");
+const typeOf = (id: string): IndType => (id === "volume" ? "volume" : id === "rsi" ? "rsi" : id === "atr" ? "atr" : id === "rs" ? "rs" : "sma");
 // Sous-séries (clés seriesRef) contrôlées ensemble par une instance.
 const seriesKeysOf = (id: string): string[] =>
   id === "volume" ? ["volume", "volumeMa"] : id === "rsi" ? ["rsi", "rsiMa"] : [id];
@@ -260,6 +263,13 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const [activeVolume, setActiveVolume] = useState(cfg0.activeVolume);
   const [activeRsi, setActiveRsi] = useState(cfg0.activeRsi);
   const [activeAtr, setActiveAtr] = useState(cfg0.activeAtr);
+  const [activeRs, setActiveRs] = useState(cfg0.activeRs);
+  // RS (#56) : série de la référence et dividendes, chargés à part du symbole affiché.
+  const [rsRefData, setRsRefData] = useState<{ ref: string; byDate: Map<string, number> } | null>(null);
+  const [rsDivs, setRsDivs] = useState<{ sym: string; divs: DividendRow[] } | null>(null);
+  const rsPaneRef = useRef<number>(-1); // index utilisé, lu dans les effets
+  // Le rendu en dépend (position de la légende) : une ref ne redéclenche pas le rendu, il faut un état.
+  const [rsPane, setRsPane] = useState(-1);
   // Incrémenté à chaque (re)création du chart → ré-attache l'ATR au nouveau chart.
   const [chartEpoch, setChartEpoch] = useState(0);
   const [favorites, setFavorites] = useState<IndType[]>(cfg0.favorites);
@@ -277,8 +287,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
   // Persistance de toute la config d'indicateurs (structure + réglages + favoris).
   useEffect(() => {
-    saveIndicators({ smaOrder, activeVolume, activeRsi, activeAtr, favorites, settings });
-  }, [smaOrder, activeVolume, activeRsi, activeAtr, favorites, settings]);
+    saveIndicators({ smaOrder, activeVolume, activeRsi, activeAtr, activeRs, favorites, settings });
+  }, [smaOrder, activeVolume, activeRsi, activeAtr, activeRs, favorites, settings]);
 
   const toggleIndicator = (id: string) => setHidden((h) => ({ ...h, [id]: !h[id] }));
   const removeIndicator = (id: string) => {
@@ -294,12 +304,14 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     } else if (id === "volume") setActiveVolume(false);
     else if (id === "rsi") setActiveRsi(false);
     else if (id === "atr") setActiveAtr(false);
+    else if (id === "rs") setActiveRs(false);
     setHidden((h) => { const n = { ...h }; delete n[id]; return n; });
   };
   const addIndicator = (type: IndType) => {
     if (type === "volume") { setActiveVolume(true); setHidden((h) => ({ ...h, volume: false })); return; }
     if (type === "rsi") { setActiveRsi(true); setHidden((h) => ({ ...h, rsi: false })); return; }
     if (type === "atr") { setActiveAtr(true); setHidden((h) => ({ ...h, atr: false })); return; }
+    if (type === "rs") { setActiveRs(true); setHidden((h) => ({ ...h, rs: false })); return; }
     // Nouvelle SMA : couleur non encore utilisée, longueur 50 par défaut.
     const id = `sma-${smaIdCounterRef.current++}`;
     const used = new Set(smaOrder.map((x) => settings[x]?.color));
@@ -815,7 +827,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
   // Visibilité de chaque série = actif ET autorisé par l'intervalle ET non masqué (œil) ET élément activé.
   useEffect(() => {
-    const activeIds = [...smaOrder, ...(activeVolume ? ["volume"] : []), ...(activeRsi ? ["rsi"] : []), ...(activeAtr ? ["atr"] : [])];
+    const activeIds = [...smaOrder, ...(activeVolume ? ["volume"] : []), ...(activeRsi ? ["rsi"] : []), ...(activeAtr ? ["atr"] : []), ...(activeRs ? ["rs"] : [])];
     activeIds.forEach((id) => {
       const st = settings[id];
       const allowed = st ? visibleForInterval(interval, st.visibility) : true;
@@ -832,6 +844,53 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     if (!activeVolume) seriesKeysOf("volume").forEach((k) => { try { seriesRef.current[k]?.applyOptions({ visible: false }); } catch { /* */ } });
     if (!activeRsi) seriesKeysOf("rsi").forEach((k) => { try { seriesRef.current[k]?.applyOptions({ visible: false }); } catch { /* */ } });
   }, [settings, interval, hidden, smaOrder, activeVolume, activeRsi, activeAtr]);
+
+  // RS (#56) : charge la série de la référence + les dividendes des deux côtés.
+  // Fait à part du symbole affiché : une seule requête tant que la référence ne change pas.
+  useEffect(() => {
+    if (!activeRs) return;
+    const st = settings.rs;
+    const ref = (st?.rsRef || "XIU.TO").toUpperCase();
+    let annule = false;
+    (async () => {
+      try {
+        const r = await fetchCandlesApi(ref, interval);
+        if (annule) return;
+        const divs = st?.rsAdjusted !== false ? await fetchDividends(ref) : [];
+        if (annule) return;
+        const closes = st?.rsAdjusted !== false ? adjustedCloses(r.candles, divs) : r.candles.map((c) => c.close);
+        const byDate = new Map<string, number>();
+        r.candles.forEach((c, i) => byDate.set(String(c.time), closes[i]));
+        setRsRefData({ ref, byDate });
+      } catch {
+        if (!annule) setRsRefData({ ref, byDate: new Map() }); // référence indisponible → panneau vide
+      }
+    })();
+    return () => { annule = true; };
+  }, [activeRs, settings.rs?.rsRef, settings.rs?.rsAdjusted, interval]);
+
+  // Dividendes du titre affiché (pour ajuster son propre cours).
+  useEffect(() => {
+    if (!activeRs || settings.rs?.rsAdjusted === false) { setRsDivs(null); return; }
+    let annule = false;
+    fetchDividends(symbol).then((divs) => { if (!annule) setRsDivs({ sym: symbol, divs }); });
+    return () => { annule = true; };
+  }, [activeRs, symbol, settings.rs?.rsAdjusted]);
+
+  // Points du RS : recalculés dès que le titre, la référence ou les réglages changent.
+  const rsPoints = useMemo(() => {
+    if (!activeRs || !rsRefData || candles.length === 0) return [];
+    const st = settings.rs;
+    const ajuste = st?.rsAdjusted !== false;
+    const divs = ajuste && rsDivs?.sym === symbol ? rsDivs.divs : [];
+    const closes = ajuste ? adjustedCloses(candles, divs) : candles.map((c) => c.close);
+    // ~52 semaines quel que soit l'intervalle : 252 séances en jour, 52 en semaine, 12 en mois.
+    const base = st?.length ?? 252;
+    const per = interval === "1w" ? Math.max(2, Math.round(base / 5))
+              : interval === "1mo" ? Math.max(2, Math.round(base / 21))
+              : base;
+    return mansfieldRS(candles, closes, rsRefData.byDate, per);
+  }, [activeRs, rsRefData, rsDivs, candles, symbol, interval, settings.rs?.length, settings.rs?.rsAdjusted]);
 
   // ATR : panneau créé dynamiquement à l'activation (en bas, hauteur type volume),
   // retiré à la désactivation (pas de panneau vide, contrairement à Volume/RSI).
@@ -868,6 +927,75 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAtr, chartEpoch]);
+
+  // RS : panneau créé dynamiquement. L'index n'est PAS figé à 4 — si l'ATR est éteint,
+  // il n'y a pas de panneau 3, et demander le 4 en créerait un vide au milieu.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const sr = seriesRef.current;
+    if (!chart) return;
+    // Index déterministe : 0 prix, 1 volume, 2 RSI existent toujours (même éteints),
+    // 3 = ATR quand il est actif. Le RS prend donc le 4, ou le 3 sans ATR.
+    // Ne PAS utiliser `panes().length` : il compte le panneau du RS lui-même, et la
+    // garde de recréation ci-dessous se déclencherait en boucle.
+    // Cet effet doit rester APRÈS celui de l'ATR : Lightweight Charts ne crée qu'un
+    // panneau à la fois, demander le 4 avant que le 3 existe le rabattrait sur le 3.
+    const attendu = activeAtr ? 4 : 3;
+    // Si l'ATR s'allume ou s'éteint pendant que le RS est affiché, il faut le recréer ailleurs.
+    if (sr.rs && rsPaneRef.current !== attendu) {
+      try { chart.removeSeries(sr.rs); } catch { /* déjà retirée */ }
+      delete sr.rs;
+      rsPaneRef.current = -1;
+      setRsPane(-1);
+    }
+    if (activeRs && !sr.rs) {
+      const st = settings.rs;
+      const idx = attendu;
+      const rsSeries = chart.addSeries(
+        LineSeries,
+        {
+          color: rgba(st?.color ?? "#26a69a", st?.opacity),
+          lineWidth: (st?.lineWidth ?? 2) as 1 | 2 | 3 | 4,
+          lineStyle: LINE_STYLE_MAP[st?.lineStyle ?? "solid"],
+          priceLineVisible: false,
+        },
+        idx
+      );
+      const prov = providerRef.current;
+      if (prov) rsSeries.applyOptions({ autoscaleInfoProvider: prov(idx) });
+      rsSeries.priceScale().applyOptions({ scaleMargins: { top: 0, bottom: 0 } });
+      // Ligne ZÉRO : le repère qui donne tout son sens au Mansfield.
+      if (st?.zeroOn !== false) {
+        rsSeries.createPriceLine({
+          price: 0, color: st?.zeroColor ?? "#8b949e", lineWidth: 1,
+          lineStyle: LineStyle.Dashed, axisLabelVisible: false,
+        });
+      }
+      sr.rs = rsSeries;
+      rsPaneRef.current = idx;
+      setRsPane(idx);
+      paneScalesRef.current[idx] = rsSeries.priceScale();
+      const panes = chart.panes();
+      if (panes[idx]) panes[idx].setStretchFactor(panes[1]?.getStretchFactor() ?? 1);
+      requestAnimationFrame(() => measure());
+    } else if (!activeRs && sr.rs) {
+      try { chart.removeSeries(sr.rs); } catch { /* déjà retirée */ }
+      delete sr.rs;
+      if (rsPaneRef.current >= 0) paneScalesRef.current = paneScalesRef.current.slice(0, rsPaneRef.current);
+      rsPaneRef.current = -1;
+      setRsPane(-1);
+      requestAnimationFrame(() => measure());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRs, activeAtr, chartEpoch]);
+
+  // Alimente la série du RS.
+  useEffect(() => {
+    const sr = seriesRef.current;
+    if (!sr.rs) return;
+    sr.rs.setData(rsPoints.map((p) => ({ time: toTime(p.time), value: p.value })));
+  }, [rsPoints]);
+
 
   // Mise à jour des données quand les bougies changent.
   useEffect(() => {
@@ -910,7 +1038,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
     // --- SMA dynamiques : synchronise les séries (pane 0) avec smaOrder, puis calcule/pose les données ---
     const chart = chartRef.current;
-    const FIXED = new Set(["candle", "volume", "volumeMa", "rsi", "rsiMa", "atr"]);
+    const FIXED = new Set(["candle", "volume", "volumeMa", "rsi", "rsiMa", "atr", "rs"]);
     // Retire les SMA qui ne sont plus dans l'ordre.
     Object.keys(s).forEach((k) => {
       if (!FIXED.has(k) && !smaOrder.includes(k)) {
@@ -950,6 +1078,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     const { rsiMap, maMap: rsiMaMap } = rsiValues(settings.rsi, candles, dailyCandles);
     // ATR : lissage de Wilder du True Range sur l'intervalle affiché.
     const atrMap = new Map(atr(candles, settings.atr?.length ?? 14).map((p) => [p.time, p.value]));
+    const rsByTime = new Map(rsPoints.map((p) => [p.time, p.value]));
     // Volume MA : moyenne mobile du volume (longueur réglable).
     const vol = settings.volume;
     const volMaPts = smaOfPoints(candles.map((c) => ({ time: c.time, value: c.volume })), vol.maLength ?? 20);
@@ -979,6 +1108,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         vol: c.volume, volMa: mVolMa.get(c.time) ?? null,
         rsi: rsiMap.get(c.time) ?? null, rsiMa: rsiMaMap.get(c.time) ?? null,
         atr: atrMap.get(c.time) ?? null,
+        rs: rsByTime.get(c.time) ?? null,
       };
     });
     legendRowsRef.current = rows;
@@ -1020,7 +1150,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     // Dépendance sur la longueur/plage des SMA : recalcule les données quand elles changent
     // (la couleur/épaisseur/visibilité passent par des effets légers, sans recalcul).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, dailyCandles, measure, dataSig]);
+  }, [candles, dailyCandles, measure, dataSig, rsPoints]);
 
   const toggleAuto = (i: number) =>
     setPaneState((prev) => prev.map((s, idx) => (idx === i ? { ...s, auto: !s.auto } : s)));
@@ -1212,6 +1342,12 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
             {indRow("atr", settings.atr?.color ?? "#ef5350", <>ATR {settings.atr?.length ?? 14} {f2(legend.atr)}</>)}
           </div>
         )}
+        {legend && rsPane >= 0 && layout[rsPane] && activeRs && (
+          <div className="pane-legend" style={{ top: layout[rsPane].top + 4 }}>
+            {indRow("rs", settings.rs?.color ?? "#26a69a",
+              <>RS {settings.rs?.rsRef ?? "XIU.TO"} {f2(legend.rs)}</>)}
+          </div>
+        )}
         {currency && layout[0] && (
           <div className="currency-label" style={{ top: layout[0].top + 4, right: 6 }}>
             {currency}
@@ -1249,7 +1385,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         const t = typeOf(settingsOpenId);
         return (
           <IndicatorSettings
-            title={t === "volume" ? "Vol" : t === "rsi" ? "RSI" : t === "atr" ? "ATR" : "SMA"}
+            title={t === "volume" ? "Vol" : t === "rsi" ? "RSI" : t === "atr" ? "ATR" : t === "rs" ? "RS" : "SMA"}
             type={t}
             settings={settings[settingsOpenId]}
             onChange={changeSettings}
