@@ -15,6 +15,7 @@ import {
 } from "lightweight-charts";
 import type { Candle, LinePoint, Time } from "../lib/indicators";
 import { sma, rsi, atr, smaOfPoints, adjustedCloses, mansfieldRS } from "../lib/indicators";
+import { syncToCloud } from "../lib/cloudPrefs";
 import type { Dividend as DividendRow } from "../lib/indicators";
 import { fetchDividends, fetchCandles as fetchCandlesApi } from "../lib/api";
 import IndicatorSettings from "./IndicatorSettings";
@@ -612,6 +613,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       stretchRef.current = parSerie;
       try {
         localStorage.setItem(LS_STRETCH, JSON.stringify(parSerie));
+        // Sans ce miroir, l'hydratation au démarrage réécrase le réglage local
+        // avec l'ancienne valeur du cloud : le redimensionnement ne survivait pas.
+        syncToCloud(LS_STRETCH);
       } catch {
         /* ignore */
       }

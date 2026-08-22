@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { syncToCloud } from "../lib/cloudPrefs";
 
 // Catalogue d'intervalles. Intraday (min/heures) = historique court côté Yahoo.
 const CATALOG = [
@@ -40,6 +41,7 @@ export default function IntervalSelector({ value, onChange }: Props) {
 
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(favs));
+    syncToCloud(LS_KEY); // sinon l'hydratation au démarrage restaure l'ancienne valeur du cloud
   }, [favs]);
 
   // Fermer le menu au clic en dehors.
