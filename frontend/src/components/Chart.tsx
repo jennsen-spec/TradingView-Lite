@@ -211,7 +211,7 @@ const IcoTrash = (
 
 // Hauteurs de panneaux (stretch factors) persistées → conservées d'une session à l'autre.
 const LS_STRETCH = "tvlike:pane-stretch";
-const DEFAULT_STRETCH = [3, 1, 1]; // 60% / 20% / 20%
+const DEFAULT_STRETCH = [3, 1, 1, 1, 1]; // prix 60% ; volume, RSI, ATR, RS à 20% chacun
 const loadStretch = (): number[] | null => {
   try {
     const r = localStorage.getItem(LS_STRETCH);
@@ -234,6 +234,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<Record<string, ISeriesApi<any>>>({});
   const paneScalesRef = useRef<IPriceScaleApi[]>([]);
+  // Hauteurs enregistrées, relues par l'ATR et le RS à leur création (créés après le graphique).
+  const stretchRef = useRef<number[] | null>(null);
   // Décorations RSI : lignes de niveau (upper/middle/lower) + bande ombrée (primitive).
   const rsiLinesRef = useRef<{ upper: any; middle: any; lower: any } | null>(null);
   const rsiBandRef = useRef<RsiBand | null>(null);
@@ -516,8 +518,11 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     // Hauteurs de panes : restaurées depuis localStorage (sinon 60% / 20% / 20%).
     const panes = chart.panes();
     const saved = loadStretch();
-    const factors = saved && saved.length === panes.length ? saved : DEFAULT_STRETCH;
-    panes.forEach((p, i) => p.setStretchFactor(factors[i]));
+    stretchRef.current = saved;
+    // On applique panneau par panneau. L'ancienne version exigeait `saved.length === panes.length`
+    // et jetait TOUT sinon — or à cet instant seuls 3 panneaux existent, l'ATR et le RS étant
+    // créés plus tard : dès qu'ils étaient actifs, les hauteurs enregistrées étaient perdues.
+    panes.forEach((p, i) => p.setStretchFactor(saved?.[i] ?? DEFAULT_STRETCH[i] ?? 1));
 
     // Sauvegarde (debouncée) des hauteurs après un redimensionnement de panneau.
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -526,6 +531,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       if (!c) return;
       const facs = c.panes().map((p) => p.getStretchFactor());
       if (facs.length) {
+        stretchRef.current = facs;
         try {
           localStorage.setItem(LS_STRETCH, JSON.stringify(facs));
         } catch {
@@ -925,7 +931,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       s.atr = atrSeries;
       paneScalesRef.current[3] = atrSeries.priceScale();
       const panes = chart.panes();
-      if (panes[3]) panes[3].setStretchFactor(panes[1]?.getStretchFactor() ?? 1); // aussi haut que le volume
+      // Hauteur enregistrée de CE panneau si elle existe, sinon celle du volume.
+      if (panes[3]) panes[3].setStretchFactor(stretchRef.current?.[3] ?? panes[1]?.getStretchFactor() ?? 1);
       atrSeries.setData(atr(candles, st?.length ?? 14).map((p) => ({ time: toTime(p.time), value: p.value })));
       requestAnimationFrame(() => measure());
     } else if (!activeAtr && s.atr) {
@@ -985,7 +992,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       setRsPane(idx);
       paneScalesRef.current[idx] = rsSeries.priceScale();
       const panes = chart.panes();
-      if (panes[idx]) panes[idx].setStretchFactor(panes[1]?.getStretchFactor() ?? 1);
+      if (panes[idx]) panes[idx].setStretchFactor(stretchRef.current?.[idx] ?? panes[1]?.getStretchFactor() ?? 1);
       requestAnimationFrame(() => measure());
     } else if (!activeRs && sr.rs) {
       try { chart.removeSeries(sr.rs); } catch { /* déjà retirée */ }
