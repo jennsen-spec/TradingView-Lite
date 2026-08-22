@@ -22,7 +22,7 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
 | [**48**](docs/backlog/48-reconciliation-cloud.md) | **Réconciliation cloud ↔ local** (cloud-clobber) — *bloquant #54* | ⚙️ | 5 | M | ⭐ | ✅ |
-| [**49**](docs/backlog/49-terrain-unifie.md) | **Une seule base** — robots coupés, tables de l'ancien monde jetées, TSXV supprimé, remplissage TSX par volume sous 450 Mo | ⚙️ | 8 | L | ⭐ | 🏗️ |
+| [**49**](docs/backlog/49-terrain-unifie.md) | **Une seule base** — robots coupés, ancien monde jeté, 907 titres / 650 à historique complet + 20 ETF de référence | ⚙️ | 8 | L | ⭐ | 🧪 |
 | [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | ⏸️ |
 | [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | ⏸️ |
 | [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte, accord de Jean requis* | 💼 | 8 | L | ⭐ | ⏸️ |

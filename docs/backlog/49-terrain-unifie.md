@@ -134,9 +134,44 @@ Postgres sachant lire un index à l'envers) : index de `bars` 137 → 61 Mo.
 **Fonction temporaire** `public.suivi_remplissage()` (SECURITY DEFINER, exécutable par `anon`) créée
 pour suivre l'avancement depuis le terminal — **à supprimer une fois le remplissage terminé**.
 
-### Reste à faire
-- [ ] Supprimer le cron `remplissage-tsx` et la fonction `suivi_remplissage()` à la fin.
-- [ ] `VACUUM FULL` final.
-- [ ] **Étape 5** — supprimer le projet Swing Mastery (bouton côté Jean).
+### Résultat final — 22 août 2026, terminé
+
+**Le remplissage s'est arrêté sur le quota, pas sur une erreur** : 763 titres traités, **0 échec**,
+114 non traités. Crons actifs : **0**.
+
+**Le seuil de volume est sorti de la course** : le dernier titre approfondi était `CCL-A.TO` (~20 k$/jour).
+Puis, la base étant trop près du quota (Supabase affichait 95 %), coupe décidée **au rang 650** :
+
+| | |
+|---|---|
+| Titres TSX en base | **877** (tous consultables) |
+| dont **historique complet** | **650** — jusqu'à ~90 k$/jour, dernier `RIIN.TO` |
+| dont ramenés à 8 ans | 113 (rangs 651-763) |
+| dont jamais approfondis | 114 (rangs 764-877) |
+| ETF de référence | **20** |
+| Titres consultés via TVLite | 17 |
+| **Total** | **907 titres · 2 880 374 barres** |
+| Base | **436,7 Mo** (~50 Mo de matelas réutilisable) |
+
+**Références RS chargées** — jeu couvert cohérent : `XIU.TO` (1999), `XIC.TO` (2001), `XSP.TO` (2002,
+S&P 500 couvert), `ZQQ.TO` (2010, Nasdaq 100 couvert). Sectoriels : `XFN`, `XEG`, `XGD`, `XIT`, `XMA`,
+`XRE`, `XUT`, `XST`, `XHC`. Non couverts en réserve : `VFV`, `HXQ`, `ZNQ`. **Rendement total** (sans
+distribution, donc immunisés au biais dividende) : `HXT`, `HXS`, `HXQ`.
+
+### Deux pièges rencontrés, à retenir
+- **`VACUUM FULL` double temporairement la table** (copie neuve avant suppression de l'ancienne).
+  La sonde de Supabase a capté ce pic et affiché **473 Mo alors que Postgres en rapportait 437**.
+  Ne pas paniquer sur ce chiffre — et **ne pas compacter quand on est déjà près du quota**.
+- **Supprimer sans compacter** est la bonne manœuvre près du plafond : l'espace devient réutilisable
+  en interne, la base cesse de croître, et il n'y a aucun pic.
+
+### Étape 5 — ANNULÉE
+Jean garde le projet Swing Mastery : 0,03 Go seulement, et il conserve des liens vers d'autres projets.
+
+### Reste à faire (hors de ce ticket)
+- [ ] **Rafraîchissement des cours** — tous les robots sont coupés, les données sont figées au 21/08.
+      À remettre avant toute analyse mensuelle. *Le plus urgent.*
+- [ ] Trancher `adj_close` (dividendes) — **avant** le RS, c'est lui qui en souffre le plus.
+- [ ] Ajouter le **RS** dans TVLite (données prêtes).
 - [ ] Rattraper `BLX.TO`, absent de `bars`.
-- [ ] Prévoir un rafraîchissement mensuel des cours (l'ancien `backfill-ca` est coupé) — sinon les données vieillissent.
+- [ ] Vérifier à la main le correctif « trait droit avec shift » (non vérifiable par le harnais).
