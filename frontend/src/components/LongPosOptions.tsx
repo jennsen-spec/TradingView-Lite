@@ -8,21 +8,18 @@ import ColorButton from "./ColorButton";
 
 type Tab = "input" | "style" | "visibility";
 
-// UTCTimestamp (s) <-> valeur d'un <input type="date">.
-// Lu et ecrit en UTC : une barre journaliere est horodatee a minuit UTC, donc en heure
-// locale (Montreal) elle tomberait la veille et le champ afficherait un jour de moins.
-const toDateInput = (sec: number) => {
+// UTCTimestamp (s) <-> valeur d'un <input type="datetime-local"> (avec secondes).
+// Tout est lu et ecrit en UTC, comme l'axe du graphique (voir lib/timeFormat.ts) : une
+// barre journaliere est horodatee a minuit UTC et s'affiche donc au bon jour, a 00:00:00.
+const toDtInput = (sec: number) => {
   const dt = new Date(sec * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth() + 1)}-${p(dt.getUTCDate())}`;
+  return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth() + 1)}-${p(dt.getUTCDate())}`
+    + `T${p(dt.getUTCHours())}:${p(dt.getUTCMinutes())}:${p(dt.getUTCSeconds())}`;
 };
-// Ne remplace que le jour : l'heure de la borne est conservee (utile en intraday).
-const fromDateInput = (v: string, sec: number): number | null => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
-  if (!m) return null;
-  const dt = new Date(sec * 1000);
-  dt.setUTCFullYear(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return Math.round(dt.getTime() / 1000);
+const fromDtInput = (v: string): number | null => {
+  const ms = Date.parse(`${v}Z`); // le "Z" force l'interpretation en UTC
+  return Number.isNaN(ms) ? null : Math.round(ms / 1000);
 };
 
 interface Props {
@@ -35,6 +32,7 @@ interface Props {
 // Dialogue de la Position longue : Paramètres en Entrée (dimensionnement) + Style + Visibilité.
 export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }: Props) {
   const [tab, setTab] = useState<Tab>("input");
+  const [brouillon, setBrouillon] = useState<{ i: number; v: string; err: boolean } | null>(null);
   const L = d.long!;
   const ts = L.tickSize || 0.01;
   const st = longPosStats(L);
@@ -46,9 +44,16 @@ export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }:
   const setEntry = (entry: number) => onChange({ ...d, long: { ...L, entry }, points: d.points.map((p) => ({ ...p, price: entry })) });
   const num = (v: string, fallback: number) => { const n = Number(v); return Number.isNaN(n) ? fallback : n; };
   // Bornes horizontales du bloc : points[0] = debut, points[1] = fin.
+  // Une saisie refusee reste affichee dans le champ (brouillon) au lieu d'etre avalee ;
+  // seule une borne valide est reportee sur le dessin.
+  const valBorne = (i: number) =>
+    brouillon?.i === i ? brouillon.v : (d.points[i] ? toDtInput(d.points[i].time) : "");
   const setTime = (i: number, v: string) => {
-    const t = fromDateInput(v, d.points[i]?.time ?? 0);
-    if (t == null) return;
+    const t = fromDtInput(v);
+    const autre = d.points[1 - i]?.time;
+    if (t == null || autre == null) { setBrouillon({ i, v, err: false }); return; } // saisie en cours
+    if (i === 0 ? t >= autre : t <= autre) { setBrouillon({ i, v, err: true }); return; }
+    setBrouillon(null);
     onChange({ ...d, points: d.points.map((p, j) => (j === i ? { ...p, time: t } : p)) });
   };
 
@@ -111,11 +116,20 @@ export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }:
 
             <div className="is-section">Période</div>
             <div className="lp-row"><label>Début</label>
-              <input type="date" value={d.points[0] ? toDateInput(d.points[0].time) : ""} onChange={(e) => setTime(0, e.target.value)} />
+              <input
+                type="datetime-local" step="1" value={valBorne(0)}
+                max={d.points[1] ? toDtInput(d.points[1].time - 1) : undefined}
+                onChange={(e) => setTime(0, e.target.value)}
+              />
             </div>
             <div className="lp-row"><label>Fin</label>
-              <input type="date" value={d.points[1] ? toDateInput(d.points[1].time) : ""} onChange={(e) => setTime(1, e.target.value)} />
+              <input
+                type="datetime-local" step="1" value={valBorne(1)}
+                min={d.points[0] ? toDtInput(d.points[0].time + 1) : undefined}
+                onChange={(e) => setTime(1, e.target.value)}
+              />
             </div>
+            {brouillon?.err && <div className="lp-err">La fin doit être postérieure au début.</div>}
 
             <div className="lp-stats">
               <span>R:R <b>{st.rr.toFixed(2)}</b></span>
