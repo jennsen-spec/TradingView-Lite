@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "maj": "2026-08-23",
+  "repartition_apports": {
+    "commentaire": "Découpe de CHAQUE APPORT de Jean — jamais des avoirs détenus. Aucun rééquilibrage : les poches dérivent librement ensuite. Modifiable (100 % duo un jour).",
+    "duo": 0.3,
+    "ZEQT.TO": 0.4,
+    "HXS.TO": 0.15,
+    "VMO.TO": 0.15
+  },
+  "regles": {
+    "jeu": "c-duo-plaf5-p1",
+    "lignes": 10,
+    "plafond_secteur": 5,
+    "candidats_affiches_par_secteur": 10,
+    "exclure_cdr": false,
+    "cdr": [
+      "AAPL.TO",
+      "AMD.TO",
+      "AMZN.TO",
+      "COST.TO",
+      "CSCO.TO",
+      "GOOG.TO",
+      "HOOD.TO",
+      "LLY.TO",
+      "MA.TO",
+      "META.TO",
+      "MSFT.TO",
+      "NFLX.TO",
+      "NVDA.TO",
+      "TSLA.TO"
+    ],
+    "commentaire_cdr": "Certificats canadiens (Cboe Canada) adosses a une action americaine, en CAD. RY/TD/LSPD n'y sont PAS : vraies societes canadiennes cotees aussi a New York. Quatre seulement entrent dans l'univers du duo : AAPL, AMD, MSFT, NVDA."
+  },
+  "poche_duo": {
+    "montant_initial": 15000,
+    "date_initiale": null,
+    "liquidites": 0
+  },
+  "etf": {
+    "commentaire": "EN ATTENTE — parts détenues. Jean doit d'abord acheter (retour semaine du 31/08).",
+    "ZEQT.TO": {
+      "parts": null,
+      "liquidites": 0
+    },
+    "HXS.TO": {
+      "parts": null,
+      "liquidites": 0
+    },
+    "VMO.TO": {
+      "parts": null,
+      "liquidites": 0
+    }
+  },
+  "apports": [],
+  "cycles": [],
+  "derogations": []
+}
