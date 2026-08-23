@@ -8,6 +8,23 @@ import ColorButton from "./ColorButton";
 
 type Tab = "input" | "style" | "visibility";
 
+// UTCTimestamp (s) <-> valeur d'un <input type="date">.
+// Lu et ecrit en UTC : une barre journaliere est horodatee a minuit UTC, donc en heure
+// locale (Montreal) elle tomberait la veille et le champ afficherait un jour de moins.
+const toDateInput = (sec: number) => {
+  const dt = new Date(sec * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth() + 1)}-${p(dt.getUTCDate())}`;
+};
+// Ne remplace que le jour : l'heure de la borne est conservee (utile en intraday).
+const fromDateInput = (v: string, sec: number): number | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!m) return null;
+  const dt = new Date(sec * 1000);
+  dt.setUTCFullYear(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Math.round(dt.getTime() / 1000);
+};
+
 interface Props {
   drawing: Drawing;
   onChange: (d: Drawing) => void;
@@ -28,6 +45,12 @@ export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }:
   // Prix d'entrée : synchronise aussi le prix des points (ancrage sur l'axe).
   const setEntry = (entry: number) => onChange({ ...d, long: { ...L, entry }, points: d.points.map((p) => ({ ...p, price: entry })) });
   const num = (v: string, fallback: number) => { const n = Number(v); return Number.isNaN(n) ? fallback : n; };
+  // Bornes horizontales du bloc : points[0] = debut, points[1] = fin.
+  const setTime = (i: number, v: string) => {
+    const t = fromDateInput(v, d.points[i]?.time ?? 0);
+    if (t == null) return;
+    onChange({ ...d, points: d.points.map((p, j) => (j === i ? { ...p, time: t } : p)) });
+  };
 
   return (
     <div className="is-modal lp-modal">
@@ -84,6 +107,14 @@ export default function LongPosOptions({ drawing: d, onChange, onCancel, onOk }:
             </div>
             <div className="lp-row"><label>Prix</label>
               <input type="number" step="any" value={L.stop} onChange={(e) => setL({ stop: num(e.target.value, L.stop) })} />
+            </div>
+
+            <div className="is-section">Période</div>
+            <div className="lp-row"><label>Début</label>
+              <input type="date" value={d.points[0] ? toDateInput(d.points[0].time) : ""} onChange={(e) => setTime(0, e.target.value)} />
+            </div>
+            <div className="lp-row"><label>Fin</label>
+              <input type="date" value={d.points[1] ? toDateInput(d.points[1].time) : ""} onChange={(e) => setTime(1, e.target.value)} />
             </div>
 
             <div className="lp-stats">
