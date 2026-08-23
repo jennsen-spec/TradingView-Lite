@@ -19,6 +19,22 @@ const fmtVol = (v: number) => {
   return s ? `${(v / d).toFixed(1).replace(".", ",")} ${s}` : String(Math.round(v));
 };
 
+// Icones des actions de ligne (revelees au survol).
+const IconEtiquette = () => (
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" />
+    <circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none" />
+  </svg>
+);
+const IconPoubelle = () => (
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+    <path d="M10 11v5M14 11v5" />
+  </svg>
+);
+
 // Marqueurs de couleur (flags) et colonnes optionnelles.
 const FLAG_COLORS = ["#ef5350", "#ff9800", "#26a69a", "#3f8cff", "#9c27b0", "#26c6da"];
 interface ColConfig { last: boolean; volume: boolean; }
@@ -285,7 +301,20 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
               );
             })()}
           </button>
-          <button className="wl-remove" title="Retirer de la collection" onClick={() => removeItem(item.id)}>−</button>
+          <div className="wl-row-actions">
+            <button
+              className="wl-act" title="Étiquette" aria-label={`Étiquette de ${sym}`}
+              onClick={() => { /* #57 — fonctionnalite a brancher */ }}
+            >
+              <IconEtiquette />
+            </button>
+            <button
+              className="wl-act wl-act-del" title="Retirer de la collection"
+              aria-label={`Retirer ${sym} de la collection`} onClick={() => removeItem(item.id)}
+            >
+              <IconPoubelle />
+            </button>
+          </div>
         </div>
       );
     }

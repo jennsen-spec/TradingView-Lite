@@ -2023,6 +2023,7 @@ body {
   transform: rotate(-90deg);
 }
 .wl-row {
+  position: relative; /* ancre .wl-row-actions, pose en surimpression */
   display: flex;
   align-items: center;
   border-radius: 8px;
@@ -2102,20 +2103,48 @@ body {
   padding: 0;
 }
 .wl-col-chg:hover { color: var(--text); }
-.wl-remove {
-  width: 34px;
-  flex-shrink: 0;
+/* Actions de ligne : masquees au repos (on ne voit que prix + variation), revelees au
+   survol. Posees en surimpression comme sur TradingView, avec un degrade qui efface
+   proprement les chiffres au lieu de decaler la ligne. */
+.wl-row-actions {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  bottom: 1px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px 0 22px;
+  border-radius: 0 8px 8px 0;
+  background: linear-gradient(to right, transparent, var(--surface-2) 20px);
+}
+.wl-row:hover .wl-row-actions,
+.wl-row:focus-within .wl-row-actions {
+  display: flex;
+}
+/* --accent-soft est translucide (16 %) : empile sur une base opaque, sinon la
+   variation transparait sous les icones. --bg = fond du volet (.wl-panel). */
+.wl-row.active .wl-row-actions {
+  background:
+    linear-gradient(to right, transparent, var(--accent-soft) 20px),
+    linear-gradient(to right, transparent, var(--bg) 20px);
+}
+.wl-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
   background: none;
   border: none;
+  border-radius: 6px;
   color: var(--text-muted);
-  font-size: 18px;
-  line-height: 1;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 0;
 }
-.wl-remove:hover {
-  color: #ef5350;
-}
+.wl-act:hover { color: var(--text-strong); background: var(--surface-3, rgba(127, 127, 127, 0.14)); }
+.wl-act-del:hover { color: #ef5350; }
 /* Drag & drop de réordonnancement. */
 .wl-cat-head[draggable="true"],
 .wl-row[draggable="true"] {
