@@ -6,7 +6,7 @@ import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings"
 import { fmtTimeByInterval } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
-  newTrend, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
 import { applyTemplateDefault } from "../lib/templates";
 
@@ -123,6 +123,7 @@ export default function DrawingLayer({
   // Temps des bougies (secondes) pour l'interpolation temps <-> logical (ancrage cross-intervalle).
   const candleTimes = useMemo(() => candles.map((c) => tsOf(c.time)), [candles]);
   const candleTimesRef = useRef(candleTimes); candleTimesRef.current = candleTimes;
+  const candlesRef = useRef(candles); candlesRef.current = candles;
 
   // Persistance par symbole (symbole constant pour l'instance grâce à key={symbol} côté Chart).
   useEffect(() => { saveDrawings(symbol, drawings); }, [symbol, drawings]);
@@ -213,6 +214,32 @@ export default function DrawingLayer({
     if (x == null || y == null) return null;
     return { x, y: (y as number) + box.top };
   };
+  // --- Divergence (#57) ---
+  // La fleche du prix ne stocke aucun prix : on relit la bougie a chaque rendu. En passant
+  // en hebdomadaire l'ancrage suit donc le haut (ou le bas) de la SEMAINE.
+  const bougieA = (time: number): Candle | null => {
+    const list = candlesRef.current;
+    const n = list.length;
+    if (n === 0) return null;
+    const i = Math.max(0, Math.min(n - 1, Math.round(timeToLogical(time))));
+    return list[i] ?? null;
+  };
+  // Les deux bouts de la fleche miroir, accroches aux sommets ou aux creux.
+  const bornesPrix = (d: Drawing): [DPoint, DPoint] | null => {
+    const c0 = bougieA(d.points[0]?.time), c1 = bougieA(d.points[1]?.time);
+    if (!c0 || !c1) return null;
+    const haut = divergenceAnchor(d) === "high";
+    return [
+      { time: d.points[0].time, price: haut ? c0.high : c0.low },
+      { time: d.points[1].time, price: haut ? c1.high : c1.low },
+    ];
+  };
+  // Meme couleur des deux cotes = pas de divergence ; couleurs opposees = divergence.
+  const couleurPente = (d: Drawing, p0: DPoint, p1: DPoint) => {
+    const c = d.divergence ?? defaultDivergence();
+    return p1.price >= p0.price ? c.upColor : c.downColor;
+  };
+
   // Pixel -> point de données + panneau. `forcePane` verrouille le panneau (tracé/drag en cours).
   const pxToData = (clientX: number, clientY: number, forcePane?: number): (DPoint & { pane: number }) | null => {
     const wrap = wrapRef.current; const c = chartRef.current;
@@ -242,6 +269,16 @@ export default function DrawingLayer({
         const x = logicalToX(timeToLogical(d.points[0].time));
         if (x != null && Math.abs(mx - x) <= SEG_HIT) return { id: d.id, part: "seg" };
         continue;
+      }
+      // Divergence : la fleche miroir selectionne la paire, mais ne se deplace pas
+      // directement (ses prix sont derives) — on renvoie "seg", jamais une poignee.
+      if (d.type === "divergence") {
+        const m = bornesPrix(d);
+        if (m) {
+          const a = dataToPx(m[0], 0), b = dataToPx(m[1], 0);
+          if (a && b && distToSegment(mx, my, a.x, a.y, b.x, b.y) <= SEG_HIT) return { id: d.id, part: "seg" };
+        }
+        // …puis le test normal sur la fleche de l'indicateur (poignees comprises).
       }
       if (d.type === "brush") {
         const pts = d.points.map((p) => dataToPx(p, d.pane));
@@ -381,11 +418,14 @@ export default function DrawingLayer({
 
       const tool = toolRef.current;
       // Mode dessin 2 points (Trait / Flèche / Fibonacci / Rectangle) : 1er clic démarre, 2e finalise.
-      if (tool === "trend" || tool === "arrow" || tool === "fib" || tool === "rect") {
+      if (tool === "trend" || tool === "arrow" || tool === "fib" || tool === "rect" || tool === "divergence") {
         const dr = draftRef.current;
         // 2e clic : on verrouille le panneau du 1er point pour rester dans le même sous-graphe.
         const raw = pxToData(e.clientX, e.clientY, dr ? dr.pane : undefined);
         if (!raw) return;
+        // La divergence se trace DANS un indicateur : un clic sur le titre ne fait rien
+        // (l'outil reste arme plutot que de poser un dessin qui ne montrerait rien).
+        if (tool === "divergence" && raw.pane === 0) return;
         e.preventDefault(); e.stopPropagation();
         // Shift pendant le tracé → 2e point au prix du 1er (ligne horizontale) ; pas pour le rectangle.
         const pt = e.shiftKey && dr && tool !== "rect" ? { ...raw, price: dr.p0.price } : raw;
@@ -396,6 +436,8 @@ export default function DrawingLayer({
             d = applyTemplateDefault(newFib(dr.p0, pt, dr.pane));
           } else if (tool === "rect") {
             d = applyTemplateDefault(newRect(dr.p0, pt, dr.pane));
+          } else if (tool === "divergence") {
+            d = newDivergence(dr.p0, pt, dr.pane); // couleurs pilotees par la pente, pas par un modele
           } else {
             d = applyTemplateDefault(newTrend(dr.p0, pt, tool === "arrow" ? "arrow" : "normal", dr.pane));
             if (tool === "arrow") d = { ...d, style: { ...d.style, rightCap: "arrow" } }; // l'outil Flèche impose l'embout
@@ -1095,6 +1137,34 @@ export default function DrawingLayer({
     );
   };
 
+  // Divergence (#57) : deux fleches liees. `miroir` = celle du panneau du titre, dont
+  // les prix ne sont pas stockes mais relus sur les bougies.
+  const renderDivergence = (d: Drawing, miroir: boolean) => {
+    if (!visibleForInterval(interval, d.visibility)) return null;
+    const pts = miroir ? bornesPrix(d) : [d.points[0], d.points[1]];
+    if (!pts || !pts[0] || !pts[1]) return null;
+    const pane = miroir ? 0 : d.pane;
+    const a = dataToPx(pts[0], pane), b = dataToPx(pts[1], pane);
+    if (!a || !b) return null;
+    const col = couleurPente(d, pts[0], pts[1]);
+    const sel = selectedSet.has(d.id);
+    return (
+      <g key={`${d.id}${miroir ? "-m" : ""}`}>
+        <line
+          x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={col} strokeWidth={d.style.width}
+          strokeDasharray={dashOf(d.style.lineStyle)} strokeLinecap="round"
+        />
+        <polygon points={arrowPts(b, a)} fill={col} />
+        {sel && (
+          <>
+            <circle cx={a.x} cy={a.y} r={5} className="draw-handle" />
+            <circle cx={b.x} cy={b.y} r={5} className="draw-handle" />
+          </>
+        )}
+      </g>
+    );
+  };
+
   // Surligneur (#35) : polyligne épaisse semi-transparente.
   const renderBrush = (d: Drawing) => {
     if (!visibleForInterval(interval, d.visibility)) return null;
@@ -1206,6 +1276,9 @@ export default function DrawingLayer({
               {drawings.filter((d) => d.type === "longpos" && (d.pane ?? 0) === logique).map(renderLongPos)}
               {drawings.filter((d) => d.type === "rect" && (d.pane ?? 0) === logique).map(renderRect)}
               {drawings.filter((d) => d.type === "trend" && (d.pane ?? 0) === logique).map(renderTrend)}
+              {drawings.filter((d) => d.type === "divergence" && (d.pane ?? 0) === logique).map((d) => renderDivergence(d, false))}
+              {/* Le miroir vit dans le panneau du titre, quel que soit le panneau d'ancrage. */}
+              {logique === 0 && drawings.filter((d) => d.type === "divergence" && (d.pane ?? 0) !== 0).map((d) => renderDivergence(d, true))}
               {draft && draft.pane === logique && (() => {
                 const a = dataToPx(draft.p0, draft.pane); const b = dataToPx(draft.p1, draft.pane);
                 if (!a || !b) return null;

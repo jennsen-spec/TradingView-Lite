@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Outils de la barre (concept UI : "arrow" = trait à embout flèche ; le reste = types de dessin).
-export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect";
+export type Tool = "cursor" | "trend" | "arrow" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect" | "divergence";
 
 interface ToolDef {
   key: Tool;
@@ -38,6 +38,17 @@ const TOOLS: ToolDef[] = [
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="4" y1="20" x2="19" y2="5" />
         <polyline points="11 4 20 4 20 13" />
+      </svg>
+    ),
+  },
+  {
+    key: "divergence",
+    label: "Divergence (prix ↔ indicateur)",
+    icon: (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="4" y1="14" x2="19" y2="5" />
+        <polyline points="13 4 20 4 20 11" />
+        <line x1="4" y1="15" x2="20" y2="21" strokeDasharray="3 3" opacity="0.55" />
       </svg>
     ),
   },

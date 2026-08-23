@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PALETTE, LINE_STYLES } from "../lib/indicatorSettings";
 import type { Drawing, DrawingStyle, CapStyle, DPoint, TextConfig, MeasureConfig } from "../lib/drawings";
-import { CHANNEL_LEVELS, BRUSH_WIDTHS, defaultMeasure, drawingDefaultKey } from "../lib/drawings";
+import { CHANNEL_LEVELS, BRUSH_WIDTHS, defaultMeasure, drawingDefaultKey, defaultDivergence } from "../lib/drawings";
 import { templateFromDrawing, applyTemplate, factoryTemplate } from "../lib/templates";
 import VisibilityEditor from "./VisibilityEditor";
 import TemplateMenu from "./TemplateMenu";
@@ -163,7 +163,44 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
       <div className="is-body">
         {tab === "style" && (
           <>
-            <div className="is-section">Couleur</div>
+            {d.type === "divergence" && (
+              <>
+                <div className="is-section">Accrochage sur le prix</div>
+                <div className="is-choices">
+                  {([
+                    ["auto", "Auto"],
+                    ["high", "Sommets"],
+                    ["low", "Creux"],
+                  ] as const).map(([v, lbl]) => (
+                    <button
+                      key={v}
+                      className={`is-choice${(d.divergence ?? defaultDivergence()).anchor === v ? " sel" : ""}`}
+                      title={v === "auto" ? "La pente tracée décide : descendante → sommets, montante → creux" : undefined}
+                      onClick={() => onChange({ ...d, divergence: { ...(d.divergence ?? defaultDivergence()), anchor: v } })}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                <div className="is-section">Couleurs de pente</div>
+                <div className="is-field">
+                  <label>Montante</label>
+                  <input
+                    type="color" value={(d.divergence ?? defaultDivergence()).upColor}
+                    onChange={(e) => onChange({ ...d, divergence: { ...(d.divergence ?? defaultDivergence()), upColor: e.target.value } })}
+                  />
+                </div>
+                <div className="is-field">
+                  <label>Descendante</label>
+                  <input
+                    type="color" value={(d.divergence ?? defaultDivergence()).downColor}
+                    onChange={(e) => onChange({ ...d, divergence: { ...(d.divergence ?? defaultDivergence()), downColor: e.target.value } })}
+                  />
+                </div>
+                <div className="is-section">Trait</div>
+              </>
+            )}
+            {d.type !== "divergence" && <div className="is-section">Couleur</div>}
             <div className="is-swatches">
               {PALETTE.map((c) => (
                 <button

@@ -3,7 +3,7 @@
 import type { Visibility, LineStyleName } from "./indicatorSettings";
 import { syncToCloud } from "./cloudPrefs";
 
-export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect";
+export type DrawingType = "trend" | "vline" | "channel" | "brush" | "fib" | "longpos" | "rect" | "divergence";
 export type CapStyle = "normal" | "arrow"; // embout d'un trait
 
 // Niveaux d'offset optionnels d'un canal (fractions de la largeur ; 0 et 1 = les 2 bords).
@@ -188,6 +188,7 @@ export interface Drawing {
   channelOffset?: number; // canal : décalage de prix définissant la parallèle
   fib?: FibConfig; // retracement de Fibonacci
   long?: LongPosConfig; // position longue (entrée / objectif / stop)
+  divergence?: DivergenceConfig; // divergence (#57) : ancrage + couleurs de pente
   measure?: MeasureConfig; // flèche : mesure (variation % + durée)
   pane?: number; // panneau d'ancrage (0=prix, 1=volume, 2=RSI) ; absent = 0 (compat)
   style: DrawingStyle;
@@ -218,6 +219,47 @@ export const defaultTrendStyle = (): DrawingStyle => ({
 let idSeq = 0;
 export const genDrawingId = () => `d-${Date.now().toString(36)}-${(idSeq++).toString(36)}`;
 const genId = genDrawingId;
+
+// --- Divergence (#57) : une fleche dans un panneau d'indicateur + son miroir sur le prix ---
+// Seule particularite du modele : la fleche du prix ne stocke aucun prix. Elle n'a que les
+// deux dates de `points` et se raccroche a la bougie a l'affichage — donc en hebdomadaire
+// elle suit le haut (ou le bas) de la SEMAINE, pas celui du jour d'origine.
+export interface DivergenceConfig {
+  anchor: "auto" | "high" | "low"; // auto : pente descendante → sommets, montante → creux
+  upColor: string;                 // pente haussiere
+  downColor: string;               // pente baissiere
+}
+export const defaultDivergence = (): DivergenceConfig => ({
+  anchor: "auto",
+  upColor: "#3f8cff",
+  downColor: "#ef5350",
+});
+
+// Ancrage effectif d'une divergence : sommets ou creux des bougies.
+// En auto, c'est la pente TRACEE dans l'indicateur qui decide — tracer sur les sommets
+// du RSI (pente descendante) doit raccrocher aux sommets du prix.
+export function divergenceAnchor(d: Drawing): "high" | "low" {
+  const c = d.divergence ?? defaultDivergence();
+  if (c.anchor !== "auto") return c.anchor;
+  const [a, b] = d.points;
+  if (!a || !b) return "high";
+  return b.price >= a.price ? "low" : "high";
+}
+
+export function newDivergence(p0: DPoint, p1: DPoint, pane: number): Drawing {
+  return {
+    id: genId(),
+    type: "divergence",
+    points: [p0, p1],
+    pane,
+    divergence: defaultDivergence(),
+    style: { ...defaultTrendStyle(), width: 2, rightCap: "arrow" },
+    text: defaultText(),
+    visibility: defaultVisibility(),
+    locked: false,
+    title: "Divergence",
+  };
+}
 
 export function newTrend(p0: DPoint, p1: DPoint, rightCap: CapStyle = "normal", pane = 0): Drawing {
   return {
