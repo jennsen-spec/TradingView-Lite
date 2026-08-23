@@ -37,6 +37,11 @@ const IconPoubelle = () => (
 
 // Marqueurs de couleur (flags) et colonnes optionnelles.
 const FLAG_COLORS = ["#ef5350", "#ff9800", "#26a69a", "#3f8cff", "#9c27b0", "#26c6da"];
+// Derniere couleur choisie : re-appliquee directement au clic sur l'etiquette.
+const LAST_FLAG_KEY = "tvlike:wl-last-flag";
+const loadLastFlag = (): string => {
+  try { return localStorage.getItem(LAST_FLAG_KEY) || FLAG_COLORS[0]; } catch { return FLAG_COLORS[0]; }
+};
 interface ColConfig { last: boolean; volume: boolean; }
 const COLS_KEY = "tvlike:wl-columns";
 const loadCols = (): ColConfig => {
@@ -69,7 +74,8 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [secMenu, setSecMenu] = useState<{ id: string; x: number; y: number } | null>(null);
-  const [flagMenu, setFlagMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [flagMenu, setFlagMenu] = useState<{ id: string; x: number; y: number; pastille?: boolean } | null>(null);
+  const [lastFlag, setLastFlagState] = useState<string>(loadLastFlag);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [sortDir, setSortDir] = useState<SortDir>("none");
   const [cols, setCols] = useState<ColConfig>(loadCols);
@@ -97,7 +103,7 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   useEffect(() => {
     if (!nameMenu && !dotsMenu && !secMenu && !flagMenu) return;
     const onDoc = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest(".wl-menu, .wl-title, .wl-dots-wrap")) {
+      if (!(e.target as HTMLElement).closest(".wl-menu, .wl-flag-pastille, .wl-title, .wl-dots-wrap")) {
         setNameMenu(false);
         setDotsMenu(false);
         setSecMenu(null);
@@ -111,6 +117,11 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const setColumns = (c: ColConfig) => { setCols(c); saveCols(c); };
   const setFlag = (itemId: string, color: string | null) =>
     updateCur((coll) => ({ ...coll, items: coll.items.map((i) => (i.id === itemId ? { ...i, flag: color ?? undefined } : i)) }));
+  // Ecrit seulement sur action de l'utilisateur (jamais au montage) : voir #48.
+  const setLastFlag = (c: string) => {
+    setLastFlagState(c);
+    try { localStorage.setItem(LAST_FLAG_KEY, c); syncToCloud(LAST_FLAG_KEY); } catch { /* ignore */ }
+  };
 
   const cur = collections.find((c) => c.id === currentId) ?? collections[0];
   const favorites = collections.filter((c) => c.favorite);
@@ -287,7 +298,6 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
             title={`Afficher ${sym} · clic droit = marqueur`}
           >
             <SymbolLogo symbol={sym} />
-            {item.flag && <span className="wl-flag" style={{ background: item.flag }} />}
             <span className="wl-sym">{sym}</span>
             {(() => {
               const q = quotes[sym.toUpperCase()];
@@ -301,10 +311,18 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
               );
             })()}
           </button>
+          {item.flag && <span className="wl-ruban" style={{ background: item.flag }} />}
           <div className="wl-row-actions">
             <button
-              className="wl-act" title="Étiquette" aria-label={`Étiquette de ${sym}`}
-              onClick={() => { /* #57 — fonctionnalite a brancher */ }}
+              className="wl-act" style={item.flag ? { color: item.flag } : undefined}
+              title={item.flag ? "Retirer l'étiquette" : "Étiqueter"}
+              aria-label={`${item.flag ? "Retirer l'étiquette de" : "Étiqueter"} ${sym}`}
+              onClick={(e) => {
+                if (item.flag) { setFlag(item.id, null); setFlagMenu(null); return; } // deja etiquete → on retire
+                setFlag(item.id, lastFlag); // applique la derniere couleur…
+                const r = (e.currentTarget.closest(".wl-row") as HTMLElement).getBoundingClientRect();
+                setFlagMenu({ id: item.id, x: r.left + 8, y: r.top + 2, pastille: true }); // …et propose la palette
+              }}
             >
               <IconEtiquette />
             </button>
@@ -444,11 +462,25 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
         </div>
       )}
 
-      {flagMenu && (
+      {flagMenu?.pastille && (
+        <div className="wl-flag-pastille" style={{ position: "fixed", top: flagMenu.y, left: flagMenu.x }}>
+          {FLAG_COLORS.map((c) => {
+            const actif = cur.items.find((i) => i.id === flagMenu.id)?.flag === c;
+            return (
+              <button
+                key={c} className={`wl-flag-sw${actif ? " sel" : ""}`} style={{ background: c }}
+                title="Couleur de l'étiquette" aria-label={`Couleur ${c}`}
+                onClick={() => { setFlag(flagMenu.id, c); setLastFlag(c); setFlagMenu(null); }}
+              />
+            );
+          })}
+        </div>
+      )}
+      {flagMenu && !flagMenu.pastille && (
         <div className="wl-menu wl-ctx wl-flag-menu" style={{ position: "fixed", top: flagMenu.y, right: window.innerWidth - flagMenu.x }}>
           <div className="wl-flag-swatches">
             {FLAG_COLORS.map((c) => (
-              <button key={c} className="wl-flag-sw" style={{ background: c }} title="Marquer" onClick={() => { setFlag(flagMenu.id, c); setFlagMenu(null); }} />
+              <button key={c} className="wl-flag-sw" style={{ background: c }} title="Marquer" onClick={() => { setFlag(flagMenu.id, c); setLastFlag(c); setFlagMenu(null); }} />
             ))}
           </div>
           <button className="wl-menu-item" onClick={() => { setFlag(flagMenu.id, null); setFlagMenu(null); }}>Retirer le marqueur</button>

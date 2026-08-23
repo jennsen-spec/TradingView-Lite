@@ -2224,12 +2224,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 /* --- Flags & colonnes (Phase C) --- */
-.wl-flag {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex: none;
-  margin-left: -2px;
+/* Etiquette : ruban colle au bord gauche de la ligne (facon TradingView), pose en
+   surimpression pour ne pas decaler le logo ni le ticker. */
+.wl-ruban {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 17px;
+  border-radius: 2px 0 0 2px;
+  pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 62% 50%, 100% 100%, 0 100%);
 }
 .wl-cols-right {
   display: flex;
@@ -2281,6 +2287,22 @@ body {
 .wl-flag-sw:hover {
   outline: 2px solid var(--text-muted);
   outline-offset: 1px;
+}
+/* Couleur actuellement portee par la ligne : anneau facon TradingView. */
+.wl-flag-sw.sel {
+  box-shadow: inset 0 0 0 2px var(--surface), inset 0 0 0 3px currentColor;
+}
+/* Palette ouverte par l'icone etiquette : bandeau pose sur la ligne. */
+.wl-flag-pastille {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  z-index: 60;
 }
 
 /* Titre (menu) + menu ⋯ + inputs inline. */
