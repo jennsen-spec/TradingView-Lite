@@ -12,10 +12,9 @@ TradingView allégé, mono-utilisateur (frontend React+TS+Vite `frontend/` · ba
 Statuts d'un ticket : 📥 Backlog → 🔍 Affiné → 🏗️ En cours → 🧪 À valider (UAT) → ✅ Fait.
 
 - **Refinement (grooming)** : Jean décrit ce qu'il veut → tu proposes un plan → il valide → **TU écris le ticket affiné** dans `docs/backlog/<id>-<slug>.md` (à partir du modèle). Rester court (~½ page). Objectif + critères d'acceptation + décisions + questions ouvertes + plan technique.
-- **Sprint** (dans la conversation principale) : **RÈGLE — ne JAMAIS démarrer un ticket de toi-même.** Un ticket *Affiné* reste *Affiné* tant que Jean n'a pas dit explicitement « on sprinte le #X ». Implémente **contre les critères d'acceptation** (= definition of done + grille UAT), puis passe le ticket À valider.
+- **Sprint** (n'importe quelle conversation) : **RÈGLE — ne JAMAIS démarrer un ticket de toi-même.** Un ticket *Affiné* reste *Affiné* tant que Jean n'a pas dit explicitement « on sprinte le #X ». Implémente **contre les critères d'acceptation** (= definition of done + grille UAT), puis passe le ticket À valider.
 - **UAT** : Jean valide contre les critères d'acceptation → Fait, ou retour en refinement.
 
 ## Coordination entre conversations
-Plusieurs conversations peuvent tourner en parallèle (ex. une en refinement, une en sprint). Elles se synchronisent **uniquement via les fichiers du dépôt**. Éviter d'écrire le **même fichier** au même moment ; en pratique :
-- **Refinement (nous)** — écrit `docs/backlog/*.md` **et** prononce le **Ready (DoR)** : passe le ticket à 🔍 Affiné dans le ticket **et** dans l'index `ROADMAP.md`. Décider si un ticket est *Ready*, c'est notre rôle.
-- **Sprint / UAT (les autres)** — écrit le code source et fait avancer les statuts d'exécution (🏗️ En cours → 🧪 À valider → ✅ Fait). Le **Done (DoD)** se juge là, pas en refinement.
+Plusieurs conversations peuvent tourner en parallèle. Elles se synchronisent **uniquement via les fichiers du dépôt** ; éviter d'écrire le **même fichier** au même moment.
+**Chaque conversation est autonome sur tout le cycle d'un ticket** : n'importe laquelle peut l'affiner (→ 🔍 Affiné / **DoR**), le sprinter (🏗️ En cours → 🧪 À valider) **et** le clore (→ ✅ Fait / **DoD**). Aucune conversation n'est cantonnée au DoR ni au DoD. Celle qui fait avancer un ticket met à jour **le ticket** `docs/backlog/*.md` **et** l'index `ROADMAP.md`.
