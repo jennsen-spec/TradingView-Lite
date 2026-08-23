@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "labo": "node --disable-warning=ExperimentalWarning labo/src/main.ts"
+    "labo": "node --disable-warning=ExperimentalWarning labo/src/main.ts",
+    "labo:comparer": "node --disable-warning=ExperimentalWarning labo/src/comparer.ts"
   }
 }

@@ -1,0 +1,37 @@
+{
+  "nom": "c-duo-plaf5",
+  "version": 1,
+  "description": "Duo #52 — momentum 12-1 restreint a Industrials + Technology, 10 lignes, interrupteur XSP MM150, plafond 5 par secteur. (La restriction sectorielle est appliquee a l univers, pas par le jeu de regles.)",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 10
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 5,
+    "niveau": "secteur"
+  }
+}

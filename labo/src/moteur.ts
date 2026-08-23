@@ -8,10 +8,24 @@
 //    (même convention que le protocole de référence — voir la critique dans le ticket) ;
 //  - frais : 0,35 % aller-retour comptés à l'ENTRÉE d'un titre dans le portefeuille
 //    (rotation réelle : un titre conservé d'un mois sur l'autre ne paie rien).
+//
+// DÉTENTION PLURI-MENSUELLE (detention_mois > 1) :
+//  - la SÉLECTION est refaite tous les `detention_mois` mois ; la VALORISATION reste
+//    mensuelle. Sans ça, les creux intra-trimestre sortiraient du calcul et la pire
+//    baisse paraîtrait plus douce qu'elle ne l'est — on comparerait des courbes qui ne
+//    se regardent pas au même rythme ;
+//  - entre deux re-sélections les POIDS DÉRIVENT (vraie détention, pas de
+//    ré-équipondération cachée) : le rendement du mois est la moyenne des rendements
+//    pondérée par la valeur courante de chaque ligne ;
+//  - `decalage` fixe le mois de départ du cycle. Avec 3 mois il existe 3 calendriers
+//    possibles ; les comparer est le seul moyen de voir si un résultat tient à la
+//    méthode ou au hasard de la date de départ.
 
-import type { Serie, Univers } from "./data.ts";
+import { dividendesEntre, type Dividendes, type Serie, type Univers } from "./data.ts";
 import { colonne } from "./indicateurs.ts";
 import { comparer, type JeuDeRegles, type Selection } from "./regles.ts";
+import { grouper, secteurDe } from "./secteurs.ts";
+import { serieDePorte } from "./etfSectoriels.ts";
 
 export interface MoisResultat {
   reb: string; // date du signal (clôture)
@@ -25,10 +39,44 @@ export interface MoisResultat {
   frais: number; // en fraction du portefeuille
   net: number;
   investi: boolean;
+  stoppes: number; // titres sortis en cours de mois par le stop
 }
 
 export interface Trace {
   lignes: string[];
+}
+
+// Une ligne en cours de détention. `valeur` dérive avec le cours (poids réels) ;
+// `sortie` est renseignée dès qu'un stop a coupé la ligne — elle reste alors en
+// liquidités jusqu'à la re-sélection suivante.
+interface Position {
+  s: Serie;
+  achatPrix: number;
+  niveauStop: number; // NaN si aucun stop
+  valeur: number;
+  sortie: boolean;
+}
+
+interface Valorisation {
+  achat: { date: string; prix: number };
+  vente: { date: string; prix: number };
+  stoppe: boolean;
+  niveau: number; // niveau de stop retenu (NaN si aucun stop)
+  ret: number; // rendement TOTAL (plus-value + dividendes détachés pendant la détention)
+}
+
+// Pas de cotation du TSX : un demi-cent sous 0,50 $, un cent au-delà. C'est le plus petit
+// écart possible entre le prix acheteur et le prix vendeur — donc le plancher du coût d'un
+// aller-retour, jamais facturé nulle part mais bien perdu dans le prix.
+function pasDeCotation(prix: number): number {
+  return prix < 0.5 ? 0.005 : 0.01;
+}
+
+// Coût d'un aller-retour sur une ligne, en fraction de la mise.
+function coutEntree(regles: JeuDeRegles, prix: number): number {
+  const f = regles.frais_fourchette;
+  if (!f) return regles.frais_aller_retour;
+  return f.commission + (f.ticks * pasDeCotation(prix)) / prix;
 }
 
 function taille(sel: Selection, n: number): number {
@@ -64,20 +112,56 @@ function achatSuivant(s: Serie, d: string): { date: string; prix: number } | nul
   return { date: s.dates[i + 1], prix: s.open[i + 1] };
 }
 
+// Porte d'un secteur : ouverte si l'ETF qui le représente clôture au-dessus de sa
+// moyenne à la date de signal. Moyenne non calculable (ETF trop jeune) → ouverte,
+// faute de quoi on fermerait un secteur pour une raison qui n'est pas le marché.
+function porteOuverte(secteur: string, reb: string, ma: string, refs: Map<string, Serie>): boolean {
+  const s = serieDePorte(secteur, refs);
+  if (!s) return true;
+  let i = s.dates.length - 1;
+  while (i >= 0 && s.dates[i] > reb) i--;
+  if (i < 0) return true;
+  const m = colonne(s, ma)[i];
+  return Number.isNaN(m) ? true : s.close[i] > m;
+}
+
 function indicateurMarche(
   nom: string,
   refs: Map<string, Serie>,
   eligibles: { s: Serie; i: number }[],
   reb: string,
 ): number {
-  if (nom === "xiu_sur_sma200") {
-    const xiu = refs.get("XIU.TO");
-    if (!xiu) return NaN;
-    // dernière barre du XIU ≤ date de rebalancement (aucune donnée future)
-    let i = xiu.dates.length - 1;
-    while (i >= 0 && xiu.dates[i] > reb) i--;
+  // « <ticker>_pente_sma50_75 » : pente de la MM50 de la référence sur 75 séances.
+  const pen = /^([a-z]+)_pente_sma50_75$/.exec(nom);
+  if (pen) {
+    const ref = refs.get(pen[1].toUpperCase() + ".TO");
+    if (!ref) return NaN;
+    let i = ref.dates.length - 1;
+    while (i >= 0 && ref.dates[i] > reb) i--;
+    return i < 0 ? NaN : colonne(ref, "pente_sma50_75")[i];
+  }
+
+  // « <ticker>_sous_sma50_depuis » : nb de séances consécutives sous la MM50 de la référence.
+  const pers = /^([a-z]+)_sous_sma50_depuis$/.exec(nom);
+  if (pers) {
+    const ref = refs.get(pers[1].toUpperCase() + ".TO");
+    if (!ref) return NaN;
+    let i = ref.dates.length - 1;
+    while (i >= 0 && ref.dates[i] > reb) i--;
+    return i < 0 ? NaN : colonne(ref, "sous_sma50_depuis")[i];
+  }
+
+  // « <ticker>_sur_sma<N> » : cours de la référence rapporté à sa moyenne N jours.
+  // > 1 = au-dessus de sa moyenne.
+  const m = /^([a-z]+)_sur_(sma\d+)$/.exec(nom);
+  if (m) {
+    const ref = refs.get(m[1].toUpperCase() + ".TO");
+    if (!ref) return NaN;
+    // dernière barre de la référence ≤ date de rebalancement (aucune donnée future)
+    let i = ref.dates.length - 1;
+    while (i >= 0 && ref.dates[i] > reb) i--;
     if (i < 0) return NaN;
-    return xiu.close[i] / colonne(xiu, "sma200")[i];
+    return ref.close[i] / colonne(ref, m[2])[i];
   }
   if (nom === "largeur_sma50") {
     if (eligibles.length === 0) return NaN;
@@ -95,19 +179,36 @@ export function lancer(
   regles: JeuDeRegles,
   refs: Map<string, Serie>,
   traceDate?: string,
+  dividendes?: Dividendes,
+  decalage = 0,
 ): { mois: MoisResultat[]; trace?: Trace } {
   const fins = finsDeMois(univers);
   const mois: MoisResultat[] = [];
   let trace: Trace | undefined;
   let precedents = new Set<string>(); // titres détenus le mois précédent
   let investiPrecedent = false;
+  const detention = Math.max(1, regles.detention_mois);
+  let portefeuille: Position[] = []; // lignes en cours (vide hors détention pluri-mensuelle)
 
   for (let k = 0; k + 1 < fins.length; k++) {
     const reb = fins[k];
     const next = fins[k + 1];
+    const estReselection = (k - decalage) % detention === 0 || portefeuille.length === 0;
+
+    // Portes sectorielles, évaluées une fois par mois (mémoïsées sur ce rebalancement).
+    const memoPortes = new Map<string, boolean>();
+    const ouvertes = (sec: string): boolean => {
+      if (!regles.portes_secteur) return true;
+      let v = memoPortes.get(sec);
+      if (v === undefined) { v = porteOuverte(sec, reb, regles.portes_secteur.ma, refs); memoPortes.set(sec, v); }
+      return v;
+    };
 
     // 1) FILTRER — éligibilité titre par titre, à la clôture de reb.
-    const eligibles: { s: Serie; i: number; cle: number }[] = [];
+    // `eligiblesBase` ne connaît QUE les filtres du jeu de règles : c'est lui qui sert de
+    // benchmark apparié. Comparer la stratégie à un univers déjà purgé de ce qu'elle évite
+    // reviendrait à la comparer à elle-même.
+    const eligiblesBase: { s: Serie; i: number; cle: number }[] = [];
     for (const s of univers.series) {
       const i = s.idx.get(reb);
       if (i === undefined) continue;
@@ -120,9 +221,14 @@ export function lancer(
           break;
         }
       }
-      if (ok) eligibles.push({ s, i, cle });
+      if (ok) eligiblesBase.push({ s, i, cle });
     }
-    if (eligibles.length === 0) continue;
+    if (eligiblesBase.length === 0) continue;
+
+    // Les portes en mode « reallouer » retirent des CANDIDATS, jamais du benchmark.
+    const eligibles = regles.portes_secteur?.mode === "reallouer"
+      ? eligiblesBase.filter((e) => ouvertes(secteurDe(e.s.ticker)))
+      : eligiblesBase;
 
     // 2) TRIER — classement transversal, sélection.
     const sens = regles.trier.ordre === "desc" ? -1 : 1;
@@ -131,31 +237,94 @@ export function lancer(
     const debut = regles.trier.selection.type === "decile"
       ? tailleCumulee(regles.trier.selection.rang, eligibles.length)
       : 0;
-    const selection = eligibles.slice(debut, debut + nSel);
+    // PLAFOND — on descend le classement en sautant les paniers pleins ; la taille du
+    // portefeuille est préservée (la place libérée revient au titre suivant éligible).
+    let selection: typeof eligibles;
+    if (regles.plafond) {
+      const compte = new Map<string, number>();
+      selection = [];
+      for (let r = debut; r < eligibles.length && selection.length < nSel; r++) {
+        const cle = grouper(eligibles[r].s.ticker, regles.plafond.niveau);
+        const n = compte.get(cle) ?? 0;
+        if (n >= regles.plafond.n) continue;
+        compte.set(cle, n + 1);
+        selection.push(eligibles[r]);
+      }
+    } else {
+      selection = eligibles.slice(debut, debut + nSel);
+    }
 
     // 3) Valorisation : achat à l'ouverture suivant reb, vente à l'ouverture suivant next.
-    const valorise = (e: { s: Serie; i: number }): { achat: { date: string; prix: number }; vente: { date: string; prix: number }; ret: number } | null => {
+    // Valorisation d'une ligne. `avecStop` n'est vrai que pour le PORTEFEUILLE :
+    // le benchmark apparié reste un achat-conservation du mois, sinon on comparerait
+    // la stratégie à elle-même.
+    const valorise = (e: { s: Serie; i: number }, avecStop = false): Valorisation | null => {
       const achat = achatSuivant(e.s, reb);
       if (!achat) return null;
       if (!e.s.idx.has(next)) return null; // pas de barre à la fin de mois suivante
-      const vente = achatSuivant(e.s, next);
+      let vente = achatSuivant(e.s, next);
       if (!vente) return null;
-      return { achat, vente, ret: vente.prix / achat.prix - 1 };
+
+      let stoppe = false;
+      let niveau = NaN;
+      if (avecStop && regles.stop) {
+        const sigma = colonne(e.s, "vol20")[e.i]; // σ lue à la CLÔTURE du rebalancement
+        if (sigma > 0) {
+          niveau = achat.prix * (1 - regles.stop.k * sigma * Math.sqrt(21));
+          const iA = e.s.idx.get(achat.date)!;
+          const iN = e.s.idx.get(next)!;
+          for (let i = iA; i <= iN; i++) {
+            if (e.s.close[i] <= niveau) {
+              // sortie à l'ouverture SUIVANT la clôture qui perce
+              if (i + 1 < e.s.dates.length) {
+                vente = { date: e.s.dates[i + 1], prix: e.s.open[i + 1] };
+                stoppe = true;
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      const div = dividendes
+        ? dividendesEntre(dividendes, e.s, achat.date, vente.date)
+        : { somme: 0, ecartes: 0 };
+      return { achat, vente, stoppe, niveau, ret: (vente.prix + div.somme) / achat.prix - 1 };
     };
 
-    const retenus: { ticker: string; ret: number }[] = [];
-    for (const e of selection) {
-      const v = valorise(e);
-      if (v) retenus.push({ ticker: e.s.ticker, ret: v.ret });
+    // Toutes les portes fermées : le mois compte, en liquidités. L'effacer reviendrait
+    // à ne pas facturer la stratégie pour les périodes où elle ne joue pas.
+    if (eligibles.length === 0) {
+      const rets: number[] = [];
+      for (const e of eligiblesBase) { const v = valorise(e); if (v) rets.push(v.ret); }
+      if (rets.length > 0) {
+        mois.push({ reb, next, nElig: eligiblesBase.length, nSel: 0, retenus: [],
+          brut: 0, bench: moyenne(rets), entrees: 0, frais: 0, net: 0, investi: false, stoppes: 0 });
+        portefeuille = [];
+        precedents = new Set();
+        investiPrecedent = false;
+      }
+      continue;
     }
-    const retsBench: number[] = [];
-    for (const e of eligibles) {
-      const v = valorise(e);
-      if (v) retsBench.push(v.ret);
-    }
-    if (retenus.length === 0 || retsBench.length === 0) continue;
 
-    // 4) INTERRUPTEUR — le marché entier, oui/non pour ce mois.
+    // 4) PORTEFEUILLE — re-sélection seulement les mois de rebalancement.
+    if (estReselection) {
+      const nouvelles: Position[] = [];
+      for (const e of selection) {
+        const achat = achatSuivant(e.s, reb);
+        if (!achat) continue;
+        let niveauStop = NaN;
+        if (regles.stop) {
+          const sigma = colonne(e.s, "vol20")[e.i]; // σ lue à la CLÔTURE du signal
+          if (sigma > 0) niveauStop = achat.prix * (1 - regles.stop.k * sigma * Math.sqrt(21));
+        }
+        nouvelles.push({ s: e.s, achatPrix: achat.prix, niveauStop, valeur: 1, sortie: false });
+      }
+      portefeuille = nouvelles;
+    }
+    if (portefeuille.length === 0) continue;
+
+    // 5) INTERRUPTEUR — le marché entier, oui/non pour ce mois.
     let investi = true;
     let valeurInterrupteur = NaN;
     if (regles.interrupteur) {
@@ -163,22 +332,87 @@ export function lancer(
       investi = comparer(valeurInterrupteur, regles.interrupteur.op, regles.interrupteur.valeur);
     }
 
-    const brut = investi ? moyenne(retenus.map((r) => r.ret)) : 0;
+    // 6) Valorisation du mois, ligne par ligne, POIDS DÉRIVANTS.
+    //    Une ligne stoppée — ou passée en liquidités par `cash_sous` — rapporte 0
+    //    jusqu'à la re-sélection suivante : elle n'est pas rachetée en cours de route.
+    const retenus: { ticker: string; ret: number }[] = [];
+    let stoppes = 0;
+    let sommeValeur = 0;
+    let sommePondere = 0;
+    for (const p of portefeuille) {
+      const debutMois = achatSuivant(p.s, reb);
+      if (!debutMois || !p.s.idx.has(next)) continue;
+      const finMois = achatSuivant(p.s, next);
+      if (!finMois) continue;
+
+      // Mode « cash » : la ligne d'un secteur fermé ne rapporte rien ce mois-ci et
+      // n'est pas remplacée — le portefeuille est partiellement investi.
+      const secteurOuvert = regles.portes_secteur?.mode === "cash" ? ouvertes(secteurDe(p.s.ticker)) : true;
+      let ret = 0;
+      if (!p.sortie && investi && secteurOuvert) {
+        let sortieDate = finMois.date;
+        let sortiePrix = finMois.prix;
+
+        // Passage en liquidités si le cours clôture sous sa moyenne (emplacement « cash_sous »).
+        // Vérifié sur chaque clôture, sortie à l'ouverture suivante.
+        const iA = p.s.idx.get(debutMois.date)!;
+        const iN = p.s.idx.get(next)!;
+        const colCash = regles.cash_sous ? colonne(p.s, regles.cash_sous) : null;
+        for (let i = iA; i <= iN; i++) {
+          const percheStop = !Number.isNaN(p.niveauStop) && p.s.close[i] <= p.niveauStop;
+          const percheCash = colCash !== null && p.s.close[i] < colCash[i];
+          if (percheStop || percheCash) {
+            if (i + 1 < p.s.dates.length) {
+              sortieDate = p.s.dates[i + 1];
+              sortiePrix = p.s.open[i + 1];
+              p.sortie = true;
+              if (percheStop) stoppes++;
+            }
+            break;
+          }
+        }
+        const div = dividendes ? dividendesEntre(dividendes, p.s, debutMois.date, sortieDate) : { somme: 0, ecartes: 0 };
+        ret = (sortiePrix + div.somme) / debutMois.prix - 1;
+      }
+
+      sommeValeur += p.valeur;
+      sommePondere += p.valeur * ret;
+      p.valeur *= 1 + ret;
+      retenus.push({ ticker: p.s.ticker, ret });
+    }
+    if (retenus.length === 0 || sommeValeur === 0) continue;
+
+    const retsBench: number[] = [];
+    for (const e of eligiblesBase) {
+      const v = valorise(e);
+      if (v) retsBench.push(v.ret);
+    }
+    if (retsBench.length === 0) continue;
+
+    const brut = investi ? sommePondere / sommeValeur : 0;
     const bench = moyenne(retsBench);
 
-    // 5) Frais sur la rotation réelle : chaque ENTRÉE paie l'aller-retour complet.
+    // 7) Frais sur la rotation réelle : chaque ENTRÉE paie l'aller-retour complet.
+    // Le coût est lu LIGNE PAR LIGNE, au prix d'achat de chacune : sous le modèle
+    // « fourchette », deux titres du même mois ne paient pas le même taux.
     const actuels = investi ? new Set(retenus.map((r) => r.ticker)) : new Set<string>();
     let entrees = 0;
-    if (investi) {
-      for (const t of actuels) if (!investiPrecedent || !precedents.has(t)) entrees++;
+    let cout = 0;
+    if (investi && estReselection) {
+      for (const p of portefeuille) {
+        if (!actuels.has(p.s.ticker)) continue;
+        if (investiPrecedent && precedents.has(p.s.ticker)) continue;
+        entrees++;
+        cout += coutEntree(regles, p.achatPrix);
+      }
     }
-    const frais = investi && retenus.length > 0 ? (regles.frais_aller_retour * entrees) / retenus.length : 0;
+    const frais = investi && retenus.length > 0 ? cout / retenus.length : 0;
     const net = brut - frais;
 
     mois.push({
       reb,
       next,
-      nElig: eligibles.length,
+      nElig: eligiblesBase.length,
       nSel: retenus.length,
       retenus: investi ? retenus.map((r) => r.ticker) : [],
       brut,
@@ -187,6 +421,7 @@ export function lancer(
       frais,
       net,
       investi,
+      stoppes: investi ? stoppes : 0,
     });
     precedents = actuels;
     investiPrecedent = investi;
@@ -218,7 +453,7 @@ function construireTrace(
   eligibles: { s: Serie; i: number; cle: number }[],
   selection: { s: Serie; i: number; cle: number }[],
   retenus: { ticker: string; ret: number }[],
-  valorise: (e: { s: Serie; i: number }) => { achat: { date: string; prix: number }; vente: { date: string; prix: number }; ret: number } | null,
+  valorise: (e: { s: Serie; i: number }, avecStop?: boolean) => Valorisation | null,
   bench: number,
   investi: boolean,
   valeurInterrupteur: number,
@@ -230,10 +465,12 @@ function construireTrace(
   l.push(`  1. FILTRER  → ${eligibles.length} titres éligibles (signal lu à la CLÔTURE du ${reb})`);
   l.push(`  2. TRIER    → « ${regles.trier.indicateur} » ${regles.trier.ordre}, sélection ${JSON.stringify(regles.trier.selection)} → ${selection.length} titres`);
   for (const e of selection) {
-    const v = valorise(e);
+    const v = valorise(e, true);
     if (v) {
       l.push(
-        `     ${e.s.ticker.padEnd(10)} signal=${e.cle.toFixed(4)}  ACHAT ouverture ${v.achat.date} à ${v.achat.prix.toFixed(4)}  VENTE ouverture ${v.vente.date} à ${v.vente.prix.toFixed(4)}  → ${(v.ret * 100).toFixed(2)} %`,
+        `     ${e.s.ticker.padEnd(10)} signal=${e.cle.toFixed(4)}  ACHAT ouverture ${v.achat.date} à ${v.achat.prix.toFixed(4)}  ` +
+          (Number.isNaN(v.niveau) ? "" : `STOP ${v.niveau.toFixed(4)} `) +
+          `VENTE ouverture ${v.vente.date} à ${v.vente.prix.toFixed(4)}${v.stoppe ? " [STOPPÉ]" : ""}  → ${(v.ret * 100).toFixed(2)} %`,
       );
     } else {
       l.push(`     ${e.s.ticker.padEnd(10)} signal=${e.cle.toFixed(4)}  — invalorisable (barre manquante) → retiré du mois`);

@@ -1,0 +1,14 @@
+{
+  "nom": "c-momentum",
+  "version": 1,
+  "description": "Comparaison #52 — tri momentum 12-1, 20 lignes équipondérées. C'est la stratégie que l'analyse du 22/08 recommande ; celle dont Jean craint qu'elle n'achète que des sommets.",
+  "trier": { "indicateur": "mom_12_1", "ordre": "desc", "selection": { "type": "topN", "n": 20 } },
+  "filtrer": [
+    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
+    { "indicateur": "historique", "op": ">=", "valeur": 253 }
+  ],
+  "interrupteur": null,
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

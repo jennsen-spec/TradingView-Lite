@@ -1,0 +1,33 @@
+{
+  "nom": "c-sw-largeur",
+  "version": 1,
+  "description": "Robustesse #52 — momentum 12-1, 20 lignes, interrupteur : cash si moins de la moitie de l univers au-dessus de sa MM50.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "largeur_sma50",
+    "op": ">",
+    "valeur": 0.5
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

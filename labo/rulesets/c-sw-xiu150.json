@@ -1,0 +1,33 @@
+{
+  "nom": "c-sw-xiu150",
+  "version": 1,
+  "description": "Robustesse #52 — momentum 12-1, 20 lignes, interrupteur : cash si XIU (TSX 60) sous sa MM150.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xiu_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

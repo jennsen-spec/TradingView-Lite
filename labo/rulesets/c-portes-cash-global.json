@@ -1,0 +1,41 @@
+{
+  "nom": "c-portes-cash-global",
+  "version": 1,
+  "description": "Portes #52 — momentum + plafond 4, portes sectorielles EN PLUS de l interrupteur global XSP.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 4,
+    "niveau": "secteur"
+  },
+  "portes_secteur": {
+    "ma": "sma150",
+    "mode": "cash"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "nom": "c-plafi2",
+  "version": 1,
+  "description": "Plafond #52 — momentum 12-1 + interrupteur XSP MM150, au plus 2 lignes par INDUSTRIE sur les 20.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 2,
+    "niveau": "industrie"
+  }
+}

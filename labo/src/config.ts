@@ -25,4 +25,7 @@ export const REPERTOIRE_RULESETS = new URL("../rulesets/", import.meta.url).path
 export const REPERTOIRE_FIXTURES = new URL("../fixtures/", import.meta.url).pathname;
 
 // Tickers de référence absolue (chargés depuis le projet opérationnel).
-export const TICKERS_REFERENCE = ["XIU.TO", "XWD.TO"] as const;
+// XIU/XWD : références historiques longues. HXS (S&P 500) et ZEQT (tout-actions monde)
+// sont les véhicules que Jean pourrait acheter aujourd'hui — historiques courts, donc
+// comparés sur leur propre fenêtre, jamais comme benchmark long.
+export const TICKERS_REFERENCE = ["XIU.TO", "XWD.TO", "HXS.TO", "ZEQT.TO", "XSP.TO"] as const;

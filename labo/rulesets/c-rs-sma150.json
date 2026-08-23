@@ -1,0 +1,15 @@
+{
+  "nom": "c-rs-sma150",
+  "version": 1,
+  "description": "Comparaison #52 — FILTRE cours > SMA150 (tendance saine), TRI force relative de Mansfield contre XIU. 20 lignes. On n'achète pas ce qui a le plus monté, on achète ce qui surperforme MAINTENANT dans une tendance intacte.",
+  "trier": { "indicateur": "rs_mansfield", "ordre": "desc", "selection": { "type": "topN", "n": 20 } },
+  "filtrer": [
+    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
+    { "indicateur": "historique", "op": ">=", "valeur": 253 },
+    { "indicateur": "dist_sma150", "op": ">", "valeur": 0 }
+  ],
+  "interrupteur": null,
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

@@ -9,6 +9,8 @@ export interface Serie {
   ticker: string;
   dates: string[]; // ISO, croissant
   open: Float64Array;
+  haut: Float64Array; // plus-haut de séance — nécessaire aux pivots (structure, S/R)
+  bas: Float64Array;  // plus-bas de séance
   close: Float64Array;
   volume: Float64Array;
   idx: Map<string, number>;
@@ -24,6 +26,8 @@ interface LigneBrute {
   ticker: string;
   dates: string[];
   open: number[];
+  haut?: number[];
+  bas?: number[];
   close: number[];
   volume: number[];
 }
@@ -35,6 +39,9 @@ function enSerie(l: LigneBrute): Serie {
     ticker: l.ticker,
     dates: l.dates,
     open: Float64Array.from(l.open),
+    // Caches d'avant l'ajout des mèches : on retombe sur la clôture, faute de mieux.
+    haut: Float64Array.from(l.haut ?? l.close),
+    bas: Float64Array.from(l.bas ?? l.close),
     close: Float64Array.from(l.close),
     volume: Float64Array.from(l.volume),
     idx,
@@ -59,13 +66,17 @@ function ecrireCache(nom: string, series: LigneBrute[]): void {
 }
 
 function versLigne(ticker: string, barres: Record<string, unknown>[]): LigneBrute {
-  const l: LigneBrute = { ticker, dates: [], open: [], close: [], volume: [] };
+  const l: LigneBrute = { ticker, dates: [], open: [], haut: [], bas: [], close: [], volume: [] };
   for (const b of barres) {
     const o = Number(b.open);
     const c = Number(b.close);
     if (!(o > 0) || !(c > 0)) continue; // barre invalide → ignorée (comptée nulle part)
+    const h = Number(b.high);
+    const bs = Number(b.low);
     l.dates.push(String(b.bar_date));
     l.open.push(o);
+    l.haut!.push(h > 0 ? h : Math.max(o, c));
+    l.bas!.push(bs > 0 ? bs : Math.min(o, c));
     l.close.push(c);
     l.volume.push(Number(b.volume) || 0);
   }
@@ -87,7 +98,7 @@ export async function chargerResearch(sansCache = false): Promise<Univers> {
   let faits = 0;
   const lignes = await enParallele(instruments, 12, async (ins) => {
     // Cast float8 : les colonnes `real` perdent des décimales dans la sérialisation JSON sinon.
-    const barres = await paginerParDate(url, cle, "bars", `instrument_id=eq.${ins.id}`, "bar_date,open::float8,close::float8,volume");
+    const barres = await paginerParDate(url, cle, "bars", `instrument_id=eq.${ins.id}`, "bar_date,open::float8,high::float8,low::float8,close::float8,volume");
     faits++;
     if (faits % 20 === 0) process.stderr.write(`  research: ${faits}/${instruments.length}\n`);
     return versLigne(ins.ticker, barres);
@@ -113,7 +124,7 @@ export async function chargerMarket(sansCache = false): Promise<Univers> {
   let faits = 0;
   const lignes = await enParallele(tickers, 16, async (ticker) => {
     const filtre = `ticker=eq.${encodeURIComponent(ticker)}&interval=eq.1d`;
-    const barres = await paginerParDate(url, cle, "bars", filtre, "bar_date,open,close,volume");
+    const barres = await paginerParDate(url, cle, "bars", filtre, "bar_date,open,high,low,close,volume");
     faits++;
     if (faits % 200 === 0) process.stderr.write(`  market: ${faits}/${tickers.length}\n`);
     return versLigne(ticker, barres);
@@ -138,10 +149,84 @@ export async function chargerReferences(sansCache = false): Promise<Map<string, 
   const lignes: LigneBrute[] = [];
   for (const ticker of TICKERS_REFERENCE) {
     const filtre = `ticker=eq.${encodeURIComponent(ticker)}&interval=eq.1d`;
-    const barres = await paginerParDate(url, cle, "bars", filtre, "bar_date,open,close,volume");
+    const barres = await paginerParDate(url, cle, "bars", filtre, "bar_date,open,high,low,close,volume");
     lignes.push(versLigne(ticker, barres));
   }
   ecrireCache("references", lignes);
   for (const l of lignes) refs.set(l.ticker, enSerie(l));
   return refs;
+}
+
+// ── Dividendes (projet opérationnel) ────────────────────────────────────────
+// Les prix de `bars` sont ajustés des DIVISIONS mais pas des dividendes ; la table
+// `dividends` porte les montants BRUTS et historiques. On reconstitue le rendement
+// total en ajoutant les dividendes détachés pendant la détention.
+//
+// Limite connue (signalée aussi par l'analyse du 22/08) : montants non ajustés des
+// divisions face à des prix qui le sont → sur un titre ayant divisé APRÈS le
+// détachement, le rendement est surestimé. Les événements dépassant PLAFOND_RENDEMENT
+// du cours sont écartés comme incohérents, et leur nombre est rapporté.
+
+export const PLAFOND_RENDEMENT = 0.25;
+
+export interface Dividende {
+  date: string;
+  montant: number;
+}
+
+export type Dividendes = Map<string, Dividende[]>; // ticker → événements triés par date
+
+export async function chargerDividendes(sansCache = false): Promise<Dividendes> {
+  const chemin = join(REPERTOIRE_CACHE, "dividends.ndjson");
+  if (!sansCache && existsSync(chemin)) {
+    const m: Dividendes = new Map();
+    for (const l of readFileSync(chemin, "utf8").split("\n").filter((x) => x.length > 0)) {
+      const o = JSON.parse(l) as { ticker: string; evenements: Dividende[] };
+      m.set(o.ticker, o.evenements);
+    }
+    return m;
+  }
+  const { url, cle } = PROJETS.operationnel;
+  const lignes = await paginerParDate(url, cle, "dividends", "", "ticker,ex_date,amount", "ex_date");
+  const m: Dividendes = new Map();
+  for (const l of lignes) {
+    const montant = Number(l.amount);
+    if (!(montant > 0)) continue;
+    const t = String(l.ticker);
+    if (!m.has(t)) m.set(t, []);
+    m.get(t)!.push({ date: String(l.ex_date), montant });
+  }
+  for (const ev of m.values()) ev.sort((a, b) => (a.date < b.date ? -1 : 1));
+  mkdirSync(REPERTOIRE_CACHE, { recursive: true });
+  writeFileSync(
+    chemin,
+    [...m.entries()].map(([ticker, evenements]) => JSON.stringify({ ticker, evenements })).join("\n") + "\n",
+  );
+  return m;
+}
+
+// Somme des dividendes détachés dans ]apres, jusqua] — on possède le titre à partir
+// de l'ouverture du lendemain de l'achat, donc un détachement le jour même ne revient pas.
+export function dividendesEntre(
+  divs: Dividendes,
+  serie: Serie,
+  apres: string,
+  jusqua: string,
+): { somme: number; ecartes: number } {
+  const ev = divs.get(serie.ticker);
+  if (!ev) return { somme: 0, ecartes: 0 };
+  let somme = 0;
+  let ecartes = 0;
+  for (const d of ev) {
+    if (d.date <= apres) continue;
+    if (d.date > jusqua) break;
+    const i = serie.idx.get(d.date);
+    const cours = i === undefined ? NaN : serie.close[i];
+    if (cours > 0 && d.montant / cours > PLAFOND_RENDEMENT) {
+      ecartes++;
+      continue;
+    }
+    somme += d.montant;
+  }
+  return { somme, ecartes };
 }

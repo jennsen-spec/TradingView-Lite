@@ -1,0 +1,38 @@
+{
+  "nom": "c-mom-pente-xsp",
+  "version": 1,
+  "description": "Comparaison #52 — momentum 12-1, 20 lignes, filtre pente SMA150 haussiere ET interrupteur cash si XSP sous sa SMA150.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    },
+    {
+      "indicateur": "pente_sma150",
+      "op": ">",
+      "valeur": 0
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

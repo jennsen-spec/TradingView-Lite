@@ -1,0 +1,37 @@
+{
+  "nom": "c-sw-xsp-pers75",
+  "version": 1,
+  "description": "Interrupteur #52 — momentum + plafond 4, cash seulement si XSP est sous sa MM50 depuis 75 seances consecutives.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sous_sma50_depuis",
+    "op": "<",
+    "valeur": 75
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 4,
+    "niveau": "secteur"
+  }
+}

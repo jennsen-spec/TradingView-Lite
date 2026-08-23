@@ -1,0 +1,37 @@
+{
+  "nom": "c-sw-xsp-mm75",
+  "version": 1,
+  "description": "Interrupteur #52 — momentum + plafond 4, cash si XSP sous sa MM75 (moitie de 150).",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma75",
+    "op": ">",
+    "valeur": 1
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 4,
+    "niveau": "secteur"
+  }
+}

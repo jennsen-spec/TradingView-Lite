@@ -1,0 +1,37 @@
+{
+  "nom": "c-sw-pente50",
+  "version": 1,
+  "description": "Interrupteur #52 — momentum + plafond 4, cash si la MM50 de XSP est SOUS son niveau d il y a 75 seances (moyenne orientee a la baisse).",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": {
+    "indicateur": "xsp_pente_sma50_75",
+    "op": ">",
+    "valeur": 0
+  },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "plafond": {
+    "n": 4,
+    "niveau": "secteur"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "nom": "c-rs-sma150-stop",
+  "version": 1,
+  "description": "Comparaison #52 — identique à c-rs-sma150, PLUS un stop volatilite (2 sigma mensuels sous le prix d achat), fixe au rebalancement et verifie sur chaque cloture de la detention.",
+  "trier": {
+    "indicateur": "rs_mansfield",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    },
+    {
+      "indicateur": "dist_sma150",
+      "op": ">",
+      "valeur": 0
+    }
+  ],
+  "interrupteur": null,
+  "stop": {
+    "type": "volatilite",
+    "k": 2
+  },
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

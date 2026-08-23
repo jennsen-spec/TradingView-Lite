@@ -1,0 +1,34 @@
+{
+  "nom": "c-mom-pente",
+  "version": 1,
+  "description": "Comparaison #52 — momentum 12-1, 20 lignes, filtre : la SMA150 du titre doit MONTER (pente sur 21 seances > 0). Critere de Weinstein.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    },
+    {
+      "indicateur": "pente_sma150",
+      "op": ">",
+      "valeur": 0
+    }
+  ],
+  "interrupteur": null,
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035
+}

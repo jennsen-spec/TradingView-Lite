@@ -1,0 +1,30 @@
+{
+  "nom": "c-mom-3m-cash150",
+  "version": 1,
+  "description": "Comparaison #52 — momentum 12-1, 20 lignes, re-selection tous les 3 mois, ligne sous sa SMA150 = liquidites.",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": {
+      "type": "topN",
+      "n": 20
+    }
+  },
+  "filtrer": [
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    }
+  ],
+  "interrupteur": null,
+  "stop": null,
+  "detention_mois": 3,
+  "frais_aller_retour": 0.0035,
+  "cash_sous": "sma150"
+}
