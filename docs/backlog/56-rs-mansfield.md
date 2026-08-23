@@ -1,6 +1,6 @@
 # #56 — Force relative (RS Mansfield) dans TVLite
 
-**Statut** : 🧪 À valider (UAT) · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
+**Statut** : ✅ Fait · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
 
 ## Objectif
 Afficher la **force relative** d'un titre contre une référence, dans un panneau dédié sous le graphique.

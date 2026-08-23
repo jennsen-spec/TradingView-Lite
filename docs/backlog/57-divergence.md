@@ -1,6 +1,6 @@
 # #57 — Dessin « Divergence » (à cheval sur deux panneaux)
 
-**Statut** : 🧪 À valider (UAT) · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
+**Statut** : ✅ Fait · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
 
 ## Objectif
 Un outil de dessin **inédit** (il n'existe pas sur TradingView, dont l'outil de divergence reste dans
