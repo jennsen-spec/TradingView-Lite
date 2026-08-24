@@ -5,8 +5,11 @@
 //   - mois investi : le solde est réparti à parts égales entre les lignes retenues ;
 //   - une ligne qui ENTRE paie la fourchette (ticks × pas de cotation ÷ prix d'achat) ;
 //     une ligne reconduite ne paie rien, on ne la vend pas pour la racheter ;
-//   - achat à l'OUVERTURE de la séance suivant la clôture du signal, vente à
-//     l'OUVERTURE de la séance suivant la fin du mois suivant ;
+//   - vente à l'OUVERTURE de la séance suivant la fin du mois suivant ; achat à
+//     l'OUVERTURE de la séance suivant la clôture du signal — SAUF sous l'hypothèse de
+//     financement `differe`, où une ligne qui ENTRE attend le produit des ventes
+//     (clôture du même jour, ou ouverture du lendemain). Une ligne reconduite n'est
+//     jamais vendue, donc jamais décalée ;
 //   - mois en liquidités : solde inchangé.
 // Contrôle : solde(t+1) doit égaler solde(t) × (1 + net) du moteur. L'écart mesuré
 // est de l'ordre de 1e-14 % — si un jour il grimpe, c'est que les deux modèles ont
@@ -46,6 +49,7 @@ const pasDeCotation = (prix: number) => (prix < 0.5 ? 0.005 : 0.01);
 
 export async function construireJournal(opts: {
   capital?: number; jeu?: string; ticks?: number; commission?: number; secteurs?: string[];
+  differe?: "aucun" | "cloture" | "lendemain"; depuis?: string;
 } = {}): Promise<Journal> {
   const CAPITAL = opts.capital ?? 10_000;
   const TICKS = opts.ticks ?? 2, COMMISSION = opts.commission ?? 0;
@@ -59,11 +63,24 @@ export async function construireJournal(opts: {
   const SEC = new Set(opts.secteurs ?? ["Industrials", "Technology"]);
   const series = u.series.filter((s) => SEC.has(secteurDe(s.ticker)));
   const carte = new Map(series.map((s) => [s.ticker, s]));
-  const mois = lancer({ nom: "market", series }, chargerJeu(opts.jeu ?? "c-duo-plaf5-p1"), refs, undefined, divs).mois;
+  const DIFFERE = opts.differe ?? "aucun";
+  const jeuBase = chargerJeu(opts.jeu ?? "c-duo-plaf5-p1");
+  const jeu = { ...jeuBase, execution: { modele: "ouverture" as const, marge: 0,
+    vente_penalisee: false, achat_differe: DIFFERE } };
+  const tous = lancer({ nom: "market", series }, jeu, refs, undefined, divs).mois;
+  const mois = opts.depuis ? tous.filter((m) => m.reb >= opts.depuis!) : tous;
 
   const apres = (s: Serie, d: string) => {
     const i = s.idx.get(d);
     return i === undefined || i + 1 >= s.dates.length ? null : { date: s.dates[i + 1], prix: s.open[i + 1] };
+  };
+  // Prix d'achat effectif : identique au moteur, décalage compris.
+  const achatDe = (s: Serie, reb: string, entree: boolean) => {
+    const base = apres(s, reb)!;
+    if (!entree || DIFFERE === "aucun") return base;
+    const j = s.idx.get(base.date)!;
+    if (DIFFERE === "cloture") return { date: base.date, prix: s.close[j] };
+    return j + 1 < s.dates.length ? { date: s.dates[j + 1], prix: s.open[j + 1] } : base;
   };
 
   const lignes: LigneMois[] = [], barres: Barre[] = [];
@@ -77,10 +94,11 @@ export async function construireJournal(opts: {
     if (investi) {
       const mise = avant / m.retenus.length;
       for (const t of m.retenus) {
-        const s = carte.get(t)!, a = apres(s, m.reb)!, v = apres(s, m.next)!;
+        const s = carte.get(t)!;
+        const entree = !investiPrec || !prec.has(t);
+        const a = achatDe(s, m.reb, entree), v = apres(s, m.next)!;
         const div = dividendesEntre(divs, s, a.date, v.date).somme;
         const ret = (v.prix + div) / a.prix - 1;
-        const entree = !investiPrec || !prec.has(t);
         const frais = entree ? cout(a.prix) * mise : 0;
         lot.push({ mois: m.next.slice(0, 7), reb: m.reb, next: m.next, ticker: t, secteur: secteurDe(t), achatDate: a.date,
           achatPrix: a.prix, venteDate: v.date, ventePrix: v.prix, div, ret, mise, frais,

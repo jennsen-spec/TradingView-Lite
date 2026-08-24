@@ -55,6 +55,7 @@ interface Position {
   niveauStop: number; // NaN si aucun stop
   valeur: number;
   sortie: boolean;
+  entree: boolean; // vraie le mois où la ligne est ACHETÉE (donc payante en frais et en délai)
 }
 
 interface Valorisation {
@@ -86,10 +87,32 @@ function coutEntree(regles: JeuDeRegles, prix: number): number {
 // Le benchmark apparié reste sur l'ouverture : il ne représente pas un portefeuille
 // qu'on négocie, mais le rendement moyen des titres éligibles. Le pénaliser aussi
 // masquerait précisément ce qu'on cherche à mesurer.
-function prixAchatExec(regles: JeuDeRegles, s: Serie, reb: string, base: number): number {
-  if (regles.execution?.modele !== "limite") return base;
-  const i = s.idx.get(reb);
-  return i === undefined ? base : s.close[i] * (1 + regles.execution.marge);
+//
+// ACHAT_DIFFERE — la contrainte de financement. Les ventes partent à l'ouverture ;
+// tant que leur produit n'est pas disponible, un achat NOUVEAU ne peut pas partir.
+// « cloture » le repousse à la clôture du même jour, « lendemain » à l'ouverture
+// suivante. Une ligne RECONDUITE n'est pas vendue, donc pas décalée : c'est pourquoi
+// le décalage ne s'applique qu'aux entrées — les mêmes lignes qui paient la fourchette.
+// Si la séance du lendemain n'existe pas (dernière barre du titre), on garde le prix
+// d'ouverture plutôt que d'écarter la ligne : la retirer changerait la composition du
+// mois et les deux hypothèses ne seraient plus comparables.
+function prixAchat(
+  regles: JeuDeRegles,
+  s: Serie,
+  reb: string,
+  entree: boolean,
+): { date: string; prix: number } | null {
+  const base = achatSuivant(s, reb);
+  if (!base) return null;
+  if (regles.execution?.modele === "limite") {
+    const i = s.idx.get(reb);
+    if (i !== undefined) return { date: base.date, prix: s.close[i] * (1 + regles.execution.marge) };
+  }
+  const differe = regles.execution?.achat_differe ?? "aucun";
+  if (!entree || differe === "aucun") return base;
+  const j = s.idx.get(base.date)!;
+  if (differe === "cloture") return { date: base.date, prix: s.close[j] };
+  return j + 1 < s.dates.length ? { date: s.dates[j + 1], prix: s.open[j + 1] } : base;
 }
 function prixVenteExec(regles: JeuDeRegles, s: Serie, next: string, base: number): number {
   if (regles.execution?.modele !== "limite" || !regles.execution.vente_penalisee) return base;
@@ -329,14 +352,18 @@ export function lancer(
     if (estReselection) {
       const nouvelles: Position[] = [];
       for (const e of selection) {
-        const achat = achatSuivant(e.s, reb);
+        // Une ligne est une ENTRÉE si elle n'était pas détenue le mois précédent (ou si
+        // le portefeuille était en liquidités). Même test que pour les frais : les deux
+        // coûts frappent exactement les mêmes lignes.
+        const entree = !investiPrecedent || !precedents.has(e.s.ticker);
+        const achat = prixAchat(regles, e.s, reb, entree);
         if (!achat) continue;
         let niveauStop = NaN;
         if (regles.stop) {
           const sigma = colonne(e.s, "vol20")[e.i]; // σ lue à la CLÔTURE du signal
           if (sigma > 0) niveauStop = achat.prix * (1 - regles.stop.k * sigma * Math.sqrt(21));
         }
-        nouvelles.push({ s: e.s, achatPrix: prixAchatExec(regles, e.s, reb, achat.prix), niveauStop, valeur: 1, sortie: false });
+        nouvelles.push({ s: e.s, achatPrix: achat.prix, niveauStop, valeur: 1, sortie: false, entree });
       }
       portefeuille = nouvelles;
     }
@@ -358,11 +385,10 @@ export function lancer(
     let sommeValeur = 0;
     let sommePondere = 0;
     for (const p of portefeuille) {
-      const debutBrut = achatSuivant(p.s, reb);
-      if (!debutBrut || !p.s.idx.has(next)) continue;
+      const debutMois = prixAchat(regles, p.s, reb, p.entree);
+      if (!debutMois || !p.s.idx.has(next)) continue;
       const finBrut = achatSuivant(p.s, next);
       if (!finBrut) continue;
-      const debutMois = { date: debutBrut.date, prix: prixAchatExec(regles, p.s, reb, debutBrut.prix) };
       const finMois = { date: finBrut.date, prix: prixVenteExec(regles, p.s, next, finBrut.prix) };
 
       // Mode « cash » : la ligne d'un secteur fermé ne rapporte rien ce mois-ci et
@@ -398,6 +424,7 @@ export function lancer(
       sommeValeur += p.valeur;
       sommePondere += p.valeur * ret;
       p.valeur *= 1 + ret;
+      p.entree = false; // le décalage de financement ne se paie qu'une fois, à l'achat
       retenus.push({ ticker: p.s.ticker, ret });
     }
     if (retenus.length === 0 || sommeValeur === 0) continue;

@@ -85,7 +85,23 @@ export interface JeuDeRegles {
   //    clôture, ce qui n'arrive pas. Ce n'est pas un modèle du réel, c'est une
   //    borne : si la stratégie tient sous cette hypothèse, la marge ne la tue pas.
   //  `vente_penalisee` applique le même traitement à la vente (clôture × (1 − marge)).
-  execution?: { modele: "ouverture" | "limite"; marge: number; vente_penalisee: boolean } | null;
+  //
+  // ACHAT_DIFFERE — la contrainte de FINANCEMENT, découverte le 24/08/2026.
+  //  Le backtest achète et vend au même instant : il suppose donc que le produit d'une
+  //  vente finance immédiatement l'achat qui la remplace. Chez un courtier qui n'avance
+  //  pas les fonds, il faut vendre D'ABORD, et les prix ont bougé entre-temps.
+  //    "aucun"     — hypothèse d'origine : tout part dans le même encan d'ouverture.
+  //    "cloture"   — les ventes partent à l'ouverture, les achats NOUVEAUX à la clôture
+  //                  du même jour (le cas où le produit est disponible dans la journée).
+  //    "lendemain" — les achats nouveaux attendent l'ouverture du lendemain (règlement).
+  //  Une ligne RECONDUITE n'est jamais vendue : elle ne subit aucun décalage. Seules les
+  //  ENTRÉES paient ce décalage — exactement les lignes qui paient déjà la fourchette.
+  execution?: {
+    modele: "ouverture" | "limite";
+    marge: number;
+    vente_penalisee: boolean;
+    achat_differe?: "aucun" | "cloture" | "lendemain";
+  } | null;
 }
 
 // Indicateurs de marché acceptés en INTERRUPTEUR :
@@ -155,6 +171,9 @@ function valider(j: JeuDeRegles): void {
       erreurs.push("execution.modele : ouverture|limite");
     if (typeof j.execution.marge !== "number" || j.execution.marge < 0 || j.execution.marge > 0.2)
       erreurs.push("execution.marge : nombre entre 0 et 0.2");
+    const d = j.execution.achat_differe;
+    if (d !== undefined && d !== "aucun" && d !== "cloture" && d !== "lendemain")
+      erreurs.push("execution.achat_differe : aucun|cloture|lendemain");
   }
   if (j.frais_fourchette) {
     if (typeof j.frais_fourchette.ticks !== "number" || j.frais_fourchette.ticks <= 0 || j.frais_fourchette.ticks > 50)
