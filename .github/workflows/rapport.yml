@@ -1,0 +1,69 @@
+name: Rapport mensuel
+
+# Le signal se lit à la clôture de la dernière séance du mois ; Jean passe ses
+# ordres à l'ouverture du lendemain. Le rapport doit donc être prêt le soir même.
+#
+# Cron ne sait pas dire « dernier jour ouvrable du mois » : on tourne les 28, 29,
+# 30, 31, puis les 1er et 2, et le script décide s'il y a une nouvelle fin de mois
+# complète. Rien n'est publié tant que le signal n'a pas changé, donc les passages
+# inutiles ne coûtent qu'une minute et ne laissent aucune trace.
+#
+# Les jours 1 et 2 servent de rattrapage : si les barres du dernier jour n'étaient
+# pas encore ingérées le 31, le passage suivant produit le bon signal et corrige.
+
+on:
+  schedule:
+    - cron: "30 23 28,29,30,31,1,2 * *" # 23h30 UTC = 19h30 ET, 3h30 après la clôture
+  workflow_dispatch: # déclenchement manuel depuis l'onglet Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rapport
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Générer le rapport
+        id: gen
+        run: |
+          set -euo pipefail
+          AVANT=$(cat portefeuille/dernier-signal.txt 2>/dev/null || echo "aucun")
+          # --frais : le runner est neuf, aucun cache — mais on l'écrit explicitement
+          # pour que la commande soit la même à la main et ici.
+          npm run rapport -- --frais --enregistrer
+          APRES=$(cat portefeuille/dernier-signal.txt)
+          echo "avant=$AVANT" >> "$GITHUB_OUTPUT"
+          echo "apres=$APRES" >> "$GITHUB_OUTPUT"
+          if [ "$AVANT" = "$APRES" ]; then
+            echo "change=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Signal inchangé ($APRES) — rien à publier."
+          else
+            echo "change=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nouveau signal : $AVANT → $APRES"
+          fi
+
+      - name: Publier
+        if: steps.gen.outputs.change == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "TVLite"
+          git config user.email "de.brunel@gmail.com"
+          git add frontend/public/rapport.html portefeuille/dernier-signal.txt portefeuille/etat.json
+          git commit -m "rapport : signal du ${{ steps.gen.outputs.apres }}" \
+                     -m "Généré automatiquement. Le cycle est inscrit dans etat.json ; \`execute\` reste vide jusqu'à ce que Jean rapporte ses exécutions réelles."
+          git push
+
+      - name: Rien à publier
+        if: steps.gen.outputs.change != 'true'
+        run: |
+          echo "Le dernier signal complet est toujours ${{ steps.gen.outputs.apres }}."
+          echo "Le rapport en ligne est à jour ; aucun commit."

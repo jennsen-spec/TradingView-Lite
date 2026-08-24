@@ -44,13 +44,17 @@ export interface Cycle {
   regles: JeuDeRegles; etat: Record<string, unknown>;
 }
 
-export async function calculerCycle(opts: { signal?: string; marge?: number } = {}): Promise<Cycle> {
+export async function calculerCycle(opts: { signal?: string; marge?: number; frais?: boolean } = {}): Promise<Cycle> {
   const etat = lireEtat();
   const marge = opts.marge ?? 0.03;
+  // `frais` = ignorer le cache local. Le cache ne se périme jamais tout seul :
+  // sans ça, un rapport du 31 peut être calculé sur les données du 23 sans que
+  // rien ne le signale. L'Action tourne toujours sur un runner neuf, donc à froid.
+  const frais = opts.frais ?? false;
 
-  const refs = await chargerReferences(); definirReferenceRS(refs.get("XIU.TO")!);
-  await chargerDividendes();
-  const u = assainir(actionsCanadiennes(await chargerMarket()).univers).univers;
+  const refs = await chargerReferences(frais); definirReferenceRS(refs.get("XIU.TO")!);
+  await chargerDividendes(frais);
+  const u = assainir(actionsCanadiennes(await chargerMarket(frais)).univers).univers;
   definirSecteurs(await chargerSecteurs(u.series.map((s) => s.ticker)));
   definirPortes(await chargerEtfSectoriels());
 
@@ -61,14 +65,36 @@ export async function calculerCycle(opts: { signal?: string; marge?: number } = 
   const duo = u.series.filter((s) => DUO.has(secteurDe(s.ticker)) && !CDR.has(s.ticker));
   const regles = chargerJeu(etat.regles.jeu);
 
-  // Dernière fin de mois COMPLÈTE : le mois en cours ne compte pas, sa dernière
-  // séance n'est pas une fin de mois.
+  // Fins de mois COMPLÈTES. Un mois est complet si des données existent dans un
+  // mois postérieur, OU si la date du jour a atteint son dernier jour civil.
+  //
+  // La seconde condition est indispensable à l'usage réel : le soir du 31 août,
+  // aucune barre de septembre n'existe encore, et pourtant le signal du 31 est
+  // bien celui sur lequel Jean passera ses ordres le lendemain matin. Attendre
+  // une barre de septembre le lui livrerait un jour trop tard.
+  // Elle gère aussi le cas d'un dernier jour civil non ouvré : la fin de mois
+  // retenue reste la dernière SÉANCE du mois, pas le dernier jour du calendrier.
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const dernierJourCivil = (mois: string) => {
+    const [y, mo] = mois.split("-").map(Number);
+    return new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
+  };
   const fins = (() => {
     const p = new Map<string, string>();
     for (const s of duo) for (const d of s.dates) { const m = d.slice(0, 7); const c = p.get(m); if (!c || d > c) p.set(m, d); }
-    const tout = [...p.values()].sort();
-    const auj = duo.reduce((a, s) => (s.dates[s.dates.length - 1] > a ? s.dates[s.dates.length - 1] : a), "");
-    return auj.slice(0, 7) === tout[tout.length - 1].slice(0, 7) ? tout.slice(0, -1) : tout;
+    const paires = [...p.entries()].sort();
+    const dernierMois = paires[paires.length - 1][0];
+    // Garde-fou : la règle du calendrier n'est appliquée que si les données du
+    // mois vont jusqu'à sa fin (à 4 jours près, pour absorber week-ends et fériés).
+    // Sans ça, une Action lancée le 31 avant l'ingestion de la barre du jour
+    // prendrait le 28 pour la fin de mois et publierait un signal périmé.
+    const aJour = (mois: string, derniere: string) => {
+      const fin = new Date(dernierJourCivil(mois) + "T00:00:00Z").getTime();
+      return (fin - new Date(derniere + "T00:00:00Z").getTime()) / 86400000 <= 4;
+    };
+    return paires
+      .filter(([mois, d]) => mois < dernierMois || (aujourdhui >= dernierJourCivil(mois) && aJour(mois, d)))
+      .map(([, d]) => d);
   })();
   const signal = opts.signal ?? fins[fins.length - 1];
   if (!fins.includes(signal)) throw new Error(`« ${signal} » n'est pas une fin de mois complète (dernières : ${fins.slice(-3).join(", ")})`);

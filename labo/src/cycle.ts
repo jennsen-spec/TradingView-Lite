@@ -12,10 +12,10 @@ import { writeFileSync } from "node:fs";
 import { calculerCycle } from "./cycleCalc.ts";
 
 const { values } = parseArgs({ options: {
-  signal: { type: "string" }, sortie: { type: "string" }, marge: { type: "string" },
+  signal: { type: "string" }, sortie: { type: "string" }, marge: { type: "string" }, frais: { type: "boolean" },
 } });
 
-const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined });
+const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined, frais: values.frais });
 const eur = (v: number) => v.toLocaleString("fr-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pc = (v: number) => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1).replace(".", ",") + " %";
 

@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Un push fait par GITHUB_TOKEN ne redéclenche aucun workflow (garde-fou de
+  # GitHub contre les boucles). Le rapport mensuel appelle donc le déploiement
+  # explicitement à sa fin.
+  workflow_run:
+    workflows: ["Rapport mensuel"]
+    types: [completed]
 
 # Permissions requises par le déploiement Pages.
 permissions:

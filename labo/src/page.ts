@@ -10,16 +10,17 @@
 // référence historique n'est là que pour se comparer.
 
 import { parseArgs } from "node:util";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { calculerCycle, RACINE } from "./cycleCalc.ts";
 import { construireJournal } from "./journal.ts";
 
 const { values } = parseArgs({ options: {
   signal: { type: "string" }, sortie: { type: "string" }, marge: { type: "string" },
+  frais: { type: "boolean" }, enregistrer: { type: "boolean" },
 } });
 
 const TVLITE = "https://jennsen-spec.github.io/TradingView-Lite/";
-const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined });
+const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined, frais: values.frais });
 const j = await construireJournal({ jeu: c.etat.regles.jeu as string });
 const etat = c.etat as any;
 
@@ -331,5 +332,34 @@ rendre();
 // l'adresse vers laquelle pointe le bouton de l'en-tête.
 const sortie = values.sortie ?? RACINE + "frontend/public/rapport.html";
 writeFileSync(sortie, html);
+// Marqueur du dernier signal publié : l'Action s'en sert pour ne committer
+// que lorsque le signal CHANGE. Sans lui elle committerait tous les jours,
+// la date de génération suffisant à faire varier le fichier.
+writeFileSync(RACINE + "portefeuille/dernier-signal.txt", c.signal + "\n");
+
+// --enregistrer : inscrire le cycle dans l'état. Réservé à la publication (l'Action) ;
+// un `npm run rapport` lancé à la main ne touche à rien.
+//
+// `detenus` porte ce que les règles PRESCRIVENT. C'est ce qui sert de portefeuille
+// précédent au mois suivant — sans quoi le rapport de septembre croirait qu'il
+// part de zéro et remettrait tout à l'achat. Quand Jean rapporte ses exécutions
+// réelles, `execute` est renseigné et prend le pas : c'est lui qui décide, pas la
+// prescription.
+if (values.enregistrer) {
+  const e = JSON.parse(readFileSync(RACINE + "portefeuille/etat.json", "utf8"));
+  const dejaLa = e.cycles.findIndex((x: { signal: string }) => x.signal === c.signal);
+  const cycle = {
+    signal: c.signal, execution: c.execution, publie: new Date().toISOString().slice(0, 10),
+    investi: c.marche.investi, poche: Number(c.poche.toFixed(2)), ligne: Number(c.ligne.toFixed(2)),
+    detenus: c.detenus, sortants: c.sortants,
+    prescrit: c.ordres.map((o) => ({ ticker: o.ticker, action: o.action, quantite: o.quantite,
+      cloture: Number(o.cloture.toFixed(4)), limite: o.limite, momentum: Number(o.momentum.toFixed(4)) })),
+    execute: null,
+  };
+  if (dejaLa >= 0) e.cycles[dejaLa] = cycle; else e.cycles.push(cycle);
+  e.maj = new Date().toISOString().slice(0, 10);
+  writeFileSync(RACINE + "portefeuille/etat.json", JSON.stringify(e, null, 2) + "\n");
+  console.log(` Cycle ${c.signal} inscrit dans portefeuille/etat.json`);
+}
 console.log(`\n Rapport du ${c.signal} → ${sortie}`);
 console.log(` ${(html.length / 1024).toFixed(0)} Ko · ${c.ordres.length} ordres · ${j.positions.length} positions de backtest · interrupteur ${c.marche.investi ? "ON" : "OFF"}\n`);
