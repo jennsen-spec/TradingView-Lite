@@ -46,7 +46,12 @@ export interface Cycle {
 
 export async function calculerCycle(opts: { signal?: string; marge?: number; frais?: boolean } = {}): Promise<Cycle> {
   const etat = lireEtat();
-  const marge = opts.marge ?? 0.03;
+  // +5 % : Jean a confirmé le 24/08 qu'un ordre limité déposé la veille participe
+  // à l'encan d'ouverture du TSX (jusqu'à 60 jours de validité). L'encan servant à
+  // son propre prix, une limite large ne coûte rien — alors qu'une limite serrée
+  // coûte cher : mesuré, à +0,5 % un ordre sur quatre ne passe pas et le capital
+  // final est divisé par deux. +5 % couvre 99,3 % des cas.
+  const marge = opts.marge ?? 0.05;
   // `frais` = ignorer le cache local. Le cache ne se périme jamais tout seul :
   // sans ça, un rapport du 31 peut être calculé sur les données du 23 sans que
   // rien ne le signale. L'Action tourne toujours sur un runner neuf, donc à froid.
