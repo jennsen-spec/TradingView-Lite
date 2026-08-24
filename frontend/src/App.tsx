@@ -142,6 +142,22 @@ export default function App() {
         </div>
 
         <div className="refresh-cluster">
+          {/* Rapport mensuel du duo : page autonome générée par `npm run rapport`
+              dans frontend/public/, donc servie par le même déploiement. */}
+          <a
+            className="rapport-btn"
+            href={`${import.meta.env.BASE_URL}rapport.html`}
+            target="_blank"
+            rel="noopener"
+            title="Rapport mensuel — duo industrie-techno"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="8" y1="13" x2="14" y2="13" /><line x1="8" y1="17" x2="12" y2="17" />
+            </svg>
+            <span>Rapport</span>
+          </a>
           <span className="refresh-info" title="Dernière mise à jour des données">
             {fetchedAt ? fmtDate(fetchedAt) : "—"}
           </span>

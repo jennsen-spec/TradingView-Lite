@@ -326,7 +326,10 @@ rendre();
 })();
 </script>`;
 
-const sortie = values.sortie ?? RACINE + "portefeuille/rapport-" + c.signal + ".html";
+// frontend/public/ est copié tel quel dans le build : le rapport est donc servi
+// par le même déploiement GitHub Pages que TVLite, à /rapport.html — c'est
+// l'adresse vers laquelle pointe le bouton de l'en-tête.
+const sortie = values.sortie ?? RACINE + "frontend/public/rapport.html";
 writeFileSync(sortie, html);
 console.log(`\n Rapport du ${c.signal} → ${sortie}`);
 console.log(` ${(html.length / 1024).toFixed(0)} Ko · ${c.ordres.length} ordres · ${j.positions.length} positions de backtest · interrupteur ${c.marche.investi ? "ON" : "OFF"}\n`);
