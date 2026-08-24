@@ -40,6 +40,10 @@
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
 | 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |
+| — | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | ⭐ | 📥 | Bot Telegram prévenant Jean dès que l'Action publie un nouveau signal. À spécifier : bot, jeton en secret GitHub, message (signal + lien). |
+| — | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | ⭐ | 📥 | Comparer prix obtenus / prix d'ouverture du backtest, chiffrer le manque à gagner contre « si tout s'était passé comme prévu ». **1re échéance : hiver 2026-2027**, puis à répéter. La stratégie ne tolère que ~0,9 %/entrée : c'est le facteur le plus dangereux du montage. |
+| — | **Rapport plus tôt en fin de mois** | ⚙️ | 2 | XS | | 📥 | Aujourd'hui 19 h 30 ET, contraint par le rafraîchissement Supabase à 18 h ET. Passages plus tôt côté Action (gagne ~1 h) ; pour aller sous 18 h il faut déplacer le cron `rafraichissement-cours`. |
+| — | **Backtest des combinaisons d'ETF** (ZEQT · HXS · VMO) | 💼 | 3 | S | | 📥 | Que donnent les différentes pondérations de la poche ETF ? **Limite connue : ZEQT ne cote que depuis 2022, VMO depuis 2016, HXS depuis 2011** — aucune fenêtre longue commune, donc pas de réponse sur 22 ans. Décider d'un proxy ou assumer une fenêtre courte. |
 | 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | | 📥 | `createPriceLine` + persistance par symbole. |
 | 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | | 📥 | Déclenchement/persistance/notif ; sans #14, au rechargement seulement. |
 | 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | | 📥 | API panes v5 (moveToPane, réordonner) — **spike**. |
@@ -53,7 +57,7 @@
 | [42](docs/backlog/42-plateforme-data-supabase.md) | ~~Plateforme data partagée~~ | ⚙️ | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : Phase 1 livrée (TVLite en ligne). Sa décision « schéma DB possédé par `goldencross-radar` » **devient caduque** → passe à TVLite (#49). |
 | — | **Disnat — quantités réelles** (phase 5) | 💼 | ? | — | | 📥 | Après #55. Calcul **mécanique** à partir des paramètres de Jean (liquidités, risque accepté, distance au stop → quantité). **Pas** de recommandation d'investissement. À spécifier. |
 | — | **Délai de recherche de titre** | ⚙️ | ? | — | | 📥 | La recherche marque un temps désagréable. Hypothèse : lié à Yahoo, **pas** à Supabase — **à vérifier avant de spécifier**. Ne doit pas peser sur la décision de plan Supabase (#49). |
-| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | | 📥 | Build front + hébergement du backend proxy ; domaine. À spécifier. |
+| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | ⭐ | 📥 | Build front + hébergement du backend proxy ; domaine. **Plan gratuit visé** (confirmé par Jean le 24/08). Attention : le rapport mensuel est servi depuis `frontend/public/` — vérifier que son adresse survit au changement d'hébergeur. |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | | 📥 | Auth (email / OAuth) ; base utilisateurs. |
 | 24 | **Espace membre** | 🚀 | ? | — | | 📥 | Zone connectée : préférences, contenus liés au compte. |
 | 25 | **Sync multi-appareils** | 🚀 | ? | — | | 📥 | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
