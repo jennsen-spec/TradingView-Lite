@@ -75,6 +75,17 @@ export interface JeuDeRegles {
   //    les titres bon marché ne peut qu'apparaître comme une perte sèche.
   frais_fourchette?: { ticks: number; commission: number } | null;
   frais_aller_retour: number;
+  // MODÈLE D'EXÉCUTION.
+  //  "ouverture" (défaut) — le prix de l'encan d'ouverture de la séance suivante.
+  //    C'est le prix réellement obtenu quand une limite large laisse l'ordre entrer
+  //    dans l'encan : il s'exécute AU cours d'ouverture, pas à la limite.
+  //  "limite" — on suppose que l'ordre s'exécute TOUJOURS au prix limite, soit
+  //    clôture × (1 + marge) à l'achat. C'est volontairement PESSIMISTE : cela
+  //    revient à supposer que chaque titre ouvre au moins `marge` au-dessus de sa
+  //    clôture, ce qui n'arrive pas. Ce n'est pas un modèle du réel, c'est une
+  //    borne : si la stratégie tient sous cette hypothèse, la marge ne la tue pas.
+  //  `vente_penalisee` applique le même traitement à la vente (clôture × (1 − marge)).
+  execution?: { modele: "ouverture" | "limite"; marge: number; vente_penalisee: boolean } | null;
 }
 
 // Indicateurs de marché acceptés en INTERRUPTEUR :
@@ -139,6 +150,12 @@ function valider(j: JeuDeRegles): void {
     erreurs.push("detention_mois : entier entre 1 et 12");
   if (typeof j.frais_aller_retour !== "number" || j.frais_aller_retour < 0 || j.frais_aller_retour > 0.05)
     erreurs.push("frais_aller_retour : nombre entre 0 et 0.05");
+  if (j.execution) {
+    if (j.execution.modele !== "ouverture" && j.execution.modele !== "limite")
+      erreurs.push("execution.modele : ouverture|limite");
+    if (typeof j.execution.marge !== "number" || j.execution.marge < 0 || j.execution.marge > 0.2)
+      erreurs.push("execution.marge : nombre entre 0 et 0.2");
+  }
   if (j.frais_fourchette) {
     if (typeof j.frais_fourchette.ticks !== "number" || j.frais_fourchette.ticks <= 0 || j.frais_fourchette.ticks > 50)
       erreurs.push("frais_fourchette.ticks : nombre entre 0 et 50");

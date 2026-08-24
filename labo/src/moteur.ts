@@ -79,6 +79,24 @@ function coutEntree(regles: JeuDeRegles, prix: number): number {
   return f.commission + (f.ticks * pasDeCotation(prix)) / prix;
 }
 
+// Prix d'exécution effectifs. Sous le modèle « limite », on remplace le prix de
+// l'encan par la limite elle-même : achat à clôture(signal) × (1 + marge), vente à
+// clôture(fin de mois) × (1 − marge). La DATE d'exécution ne change pas — c'est le
+// prix, et lui seul, qu'on rend pessimiste.
+// Le benchmark apparié reste sur l'ouverture : il ne représente pas un portefeuille
+// qu'on négocie, mais le rendement moyen des titres éligibles. Le pénaliser aussi
+// masquerait précisément ce qu'on cherche à mesurer.
+function prixAchatExec(regles: JeuDeRegles, s: Serie, reb: string, base: number): number {
+  if (regles.execution?.modele !== "limite") return base;
+  const i = s.idx.get(reb);
+  return i === undefined ? base : s.close[i] * (1 + regles.execution.marge);
+}
+function prixVenteExec(regles: JeuDeRegles, s: Serie, next: string, base: number): number {
+  if (regles.execution?.modele !== "limite" || !regles.execution.vente_penalisee) return base;
+  const i = s.idx.get(next);
+  return i === undefined ? base : s.close[i] * (1 - regles.execution.marge);
+}
+
 function taille(sel: Selection, n: number): number {
   switch (sel.type) {
     case "decile": {
@@ -318,7 +336,7 @@ export function lancer(
           const sigma = colonne(e.s, "vol20")[e.i]; // σ lue à la CLÔTURE du signal
           if (sigma > 0) niveauStop = achat.prix * (1 - regles.stop.k * sigma * Math.sqrt(21));
         }
-        nouvelles.push({ s: e.s, achatPrix: achat.prix, niveauStop, valeur: 1, sortie: false });
+        nouvelles.push({ s: e.s, achatPrix: prixAchatExec(regles, e.s, reb, achat.prix), niveauStop, valeur: 1, sortie: false });
       }
       portefeuille = nouvelles;
     }
@@ -340,10 +358,12 @@ export function lancer(
     let sommeValeur = 0;
     let sommePondere = 0;
     for (const p of portefeuille) {
-      const debutMois = achatSuivant(p.s, reb);
-      if (!debutMois || !p.s.idx.has(next)) continue;
-      const finMois = achatSuivant(p.s, next);
-      if (!finMois) continue;
+      const debutBrut = achatSuivant(p.s, reb);
+      if (!debutBrut || !p.s.idx.has(next)) continue;
+      const finBrut = achatSuivant(p.s, next);
+      if (!finBrut) continue;
+      const debutMois = { date: debutBrut.date, prix: prixAchatExec(regles, p.s, reb, debutBrut.prix) };
+      const finMois = { date: finBrut.date, prix: prixVenteExec(regles, p.s, next, finBrut.prix) };
 
       // Mode « cash » : la ligne d'un secteur fermé ne rapporte rien ce mois-ci et
       // n'est pas remplacée — le portefeuille est partiellement investi.
