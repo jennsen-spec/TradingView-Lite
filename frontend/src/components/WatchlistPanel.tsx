@@ -173,6 +173,16 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const addSymbol = (sym: string) => updateCur((c) => ({ ...c, items: [...c.items, newSymbolItem(sym)] }));
   const removeItem = (id: string) => updateCur((c) => ({ ...c, items: c.items.filter((it) => it.id !== id) }));
   const toggleFav = (id: string) => setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, favorite: !c.favorite } : c)));
+  // Vide la liste courante : les titres partent, la collection reste dans le selecteur.
+  const clearList = () => updateCur((c) => ({ ...c, items: [] }));
+  // Supprime la collection courante. La derniere ne peut pas partir : le volet
+  // n'aurait plus rien a afficher.
+  const deleteList = () => {
+    if (collections.length <= 1) return;
+    const reste = collections.filter((c) => c.id !== cur.id);
+    setCollections(reste);
+    setCurrentId(reste[0].id);
+  };
   const createList = (name: string) => {
     if (!name.trim()) return;
     const nc = newCollection(name.trim());
@@ -399,7 +409,27 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
               <div className="wl-menu wl-menu-right">
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setEditingName(true); }}>Renommer</button>
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setAddingSection(true); }}>Ajouter une section</button>
-                <button className="wl-menu-item" onClick={() => setDotsMenu(false)}>Effacer la liste</button>
+                <button
+                  className="wl-menu-item"
+                  onClick={() => {
+                    setDotsMenu(false);
+                    if (cur.items.length === 0) return;
+                    if (confirm(`Vider « ${cur.name} » ? Ses ${cur.items.length} lignes seront retirées.`)) clearList();
+                  }}
+                >
+                  Effacer la liste
+                </button>
+                <button
+                  className="wl-menu-item wl-menu-danger"
+                  disabled={collections.length <= 1}
+                  title={collections.length <= 1 ? "La dernière collection ne peut pas être supprimée" : undefined}
+                  onClick={() => {
+                    setDotsMenu(false);
+                    if (confirm(`Supprimer la collection « ${cur.name} » ? Cette action est définitive et se propage à tes autres appareils.`)) deleteList();
+                  }}
+                >
+                  Supprimer la liste
+                </button>
                 <div className="wl-menu-sep" />
                 <div className="wl-menu-label">Colonnes</div>
                 <label className="wl-menu-check"><input type="checkbox" checked={cols.last} onChange={(e) => setColumns({ ...cols, last: e.target.checked })} /> Dernier prix</label>

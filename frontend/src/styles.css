@@ -2295,6 +2295,9 @@ body {
   cursor: pointer;
 }
 .wl-menu-check input { width: 15px; height: 15px; }
+.wl-menu-danger { color: #ef5350; }
+.wl-menu-item:disabled { opacity: 0.45; cursor: default; }
+.wl-menu-item:disabled:hover { background: none; }
 .wl-flag-menu { padding: 8px; }
 .wl-flag-swatches {
   display: flex;
