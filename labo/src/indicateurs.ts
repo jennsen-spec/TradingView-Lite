@@ -43,6 +43,29 @@ function momentum(saut: number, fenetre: number): Calcul {
   };
 }
 
+// Moyenne de plusieurs momentums, chacun sur sa propre fenêtre. C'est le score
+// « accéléré » popularisé par l'Accelerating Dual Momentum : au lieu de parier sur
+// une seule profondeur d'histoire, on moyenne plusieurs horizons, ce qui réagit plus
+// vite qu'un 12-1 seul sans être aussi nerveux qu'un 3 mois seul.
+// NaN dès qu'une des fenêtres est incalculable : sinon un titre jeune serait noté
+// sur moins d'horizons que les autres et le classement ne comparerait plus la même chose.
+function momentumMoyen(fenetres: [number, number][]): Calcul {
+  return (s) => {
+    const parts = fenetres.map(([saut, f]) => momentum(saut, f)(s));
+    const r = new Float64Array(s.close.length).fill(NaN);
+    for (let i = 0; i < s.close.length; i++) {
+      let somme = 0;
+      let ok = true;
+      for (const p of parts) {
+        if (Number.isNaN(p[i])) { ok = false; break; }
+        somme += p[i];
+      }
+      if (ok) r[i] = somme / parts.length;
+    }
+    return r;
+  };
+}
+
 // RSI 14 « Cutler » (moyennes simples des hausses/baisses sur 14 variations),
 // c'est la variante que contient ta_ca_daily (vérifié par --verifier).
 const rsi14: Calcul = (s) => {
@@ -166,7 +189,14 @@ const CALCULS: Record<string, Calcul> = {
   historique: (s) => Float64Array.from(s.close, (_, i) => i + 1), // = rn de ta_ca_daily
   dv50,
   mom_12_1: momentum(21, 252), // = ret252_21
+  mom_9_1: momentum(21, 189),
   mom_6_1: momentum(21, 126),
+  mom_3_1: momentum(21, 63),
+  // Score accéléré à la lettre de l'ADM : moyenne des rendements 1, 3 et 6 mois,
+  // SANS saut du dernier mois — c'est la définition d'origine.
+  mom_accel: momentumMoyen([[0, 21], [0, 63], [0, 126]]),
+  // Même idée mais aux horizons du duo et AVEC le saut : 3-1, 6-1, 12-1.
+  mom_mix: momentumMoyen([[21, 63], [21, 126], [21, 252]]),
   ret_12: momentum(0, 252), // = ret252
   sma20: sma(20),
   sma50: sma(50),
@@ -236,3 +266,16 @@ export function valeur(s: Serie, nom: string, i: number): number {
 }
 
 export const INDICATEURS_CONNUS = Object.keys(CALCULS);
+
+// Enregistrement d'un indicateur à la volée — réservé aux balayages de paramètres,
+// où l'on veut essayer treize fenêtres sans créer treize entrées permanentes.
+// Un jeu de règles versionné doit toujours pointer vers un indicateur du catalogue.
+export function enregistrerIndicateur(nom: string, calc: Calcul): void {
+  CALCULS[nom] = calc;
+  if (!INDICATEURS_CONNUS.includes(nom)) INDICATEURS_CONNUS.push(nom);
+}
+
+// Momentum sur une fenêtre libre exprimée en MOIS (21 séances), saut d'un mois inclus.
+export function momentumMois(mois: number): Calcul {
+  return momentum(21, mois * 21);
+}
