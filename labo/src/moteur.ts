@@ -192,6 +192,22 @@ function indicateurMarche(
     return i < 0 ? NaN : colonne(ref, "sous_sma50_depuis")[i];
   }
 
+  // « <ticker>_jour_sous_sma<N> » : 1 si la DERNIÈRE séance ≤ signal s'est déroulée
+  // entièrement sous la moyenne (ouverture ET clôture dessous), 0 sinon.
+  // Demandé par Jean le 26/08 : une clôture isolée sous la moyenne — cassée en
+  // séance puis aussitôt rachetée — ne devrait pas suffire à couper.
+  const js = /^([a-z]+)_jour_sous_(sma\d+)$/.exec(nom);
+  if (js) {
+    const ref = refs.get(js[1].toUpperCase() + ".TO");
+    if (!ref) return NaN;
+    let i = ref.dates.length - 1;
+    while (i >= 0 && ref.dates[i] > reb) i--;
+    if (i < 0) return NaN;
+    const m = colonne(ref, js[2])[i];
+    if (Number.isNaN(m)) return NaN;
+    return ref.open[i] < m && ref.close[i] < m ? 1 : 0;
+  }
+
   // « <ticker>_sur_sma<N> » : cours de la référence rapporté à sa moyenne N jours.
   // > 1 = au-dessus de sa moyenne.
   const m = /^([a-z]+)_sur_(sma\d+)$/.exec(nom);

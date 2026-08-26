@@ -335,3 +335,25 @@ de quelques dizaines de milliers de dollars. Ce n'est pas un réglage à trouver
 - [x] **Plancher de prix fixé** : **1 $**, confirmé par Jean le 23/08/2026 (option 2 $ documentée, écartée).
 - [x] **Seuil de liquidité unique arrêté** : 500 k$, confirmé par mesure.
 - [ ] **Mesure sur les deux univers** — l'univers `research` n'a toujours pas été passé.
+
+## Mesure du 26/08 — interrupteur « séance entière sous la moyenne » (demande de Jean)
+Variante : ne couper que si la dernière séance du signal s'est déroulée **entièrement**
+sous la moyenne (ouverture ET clôture), au lieu de la seule clôture. But : éviter les
+cassures d'un jour aussitôt rachetées.
+
+**Duo, 2004→2026, vendre d'abord** : ×52,8 contre ×41,7 (+1,3 pt/an), **même pire
+baisse (−27,8 %) et même 2008 (−3,8 %)**. Seuls **7 mois sur 270** divergent — la
+clôture coupait, la séance entière restait investie : 5 gagnants sur 7, +21,9 % en
+cumul (2006-07, 2007-07/08, 2009-04, 2011-10, 2015-01, 2018-04). Mais 6 de ces 7
+mois sont dans la moitié de SÉLECTION ; la validation n'apporte qu'un seul point.
+
+**Contre-épreuve S&P 500, 98 ans** : +0,18 pt/an, 14 mois divergents sur 1 175
+(8 positifs, t = 1,05 — non significatif), **krachs identiques** sauf Internet
+2000-02 (−16,9 % contre −15,2 % : sortie un mois plus tard). Jamais catastrophique :
+4 décennies mieux, 1 pire (années 60), 5 neutres.
+
+**Lecture** : le mécanisme est réel (la règle ne sort jamais PLUS TÔT ; son seul
+risque structurel est un mois de retard dans une cassure violente, payé 1,7 pt une
+fois en 98 ans), la direction est favorable sur les deux jeux de données, mais la
+preuve est mince (t ≈ 1). Décision non prise — inscrite pour la revue d'hiver.
+Indicateur `<ticker>_jour_sous_sma<N>` ajouté au moteur.

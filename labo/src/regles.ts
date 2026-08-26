@@ -108,7 +108,7 @@ export interface JeuDeRegles {
 //  - « <ticker>_sur_sma<N> » : la référence rapportée à sa moyenne N jours (> 1 = au-dessus).
 //    Le ticker doit être chargé dans TICKERS_REFERENCE (xiu, xwd, hxs, zeqt, xsp).
 //  - « largeur_sma50 » : part de l'univers éligible au-dessus de sa propre moyenne 50 jours.
-const MOTIF_MARCHE = /^[a-z]+_(sur_sma\d+|sous_sma50_depuis|pente_sma50_75)$/;
+const MOTIF_MARCHE = /^[a-z]+_(sur_sma\d+|sous_sma50_depuis|pente_sma50_75|jour_sous_sma\d+)$/;
 export const INDICATEURS_MARCHE = ["<ticker>_sur_sma<N>", "largeur_sma50"];
 export function estIndicateurMarche(nom: string): boolean {
   return nom === "largeur_sma50" || MOTIF_MARCHE.test(nom);
