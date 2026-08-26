@@ -135,6 +135,58 @@ export async function chargerMarket(sansCache = false): Promise<Univers> {
   return { nom: "market", series: gardees.map(enSerie) };
 }
 
+// ── Archive locale (#58) ────────────────────────────────────────────────────
+// Depuis la migration du 26/08, le projet Supabase opérationnel ne garde que les
+// ~105 tickers dont la stratégie a besoin : il était à 499 Mo sur 500 et le
+// rafraîchissement quotidien ne tournait plus. Les 806 autres vivent dans un export
+// local vérifié (911 tickers, 2 908 206 barres, 1986 → 2026).
+//
+// Conséquence pour le labo : `chargerMarket` ne voit plus que le duo. Les analyses
+// TOUS SECTEURS — les courbes de comparaison de #52 — doivent passer par
+// `chargerUniversComplet`, qui recolle l'archive au vivant.
+export const CHEMIN_ARCHIVE = new URL("../.cache/archive/bars.ndjson", import.meta.url).pathname;
+
+export function archiveDisponible(): boolean {
+  return existsSync(CHEMIN_ARCHIVE);
+}
+
+// Lit l'archive. Format : une ligne JSON par ticker, {ticker, n, barres:[…]}.
+export function chargerArchive(): Univers {
+  if (!existsSync(CHEMIN_ARCHIVE)) {
+    throw new Error(
+      `Archive introuvable : ${CHEMIN_ARCHIVE}\n` +
+      `Les analyses tous secteurs en dépendent depuis #58. Sans elle, seuls les ` +
+      `~105 tickers de la stratégie sont disponibles.`,
+    );
+  }
+  const series: Serie[] = [];
+  for (const ligne of readFileSync(CHEMIN_ARCHIVE, "utf8").split("\n")) {
+    if (ligne.length === 0) continue;
+    const o = JSON.parse(ligne) as { ticker: string; barres: Record<string, unknown>[] };
+    series.push(enSerie(versLigne(o.ticker, o.barres)));
+  }
+  return { nom: "market", series };
+}
+
+// Univers complet = ce qui est VIVANT dans Supabase (à jour, ~105 tickers) + ce qui
+// dort dans l'archive (806 tickers, figés au 26/08/2026). Le vivant gagne toujours :
+// un ticker présent des deux côtés est pris dans sa version fraîche.
+// Les résultats des courbes tous secteurs restent donc identiques à l'avant-migration,
+// sauf pour ce qui bouge après le 26/08 — que l'archive, par construction, ignore.
+export async function chargerUniversComplet(sansCache = false): Promise<Univers> {
+  const vivant = await chargerMarket(sansCache);
+  if (!archiveDisponible()) {
+    process.stderr.write(`  ⚠ archive absente : univers limité à ${vivant.series.length} tickers\n`);
+    return vivant;
+  }
+  const parTicker = new Map<string, Serie>();
+  for (const s of chargerArchive().series) parTicker.set(s.ticker, s);
+  for (const s of vivant.series) parTicker.set(s.ticker, s); // le vivant prime
+  const series = [...parTicker.values()].sort((a, b) => (a.ticker < b.ticker ? -1 : 1));
+  process.stderr.write(`  univers complet : ${series.length} tickers (${vivant.series.length} vivants + archive)\n`);
+  return { nom: "market", series };
+}
+
 // Références absolues (XIU.TO, XWD.TO) depuis le projet opérationnel.
 export async function chargerReferences(sansCache = false): Promise<Map<string, Serie>> {
   const refs = new Map<string, Serie>();

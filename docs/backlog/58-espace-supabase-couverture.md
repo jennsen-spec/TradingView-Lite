@@ -1,6 +1,6 @@
 # #58 — Base saturée : déplacer les secteurs hors stratégie et inventorier ce qui manque
 
-**Statut** : Affiné · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Priorité** : ⭐ bloquant
+**Statut** : 🏗️ En cours (sprint lancé le 26/08) · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Priorité** : ⭐ bloquant
 **Plan vérifié le 26/08 (2ᵉ passe)** — trois défauts corrigés, voir Décisions.
 
 ## Objectif
@@ -56,15 +56,15 @@ TVLite ni les analyses du labo**, puis se donner un inventaire de ce qui manque 
 - Seuil de volume : ne rien changer ici (décision de stratégie, ticket séparé).
 
 ## Critères d'acceptation
-- [ ] **Étape 0** : la dernière barre des 105 tickers est à ≤ 2 jours ouvrables, et le cycle de
+- [x] **Étape 0** : la dernière barre des 105 tickers est à ≤ 2 jours ouvrables, et le cycle de
       fin de mois se calcule sans déclencher le garde-fou de fraîcheur — avant toute migration.
-- [ ] Export complet vérifié : 911 tickers, 2 907 903 barres, relu et comptes conformes.
+- [x] Export complet vérifié : 911 tickers, 2 907 903 barres, relu et comptes conformes.
 - [ ] Copie vers `bars_ca` prouvée : compte de barres **par ticker** identique des deux côtés
       avant toute suppression côté opérationnel.
-- [ ] Base opérationnelle **sous 150 Mo** après rechargement ; projet 2 **sous 80 %**.
-- [ ] Le rafraîchissement traite à nouveau 200 titres/jour et plus aucun des 105 n'est en retard
+- [x] Base opérationnelle **sous 150 Mo** après rechargement ; projet 2 **sous 80 %**.
+- [x] Le rafraîchissement traite à nouveau 200 titres/jour et plus aucun des 105 n'est en retard
       de plus de 6 jours ; les tables d'état ne mentionnent plus les tickers déplacés.
-- [ ] TVLite affiche un graphique correct pour un ticker déplacé (re-téléchargement, pas de vide).
+- [x] TVLite affiche un graphique correct pour un ticker déplacé (re-téléchargement, pas de vide).
 - [ ] `npm run labo:comparer` lit `bars_ca` et produit les **13 courbes identiques** à aujourd'hui.
 - [ ] Les 47 secteurs inconnus sont résolus ou explicitement exclus avec motif ; CSCO.TO récupéré.
 - [ ] La purge rejouable existe, lancée deux fois de suite sans casse, planifiée mensuellement.
@@ -93,6 +93,43 @@ TVLite ni les analyses du labo**, puis se donner un inventaire de ce qui manque 
    mensuel. → vérif : consulter un titre hors duo, relancer, état restauré.
 8. **Inventaire** : annuaire TSX vs `bars_coverage` + `bars_ca`, manquants industrie/techno
    triés par volume, refus d'ajout si l'espace manque. → vérif : total cohérent avec TMX (~2 089).
+
+## Journal du sprint — 26/08
+**Fait (étapes 0 à 5)** : signal débloqué (backfill des 105) · export complet vérifié
+(911 tickers, 2 908 206 barres, relu deux fois) · `TRUNCATE` + rechargement · tables
+d'état purgées (806/790/802/777 lignes) · garde-fou remonté à 400 · cron réarmé
+(jobid 9) · base à **87,8 Mo** (17,6 % du quota).
+
+**Événements en cours de route :**
+- **Jean a supprimé le projet 2** pendant l'opération. Sans perte : l'export local
+  (`labo/.cache/archive/bars.ndjson`, 911 tickers, historique intégral) couvrait
+  strictement plus que l'archive `bars_ca` (806, ≥ 2002). L'archive de référence est
+  désormais **ce fichier + Yahoo** ; les étapes « projet 2 » du plan sont caduques.
+- **Régression trouvée puis corrigée** : le rechargement à 40 ans a rapatrié pour
+  13 titres des époques que la base n'avait jamais eues ; 4 titres du duo (DYA, IMP,
+  PYR, STC) se faisaient écarter par le contrôle qualité (une rupture = titre entier
+  exclu). Corrigé en **retaillant chaque historique à sa première date d'origine**
+  (53 849 barres retirées). Vérifié : le grand livre du rapport retombe à
+  **697 933,31 $ au cent près** (hypothèse « même encan », celle du rapport).
+- **Panne de secteurs neutralisée** : à froid, un seul « sans réponse » de Yahoo
+  faisait disparaître un titre du duo en silence. `labo/data/secteurs-seed.json`
+  (566 titres) est désormais commité et lu en premier ; Yahoo ne sert qu'aux
+  titres nouveaux.
+- Le cache local complet d'avant-migration n'existe plus (réécrit par une
+  vérification `--frais`) : les analyses tous-secteurs passent obligatoirement par
+  `chargerUniversComplet` (archive) — étape 6 requise, plus optionnelle.
+
+**Vérifié à froid (runner simulé, caches vides)** : rapport en 21 s, signal
+2026-07-31, interrupteur ON, 66 éligibles, **les 10 mêmes ordres dans le même
+ordre**, 633 positions, solde exact. TVLite affiche un ticker déplacé (RY.TO,
+re-téléchargement, 252 bougies).
+
+**Reste** : étape 6 (câbler comparer/journal sur l'archive + vérif 13 courbes) ·
+étape 7 (purge mensuelle des réinsertions TVLite — nécessite un cron, accord de
+Jean) · étape 8 (inventaire TSX) · **aucun cron n'alimente les dividendes**
+(chargées le 22/08, jamais planifiées — à décider) · le rapport utilise l'hypothèse
+« même encan » pour son grand livre embarqué, les artefacts récents « vendre
+d'abord » : à harmoniser ou assumer.
 
 ## Questions ouvertes
 - Où trouver un annuaire fiable des sociétés cotées au TSX, récupérable proprement ?

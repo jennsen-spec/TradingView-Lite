@@ -37,7 +37,7 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
-| [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | 🔍 | **Bloquant** : 499 Mo sur 500, le rafraîchissement ne tourne plus depuis le 22/08 et le signal du 31 août ne peut pas être calculé. Déplacer les barres hors duo vers le second projet (10 Mo/500), résoudre les 47 secteurs inconnus, et enfin inventorier ce qui manque en industrie + techno. |
+| [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | 🏗️ | **Bloquant** : 499 Mo sur 500, le rafraîchissement ne tourne plus depuis le 22/08 et le signal du 31 août ne peut pas être calculé. Déplacer les barres hors duo vers le second projet (10 Mo/500), résoudre les 47 secteurs inconnus, et enfin inventorier ce qui manque en industrie + techno. |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
 | 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |

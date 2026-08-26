@@ -13,6 +13,13 @@ import { REPERTOIRE_CACHE } from "./config.ts";
 
 const UA = { "User-Agent": "Mozilla/5.0" }; // Yahoo bloque les requêtes sans UA.
 const CHEMIN = () => join(REPERTOIRE_CACHE, "secteurs.json");
+// Fichier de secours COMMITÉ (instantané du 26/08/2026, 566 titres). Sans lui, le
+// runner GitHub — qui part sans cache — dépend de quoteSummary pour classer chaque
+// titre, et un seul « sans réponse » suffit à faire disparaître un titre du duo,
+// donc à changer les candidats du rapport en silence. Mesuré le 26/08 : 1 échec sur
+// 91, et le grand livre dérivait. Le secours répond d'abord ; Yahoo ne sert plus
+// qu'aux titres nouveaux.
+const SECOURS = new URL("../data/secteurs-seed.json", import.meta.url).pathname;
 
 export interface Secteur {
   secteur: string;
@@ -78,12 +85,19 @@ async function unTicker(t: string, c: { crumb: string; cookie: string }): Promis
 
 export async function chargerSecteurs(tickers: string[], sansCache = false): Promise<Secteurs> {
   const m: Secteurs = new Map();
+  // Le secours d'abord : le cache local puis Yahoo ne font que le compléter.
+  if (existsSync(SECOURS)) {
+    const brut = JSON.parse(readFileSync(SECOURS, "utf8")) as Record<string, Secteur>;
+    for (const [t, sec] of Object.entries(brut)) m.set(t, sec);
+  }
   if (!sansCache && existsSync(CHEMIN())) {
     const brut = JSON.parse(readFileSync(CHEMIN(), "utf8")) as Record<string, Secteur>;
     for (const [t, s] of Object.entries(brut)) m.set(t, s);
+  }
+  {
     const manquants = tickers.filter((t) => !m.has(t));
     if (manquants.length === 0) return m;
-    process.stderr.write(`  secteurs : ${m.size} en cache, ${manquants.length} à récupérer\n`);
+    process.stderr.write(`  secteurs : ${m.size} connus (secours + cache), ${manquants.length} à récupérer\n`);
     tickers = manquants;
   }
 
