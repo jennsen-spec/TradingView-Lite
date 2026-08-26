@@ -23,7 +23,7 @@ console.log(`\n╔═ CYCLE ${c.signal} ${"═".repeat(60)}`);
 console.log(`║ Signal lu à la clôture du ${c.signal} · ordre à l'ouverture de la séance suivante`);
 console.log(`║ Poche duo ${eur(c.poche)} $ · ${c.regles.trier.selection.n} lignes · ${eur(c.ligne)} $ par ligne · ${c.nEligibles} titres éligibles`);
 console.log(`╠═ INTERRUPTEUR`);
-console.log(`║ ${c.marche.ticker} au ${c.marche.date} : ${c.marche.cours.toFixed(2)} $ contre MM${c.marche.ma.slice(3)} à ${c.marche.moyenne.toFixed(2)} $`
+console.log(`║ ${c.marche.ticker} au ${c.marche.date} : ${c.marche.seance ? `ouverture ${c.marche.ouverture.toFixed(2)} $ / clôture ${c.marche.cours.toFixed(2)} $` : `${c.marche.cours.toFixed(2)} $`} contre MM${c.marche.ma.slice(3)} à ${c.marche.moyenne.toFixed(2)} $`
   + `  →  ${c.marche.investi ? "INVESTI" : "LIQUIDITÉS — aucun achat ce mois-ci"}`);
 
 if (c.marche.investi) {

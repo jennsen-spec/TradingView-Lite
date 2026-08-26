@@ -9,7 +9,7 @@
     "VMO.TO": 0.15
   },
   "regles": {
-    "jeu": "c-duo-plaf5-p1",
+    "jeu": "c-duo-plaf5-p1-seance",
     "lignes": 10,
     "plafond_secteur": 5,
     "candidats_affiches_par_secteur": 10,
@@ -30,7 +30,8 @@
       "NVDA.TO",
       "TSLA.TO"
     ],
-    "commentaire_cdr": "Certificats canadiens (Cboe Canada) adosses a une action americaine, en CAD. RY/TD/LSPD n'y sont PAS : vraies societes canadiennes cotees aussi a New York. Quatre seulement entrent dans l'univers du duo : AAPL, AMD, MSFT, NVDA."
+    "commentaire_cdr": "Certificats canadiens (Cboe Canada) adosses a une action americaine, en CAD. RY/TD/LSPD n'y sont PAS : vraies societes canadiennes cotees aussi a New York. Quatre seulement entrent dans l'univers du duo : AAPL, AMD, MSFT, NVDA.",
+    "commentaire_interrupteur": "Interrupteur a SEANCE ENTIERE depuis le 26/08/2026 : liquidites seulement si XSP a OUVERT et CLOTURE sous sa MM150 le jour du signal. Mesure : x52,8 contre x41,7, meme pire baisse (-27,8 %), meme 2008 (-3,8 %). Preuve mince (7 mois divergents sur 270, t=1,05 sur 98 ans de S&P 500) mais risque borne : la regle ne sort JAMAIS plus tot que l ancienne."
   },
   "poche_duo": {
     "montant_initial": 15000,

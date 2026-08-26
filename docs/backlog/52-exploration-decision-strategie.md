@@ -357,3 +357,28 @@ risque structurel est un mois de retard dans une cassure violente, payé 1,7 pt 
 fois en 98 ans), la direction est favorable sur les deux jeux de données, mais la
 preuve est mince (t ≈ 1). Décision non prise — inscrite pour la revue d'hiver.
 Indicateur `<ticker>_jour_sous_sma<N>` ajouté au moteur.
+
+## DÉCISION du 26/08 — l'interrupteur passe à « séance entière »
+Jean adopte la variante. Nouveau jeu de règles : `c-duo-plaf5-p1-seance`
+(`xsp_jour_sous_sma150 < 1`). `portefeuille/etat.json` y pointe désormais ;
+l'ancien `c-duo-plaf5-p1` reste au dépôt pour reproduire les mesures antérieures.
+
+**Ce que la décision repose sur** : ×52,8 contre ×41,7 sur la fenêtre 2004-2026
+(×70,2 contre ×55,4 sur la fenêtre du grand livre, même rapport), **pire baisse
+inchangée à −27,8 %**, 2008 inchangé à −3,8 %, un seul épisode sous −20 % dans les
+deux cas. Sept mois divergents sur 270, +21,9 % cumulés.
+
+**Ce qu'elle ne repose PAS sur** — à garder au dossier : six de ces sept mois sont
+dans la moitié de SÉLECTION ; sur 98 ans de S&P 500 l'écart est de +0,18 pt/an avec
+**t = 1,05**, donc indiscernable du hasard. Ce qui rend le choix défendable n'est pas
+la force de la preuve mais **la borne du risque** : la règle ne sort jamais PLUS TÔT
+que l'ancienne, son seul défaut structurel est un mois de retard dans une cassure
+violente (mesuré une fois en 98 ans : bulle internet, −1,7 pt).
+
+**Corrigé au passage** : le rapport mensuel calculait son grand livre en « même
+encan » alors que tous les documents publiés sont en « vendre d'abord ». Deux
+capitaux différents pour une même stratégie dans un même dossier. `page.ts` passe
+désormais `differe: "cloture"` et l'affiche explicitement.
+
+`cycleCalc` accepte maintenant les deux formes d'interrupteur (`_sur_smaN` et
+`_jour_sous_smaN`) et le rapport dit laquelle il applique.

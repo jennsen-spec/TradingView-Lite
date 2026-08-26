@@ -21,7 +21,12 @@ const { values } = parseArgs({ options: {
 
 const TVLITE = "https://jennsen-spec.github.io/TradingView-Lite/";
 const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined, frais: values.frais });
-const j = await construireJournal({ jeu: c.etat.regles.jeu as string });
+// « vendre d'abord » : les ventes partent à l'ouverture, les achats NOUVEAUX à la
+// clôture de la même séance, faute de pouvoir acheter avant d'avoir encaissé.
+// C'est l'hypothèse prudente retenue le 24/08 pour tous les documents ; le rapport
+// doit dire le MÊME chiffre qu'eux, sans quoi deux pages du même dossier annoncent
+// deux capitaux différents pour une seule stratégie.
+const j = await construireJournal({ jeu: c.etat.regles.jeu as string, differe: "cloture" });
 const etat = c.etat as any;
 
 const r = (x: number, n: number) => Number(x.toFixed(n));
@@ -165,7 +170,9 @@ footer{padding:32px 0 0;color:var(--ink-3);font-size:.85rem;border-top:1px solid
   <p class="sous">Lu à la clôture du ${jour(c.signal)}. Les ordres passent à l'ouverture de la séance suivante, <strong>${quand}</strong>.</p>
   <div class="interrupteur ${c.marche.investi ? "on" : "off"}">
     <b>Interrupteur</b>
-    <span>${c.marche.ticker} clôture à <span class="mono">${eur(c.marche.cours)}&nbsp;$</span> contre sa MM${c.marche.ma.slice(3)} à <span class="mono">${eur(c.marche.moyenne)}&nbsp;$</span>
+    <span>${c.marche.seance
+      ? `${c.marche.ticker} ouvre à <span class="mono">${eur(c.marche.ouverture)}&nbsp;$</span> et clôture à <span class="mono">${eur(c.marche.cours)}&nbsp;$</span>, contre sa MM${c.marche.ma.slice(3)} à <span class="mono">${eur(c.marche.moyenne)}&nbsp;$</span> — il faut les DEUX sous la moyenne pour couper`
+      : `${c.marche.ticker} clôture à <span class="mono">${eur(c.marche.cours)}&nbsp;$</span> contre sa MM${c.marche.ma.slice(3)} à <span class="mono">${eur(c.marche.moyenne)}&nbsp;$</span>`}
     → <strong>${c.marche.investi ? "on investit ce mois-ci" : "liquidités — aucun achat ce mois-ci"}</strong></span>
   </div>
 </header>
@@ -191,7 +198,7 @@ footer{padding:32px 0 0;color:var(--ink-3);font-size:.85rem;border-top:1px solid
   <p style="font-size:.88rem;color:var(--ink-2)">« Engagé » suppose une exécution à la dernière clôture ; « coût max » suppose une exécution au prix limite. Le prix réel sera celui de l'encan d'ouverture, entre les deux le plus souvent — <strong>ni l'un ni l'autre n'est une certitude</strong>.</p>
   ${c.alertes.inachetables.length ? `<div class="alerte"><strong>Inachetable à ${eur(c.ligne, 0)} $ la ligne :</strong> ${c.alertes.inachetables.map((o) => `${o.ticker} à ${eur(o.cloture)} $ l'action`).join(" · ")}. Une action entière coûte plus cher que la ligne entière.</div>` : ""}
   ${c.alertes.lourds.length ? `<div class="alerte"><strong>Ordre lourd :</strong> ${c.alertes.lourds.map((o) => `${o.ticker} pèse ${(o.partVolume * 100).toFixed(0)} % d'une journée de volume`).join(" · ")}. L'encan d'ouverture ne représente qu'une fraction de la journée — attends-toi à décaler le prix.</div>` : ""}
-  ` : `<div class="vide"><b>Rien à acheter.</b>${c.marche.ticker} clôture sous sa moyenne ${c.marche.ma.slice(3)} jours : la stratégie reste en liquidités jusqu'au prochain signal. Les positions détenues sont vendues, le produit ne va nulle part — il attend.</div>`}
+  ` : `<div class="vide"><b>Rien à acheter.</b>${c.marche.ticker} a passé la séance entière sous sa moyenne ${c.marche.ma.slice(3)} jours : la stratégie reste en liquidités jusqu'au prochain signal. Les positions détenues sont vendues, le produit ne va nulle part — il attend.</div>`}
 </section>
 
 ${c.marche.investi ? `
@@ -219,7 +226,7 @@ ${c.marche.investi ? `
 
 <section>
   <h2>Journal du backtest</h2>
-  <p class="chapo">La référence historique, sur ${donnees.barres.length} mois — de ${moisLong(j.depuis + "-01")} à ${moisLong(j.jusqua + "-01")}. Même jeu de règles, ${eur(j.capital, 0)}&nbsp;$ au départ. Ce n'est pas ton argent : c'est ce que la stratégie aurait fait, pour que tu aies un repère quand un mois se passe mal.</p>
+  <p class="chapo">La référence historique, sur ${donnees.barres.length} mois — de ${moisLong(j.depuis + "-01")} à ${moisLong(j.jusqua + "-01")}. Même jeu de règles, ${eur(j.capital, 0)}&nbsp;$ au départ. Ce n'est pas ton argent : c'est ce que la stratégie aurait fait, pour que tu aies un repère quand un mois se passe mal. Hypothèse d'exécution&nbsp;: <strong>vendre d'abord</strong> — ventes à l'ouverture, achats nouveaux à la clôture de la même séance, comme dans tous les documents du dossier.</p>
   <div class="chiffres" style="border-top:1px solid var(--rule)">
     <div class="chiffre"><span class="etiq">Départ</span><span class="val">${eur(j.capital, 0)}&nbsp;$</span><span class="note">${moisLong(j.depuis + "-01")}</span></div>
     <div class="chiffre"><span class="etiq">Arrivée</span><span class="val" style="color:var(--accent)">${eur(j.soldeFinal, 0)}&nbsp;$</span><span class="note">×${(j.soldeFinal / j.capital).toFixed(1).replace(".", ",")}</span></div>

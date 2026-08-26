@@ -35,7 +35,8 @@ export interface Cycle {
   // ouvrable au calendrier mais le TSX est fermé (congé civique), et le backtest
   // exécute le 4. Annoncer une date fausse est pire que n'en annoncer aucune.
   execution: string | null;
-  marche: { ticker: string; ma: string; date: string; cours: number; moyenne: number; ratio: number; investi: boolean };
+  marche: { ticker: string; ma: string; date: string; cours: number; ouverture: number;
+            seance: boolean; moyenne: number; ratio: number; investi: boolean };
   poche: number; ligne: number; marge: number; nEligibles: number;
   ordres: Ordre[]; sortants: string[]; detenus: string[];
   candidats: { secteur: string; titres: Candidat[] }[];
@@ -114,12 +115,23 @@ export async function calculerCycle(opts: { signal?: string; marge?: number; fra
   })();
 
   // INTERRUPTEUR — lu sur la dernière barre de la référence ≤ signal.
-  const m = /^([a-z]+)_sur_(sma\d+)$/.exec(regles.interrupteur!.indicateur)!;
+  // Deux formes acceptées, et le rapport doit dire laquelle il a appliquée :
+  //   « <ref>_sur_sma<N> »       → le cours rapporté à sa moyenne (> 1 = au-dessus) ;
+  //   « <ref>_jour_sous_sma<N> » → 1 si la séance s'est déroulée ENTIÈREMENT sous la
+  //     moyenne (ouverture ET clôture dessous). Adopté le 26/08 : une clôture isolée
+  //     sous la moyenne, cassée en séance puis rachetée, ne doit pas couper le mois.
+  const nomInter = regles.interrupteur!.indicateur;
+  const m = /^([a-z]+)_(?:sur|jour_sous)_(sma\d+)$/.exec(nomInter);
+  if (!m) throw new Error(`Interrupteur non géré par le rapport : « ${nomInter} »`);
+  const seance = nomInter.includes("_jour_sous_");
   const ref = refs.get(m[1].toUpperCase() + ".TO")!;
   let ir = ref.dates.length - 1; while (ir >= 0 && ref.dates[ir] > signal) ir--;
-  const ratio = ref.close[ir] / colonne(ref, m[2])[ir];
+  const moyenne = colonne(ref, m[2])[ir];
+  const ratio = ref.close[ir] / moyenne;
+  const valeur = seance ? (ref.open[ir] < moyenne && ref.close[ir] < moyenne ? 1 : 0) : ratio;
   const marche = { ticker: ref.ticker, ma: m[2], date: ref.dates[ir], cours: ref.close[ir],
-    moyenne: colonne(ref, m[2])[ir], ratio, investi: comparer(ratio, regles.interrupteur!.op, regles.interrupteur!.valeur) };
+    ouverture: ref.open[ir], seance, moyenne, ratio,
+    investi: comparer(valeur, regles.interrupteur!.op, regles.interrupteur!.valeur) };
 
   // FILTRER puis TRIER — identique au moteur.
   const elig: (Candidat & { s: Serie })[] = [];

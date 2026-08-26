@@ -1,0 +1,21 @@
+{
+  "nom": "c-duo-plaf5-p1-seance",
+  "version": 1,
+  "description": "Duo #52 — momentum 12-1 sur Industrials + Technology, 10 lignes, plafond 5 par secteur, PLANCHER DE PRIX 1 $. INTERRUPTEUR A SEANCE ENTIERE : on ne passe en liquidites que si la derniere seance du signal s est deroulee entierement sous la MM150 de XSP (ouverture ET cloture dessous). Une cloture isolee sous la moyenne, cassee en seance puis rachetee, ne coupe plus. Adopte par Jean le 26/08/2026. Frais : commission 0 $ + fourchette de 2 pas de cotation. (La restriction sectorielle est appliquee a l univers, pas par le jeu de regles.)",
+  "trier": {
+    "indicateur": "mom_12_1",
+    "ordre": "desc",
+    "selection": { "type": "topN", "n": 10 }
+  },
+  "filtrer": [
+    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
+    { "indicateur": "historique", "op": ">=", "valeur": 253 },
+    { "indicateur": "close", "op": ">=", "valeur": 1 }
+  ],
+  "interrupteur": { "indicateur": "xsp_jour_sous_sma150", "op": "<", "valeur": 1 },
+  "stop": null,
+  "detention_mois": 1,
+  "frais_aller_retour": 0.0035,
+  "frais_fourchette": { "ticks": 2, "commission": 0 },
+  "plafond": { "n": 5, "niveau": "secteur" }
+}
