@@ -32,6 +32,9 @@ se donner enfin un inventaire de ce qui manque en industrie + techno.
 - **Résoudre les secteurs AVANT toute purge**, sinon « Inconnu » part avec et on perd des CDR.
 - **La purge doit être répétable**, pas un coup unique : `writeDailyCache` réinsère les barres de
   tout symbole consulté dans TVLite.
+- **Forfait gratuit conservé** (tranché par Jean le 26/08). Donc pas de Pro à 25 $/mois : la base
+  restera contrainte à 500 Mo, et l'élargissement de couverture devra tenir dans ce que le
+  déplacement vers le second projet libère. Les deux projets réunis plafonnent à 1 Go.
 - Seuil de volume : **ne rien changer dans ce ticket.** Mesuré le 25/08, le baisser à 250 k$
   rapporte ~1,8 pt/an et résiste jusqu'à 8 pas de cotation de fourchette — mais c'est une décision
   de stratégie, pas d'infrastructure. Ticket séparé.
@@ -73,9 +76,6 @@ se donner enfin un inventaire de ce qui manque en industrie + techno.
    sociétés connues correspond à l'ordre de grandeur publié par TMX.
 
 ## Questions ouvertes
-- **Forfait Pro à 25 $/mois (8 Go) plutôt que tout ce travail ?** Ça débloque tout d'un coup et
-  finance l'élargissement de couverture. À trancher par Jean : le plan ci-dessus est la voie
-  gratuite, il coûte du temps et laissera la base contrainte.
 - Où trouver un annuaire fiable des sociétés cotées au TSX ? tsx.com publie un répertoire ;
   reste à vérifier qu'il est récupérable proprement et à quelle fréquence.
 - Faut-il conserver les FNB sectoriels des secteurs déplacés (XGD, XEG, XFN, XRE, XMA) côté
