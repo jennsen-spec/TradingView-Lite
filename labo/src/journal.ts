@@ -41,6 +41,8 @@ export interface Barre {
 }
 export interface Journal {
   capital: number; soldeFinal: number; ecartMax: number;
+  differe: "aucun" | "cloture" | "lendemain"; // l'hypothèse RÉELLEMENT appliquée
+
   barres: Barre[]; positions: Position[]; lignes: LigneMois[];
   depuis: string; jusqua: string;
 }
@@ -63,8 +65,13 @@ export async function construireJournal(opts: {
   const SEC = new Set(opts.secteurs ?? ["Industrials", "Technology"]);
   const series = u.series.filter((s) => SEC.has(secteurDe(s.ticker)));
   const carte = new Map(series.map((s) => [s.ticker, s]));
-  const DIFFERE = opts.differe ?? "aucun";
-  const jeuBase = chargerJeu(opts.jeu ?? "c-duo-plaf5-p1");
+  // L'hypothèse de financement appartient au JEU DE RÈGLES, pas à l'appelant : sinon
+  // chaque script doit se souvenir de la passer, et un oubli produit en silence des
+  // chiffres « même encan » au milieu d'un dossier qui dit « vendre d'abord ».
+  // `opts.differe` ne sert plus qu'aux mesures de sensibilité qui comparent exprès
+  // les deux hypothèses.
+  const jeuBase = chargerJeu(opts.jeu ?? "c-duo-plaf5-p1-seance");
+  const DIFFERE = opts.differe ?? jeuBase.execution?.achat_differe ?? "aucun";
   const jeu = { ...jeuBase, execution: { modele: "ouverture" as const, marge: 0,
     vente_penalisee: false, achat_differe: DIFFERE } };
   const tous = lancer({ nom: "market", series }, jeu, refs, undefined, divs).mois;
@@ -137,6 +144,6 @@ export async function construireJournal(opts: {
   }
   positions.sort((a, b) => (a.venteDate === b.venteDate ? (a.ticker < b.ticker ? -1 : 1) : a.venteDate < b.venteDate ? -1 : 1));
 
-  return { capital: CAPITAL, soldeFinal: solde, ecartMax, barres, positions, lignes,
+  return { capital: CAPITAL, soldeFinal: solde, ecartMax, differe: DIFFERE, barres, positions, lignes,
     depuis: barres[0].mois, jusqua: barres[barres.length - 1].mois };
 }

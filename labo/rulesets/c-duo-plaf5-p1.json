@@ -1,21 +1,52 @@
 {
   "nom": "c-duo-plaf5-p1",
   "version": 1,
-  "description": "Duo #52 — momentum 12-1 sur Industrials + Technology, 10 lignes, interrupteur XSP MM150, plafond 5 par secteur, PLANCHER DE PRIX 1 $. Frais : commission 0 $ (Disnat/BNCD) + fourchette de 2 pas de cotation. (La restriction sectorielle est appliquee a l univers, pas par le jeu de regles.)",
+  "description": "Duo #52 — momentum 12-1 sur Industrials + Technology, 10 lignes, interrupteur XSP MM150, plafond 5 par secteur, PLANCHER DE PRIX 1 $. Frais : commission 0 $ (Disnat/BNCD) + fourchette de 2 pas de cotation. (La restriction sectorielle est appliquee a l univers, pas par le jeu de regles.) EXECUTION : vendre d abord, comme le jeu -seance — sans quoi comparer les deux ferait apparaitre un ecart qui ne vient que de l hypothese d execution.",
   "trier": {
     "indicateur": "mom_12_1",
     "ordre": "desc",
-    "selection": { "type": "topN", "n": 10 }
+    "selection": {
+      "type": "topN",
+      "n": 10
+    }
   },
   "filtrer": [
-    { "indicateur": "dv50", "op": ">=", "valeur": 500000 },
-    { "indicateur": "historique", "op": ">=", "valeur": 253 },
-    { "indicateur": "close", "op": ">=", "valeur": 1 }
+    {
+      "indicateur": "dv50",
+      "op": ">=",
+      "valeur": 500000
+    },
+    {
+      "indicateur": "historique",
+      "op": ">=",
+      "valeur": 253
+    },
+    {
+      "indicateur": "close",
+      "op": ">=",
+      "valeur": 1
+    }
   ],
-  "interrupteur": { "indicateur": "xsp_sur_sma150", "op": ">", "valeur": 1 },
+  "interrupteur": {
+    "indicateur": "xsp_sur_sma150",
+    "op": ">",
+    "valeur": 1
+  },
   "stop": null,
   "detention_mois": 1,
   "frais_aller_retour": 0.0035,
-  "frais_fourchette": { "ticks": 2, "commission": 0 },
-  "plafond": { "n": 5, "niveau": "secteur" }
+  "frais_fourchette": {
+    "ticks": 2,
+    "commission": 0
+  },
+  "plafond": {
+    "n": 5,
+    "niveau": "secteur"
+  },
+  "execution": {
+    "modele": "ouverture",
+    "marge": 0,
+    "vente_penalisee": false,
+    "achat_differe": "cloture"
+  }
 }

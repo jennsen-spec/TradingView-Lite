@@ -382,3 +382,16 @@ désormais `differe: "cloture"` et l'affiche explicitement.
 
 `cycleCalc` accepte maintenant les deux formes d'interrupteur (`_sur_smaN` et
 `_jour_sous_smaN`) et le rapport dit laquelle il applique.
+
+### Correctif du 26/08 — l'hypothèse d'exécution appartient au JEU DE RÈGLES
+Elle vivait dans les *appels* : `page.ts` passait « vendre d'abord », mais
+`npm run labo` et `npm run labo:comparer` prenaient le défaut « même encan » sans
+rien dire. Sur le duo, l'écart n'est pas cosmétique : **×52,9 contre ×62,4**.
+
+`execution.achat_differe: "cloture"` est désormais déclaré dans
+`c-duo-plaf5-p1-seance.json` **et** dans `c-duo-plaf5-p1.json` — sans quoi comparer
+les deux jeux ferait apparaître un écart qui ne viendrait que de l'hypothèse.
+`construireJournal` lit la clause du jeu (`opts.differe` ne sert plus qu'aux mesures
+de sensibilité qui comparent exprès les deux) et **renvoie l'hypothèse appliquée** ;
+le rapport l'affiche au lieu de la forcer, et signale en gras si elle n'est pas
+celle du dossier. Vérifié : les deux jeux reproduisent 702 188 $ et 554 017 $.

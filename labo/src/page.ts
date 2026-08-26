@@ -21,12 +21,10 @@ const { values } = parseArgs({ options: {
 
 const TVLITE = "https://jennsen-spec.github.io/TradingView-Lite/";
 const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined, frais: values.frais });
-// « vendre d'abord » : les ventes partent à l'ouverture, les achats NOUVEAUX à la
-// clôture de la même séance, faute de pouvoir acheter avant d'avoir encaissé.
-// C'est l'hypothèse prudente retenue le 24/08 pour tous les documents ; le rapport
-// doit dire le MÊME chiffre qu'eux, sans quoi deux pages du même dossier annoncent
-// deux capitaux différents pour une seule stratégie.
-const j = await construireJournal({ jeu: c.etat.regles.jeu as string, differe: "cloture" });
+// Aucune hypothèse n'est forcée ici : elle est déclarée dans le jeu de règles
+// (`execution.achat_differe`) et le rapport AFFICHE celle qu'il a appliquée. Forcer
+// la valeur ici masquerait un jeu de règles qui dirait autre chose.
+const j = await construireJournal({ jeu: c.etat.regles.jeu as string });
 const etat = c.etat as any;
 
 const r = (x: number, n: number) => Number(x.toFixed(n));
@@ -226,7 +224,13 @@ ${c.marche.investi ? `
 
 <section>
   <h2>Journal du backtest</h2>
-  <p class="chapo">La référence historique, sur ${donnees.barres.length} mois — de ${moisLong(j.depuis + "-01")} à ${moisLong(j.jusqua + "-01")}. Même jeu de règles, ${eur(j.capital, 0)}&nbsp;$ au départ. Ce n'est pas ton argent : c'est ce que la stratégie aurait fait, pour que tu aies un repère quand un mois se passe mal. Hypothèse d'exécution&nbsp;: <strong>vendre d'abord</strong> — ventes à l'ouverture, achats nouveaux à la clôture de la même séance, comme dans tous les documents du dossier.</p>
+  <p class="chapo">La référence historique, sur ${donnees.barres.length} mois — de ${moisLong(j.depuis + "-01")} à ${moisLong(j.jusqua + "-01")}. Même jeu de règles, ${eur(j.capital, 0)}&nbsp;$ au départ. Ce n'est pas ton argent : c'est ce que la stratégie aurait fait, pour que tu aies un repère quand un mois se passe mal. Hypothèse d'exécution&nbsp;: <strong>${
+  j.differe === "cloture" ? "vendre d'abord" : j.differe === "lendemain" ? "achat au lendemain" : "même encan"
+}</strong>${
+  j.differe === "cloture" ? " — ventes à l'ouverture, achats nouveaux à la clôture de la même séance, comme dans tous les documents du dossier."
+  : j.differe === "lendemain" ? " — les achats nouveaux attendent l'ouverture suivante."
+  : " — ventes et achats dans le même encan d'ouverture. <b>Attention</b>&nbsp;: ce n'est pas l'hypothèse des documents du dossier."
+}</p>
   <div class="chiffres" style="border-top:1px solid var(--rule)">
     <div class="chiffre"><span class="etiq">Départ</span><span class="val">${eur(j.capital, 0)}&nbsp;$</span><span class="note">${moisLong(j.depuis + "-01")}</span></div>
     <div class="chiffre"><span class="etiq">Arrivée</span><span class="val" style="color:var(--accent)">${eur(j.soldeFinal, 0)}&nbsp;$</span><span class="note">×${(j.soldeFinal / j.capital).toFixed(1).replace(".", ",")}</span></div>
