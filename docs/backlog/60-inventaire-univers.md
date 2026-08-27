@@ -60,5 +60,19 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
 
 ## Journal du sprint
 - 27/08 16 h : sondage Yahoo des 37 candidats CDR/`.NE` (script local, base non touchée) —
-  résultat ci-dessus, question d'éligibilité refermée. Sprint démarré sur décision de Jean
-  (#60, #61, #62).
+  conclusion « rien à élargir ». Sprint démarré sur décision de Jean (#60, #61, #62).
+- 27/08 16 h 45 : **le CSV Cboe corrige la mesure de 16 h.** Le sondage `.NE` interrogeait
+  le mauvais suffixe : 104 des 190 CDR ont migré au TSX et vivent en `.TO` chez Yahoo,
+  très liquides (MU 99 M$/j, INTC 20, AVGO 14, PLTR 11, SMCI 11…). Resondage complet des
+  88 CDR à dv ≥ 100 k$ : **14 ont ≥ 253 barres**, dont un seul techno nouveau — CSCO.TO
+  (416 barres, 3 M$/j, éligible depuis ~janv. 2026). **Backtest élargi duo + CSCO.TO :
+  ×52,87 identique, aucun mois modifié** — jamais retenu par le tri momentum. Les autres
+  CDR techno/industrie (MU, INTC, AVGO, PLTR, SMCI, ORAC, AMAT, IBM, BA, CAT, DEER, GE,
+  HON, UPS…) mûrissent : éligibles d'ici 12-18 mois. C'est EUX que la surveillance de
+  maturation doit suivre — en `.TO`, pas en `.NE`. Le CSV Cboe
+  (`cdn.cboe.com/ca/equities/mnow/symbol_listings.csv`) devient la source pressentie de
+  l'inventaire : tout le marché canadien consolidé, bourse (mic), devise, classe d'actif
+  et volume moyen inclus — le pré-filtre de liquidité est gratuit, avant tout appel Yahoo.
+  Question posée à Jean : ajouter dès maintenant les CDR techno/industrie liquides à la
+  base (ils mûriraient DANS le système et entreraient d'eux-mêmes via les filtres), ou
+  attendre l'alerte de maturation.
