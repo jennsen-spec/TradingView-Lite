@@ -6,6 +6,7 @@
     "labo": "node --disable-warning=ExperimentalWarning labo/src/main.ts",
     "labo:comparer": "node --disable-warning=ExperimentalWarning labo/src/comparer.ts",
     "cycle": "node --disable-warning=ExperimentalWarning labo/src/cycle.ts",
-    "rapport": "node --disable-warning=ExperimentalWarning labo/src/page.ts"
+    "rapport": "node --disable-warning=ExperimentalWarning labo/src/page.ts",
+    "collection": "node --disable-warning=ExperimentalWarning labo/src/collection.ts"
   }
 }

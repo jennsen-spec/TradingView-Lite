@@ -96,6 +96,14 @@ jobs:
                      -m "Généré automatiquement. Le cycle est inscrit dans etat.json ; \`execute\` reste vide jusqu'à ce que Jean rapporte ses exécutions réelles."
           git push
 
+      # Les libellés de la collection « Duo Sec Momentum » suivent le signal publié.
+      # Après le commit : si la poussée des libellés échoue, le rapport publié reste
+      # valable et le passage suivant (signal inchangé) n'y reviendra pas — le README
+      # de portefeuille/ documente la reprise manuelle : npm run collection -- --frais
+      - name: Libellés de la collection
+        if: steps.gen.outputs.change == 'true'
+        run: npm run collection -- --frais
+
       - name: Rien à publier
         if: steps.frais.outputs.ok == 'true' && steps.gen.outputs.change != 'true'
         run: |

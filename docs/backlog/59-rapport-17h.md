@@ -40,3 +40,44 @@ Jean ait le rapport en main plus tôt le soir du signal. Demandé le 26/08.
   du 1er s'en charge, avec un jour de retard. Préféré à la publication d'un signal faux.
 - La tolérance de 4 jours de `calculerCycle` reste en place pour les fins de mois en week-end ;
   c'est elle que le garde-fou vient encadrer, pas remplacer.
+
+## Répétition générale du 27/08 (UAT, demandée par Jean)
+
+**Principe** : faire comme si le 27 août était le 31. À 17 h, après le rafraîchissement,
+dérouler la chaîne complète — signal, rapport, cycle inscrit, libellés de la collection —
+puis Jean consulte, annonce son action, elle est inscrite. À la fin, **tout est restauré**.
+
+**Mécanisme** : `TVLITE_AUJOURDHUI=2026-08-31` (variable de test lue par `calculerCycle`,
+jamais posée en production). Le 27 devient une fin de mois complète via la tolérance de
+4 jours qui existe déjà pour les week-ends.
+
+### Séquence (heure de Toronto)
+1. **17 h 00** — le cron Supabase rafraîchit les cours (processus réel, rien de simulé).
+2. **17 h 10** — vérifier la fraîcheur : barre du 27 présente sur les ~105 tickers et sur XSP.
+3. `TVLITE_AUJOURDHUI=2026-08-31 npm run rapport -- --frais --enregistrer` (en local, pas de push).
+4. `TVLITE_AUJOURDHUI=2026-08-31 npm run collection -- --frais` → libellés dans le cloud.
+5. Publier le rapport en artifact « Rapport UAT » ; prévenir Jean, qui consulte le rapport
+   ET la collection dans TVLite (recharger l'app pour voir les libellés).
+6. Jean annonce son action → l'inscrire dans `execute` du cycle (etat.json).
+7. **Rollback** (fin de l'exercice, sur l'accord de Jean).
+
+### Ce que l'exercice touche, et comment on le défait
+| Quoi | Où | Rollback |
+|---|---|---|
+| `etat.json` (cycle + execute) | git | `git restore --source=<sha-avant> -- portefeuille/etat.json` |
+| `dernier-signal.txt` (→ 2026-08-27) | git | idem |
+| `frontend/public/rapport.html` | git | idem |
+| Libellés de la collection | cloud `tvlite_prefs` | POST de la sauvegarde `uat/collections-avant-uat.json` (prise le 27 à 12 h 26, 12 456 octets) |
+| Cours Supabase | — | rien à défaire : le rafraîchissement de 17 h est le processus normal |
+
+Sauvegardes déposées dans le scratchpad de session (`uat/`). Le sha-avant est le commit
+qui précède la séquence de 17 h. **Aucun push pendant l'exercice.**
+
+### Pièges connus
+- **Cloud-clobber** : un TVLite ouvert pendant la restauration de la collection peut
+  repousser l'état UAT par-dessus. Après le rollback, Jean recharge l'app.
+- **L'Action GitHub d'origin tournera le 28 au soir** (le cron des 28-2 sur l'ancienne
+  version, 19 h 30) : sans barre de fin de mois elle conclura « signal inchangé » et ne
+  publiera rien. Inoffensif, mais attendu.
+- Si `execute` est inscrit pendant l'UAT, le rollback l'efface aussi — c'est voulu,
+  l'exercice entier est jetable.

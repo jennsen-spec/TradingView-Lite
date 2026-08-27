@@ -80,7 +80,11 @@ export async function calculerCycle(opts: { signal?: string; marge?: number; fra
   // une barre de septembre le lui livrerait un jour trop tard.
   // Elle gère aussi le cas d'un dernier jour civil non ouvré : la fin de mois
   // retenue reste la dernière SÉANCE du mois, pas le dernier jour du calendrier.
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  // TVLITE_AUJOURDHUI : date du jour forgée, pour les répétitions générales (#59).
+  // Avec « 2026-08-31 » un soir de 27, le 27 devient une fin de mois complète (l'écart
+  // de 4 jours est celui que le garde-fou tolère déjà pour les week-ends). Jamais
+  // définie en production : l'Action ne la pose pas.
+  const aujourdhui = process.env.TVLITE_AUJOURDHUI ?? new Date().toISOString().slice(0, 10);
   const dernierJourCivil = (mois: string) => {
     const [y, mo] = mois.split("-").map(Number);
     return new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
@@ -163,7 +167,12 @@ export async function calculerCycle(opts: { signal?: string; marge?: number; fra
     if (a.length < etat.regles.candidats_affiches_par_secteur) { a.push(e); parSecteur.set(e.secteur, a); }
   }
 
-  const precedent: string[] = etat.cycles.length ? (etat.cycles[etat.cycles.length - 1].detenus ?? []) : [];
+  // Le portefeuille précédent est le dernier cycle STRICTEMENT antérieur au signal.
+  // Prendre « le dernier cycle » tout court rendait le rapport non idempotent : relancé
+  // après --enregistrer (le cas normal des passages des 1er et 2 du mois), il lisait le
+  // cycle qu'il venait d'écrire, et prescrivait « conserver » sur des lignes à acheter.
+  const cyclesAvant = etat.cycles.filter((c: { signal: string }) => c.signal < signal);
+  const precedent: string[] = cyclesAvant.length ? (cyclesAvant[cyclesAvant.length - 1].detenus ?? []) : [];
   const detenus = new Set(precedent);
   const estRetenu = new Set(retenus.map((e) => e.ticker));
   const poche = (etat.poche_duo.montant_initial ?? 0) + (etat.poche_duo.liquidites ?? 0);
