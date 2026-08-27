@@ -55,6 +55,11 @@ const pasDeCotation = (prix: number) => (prix < 0.5 ? 0.005 : 0.01);
 export async function construireJournal(opts: {
   capital?: number; jeu?: string; ticks?: number; commission?: number; secteurs?: string[];
   differe?: "aucun" | "cloture" | "lendemain"; depuis?: string;
+  // #62 — pondération des lignes. « egale » (défaut) : le modèle du backtest, dix parts
+  // égales chaque mois, reconduites comprises. « derivante » : la pratique réelle — une
+  // reconduite garde sa valeur, seules les entrantes se partagent, à parts égales entre
+  // elles, l'argent libéré par les sortantes.
+  ponderation?: "egale" | "derivante";
 } = {}): Promise<Journal> {
   const CAPITAL = opts.capital ?? 10_000;
   const TICKS = opts.ticks ?? 2, COMMISSION = opts.commission ?? 0;
@@ -93,30 +98,49 @@ export async function construireJournal(opts: {
     return j + 1 < s.dates.length ? { date: s.dates[j + 1], prix: s.open[j + 1] } : base;
   };
 
+  const PONDERATION = opts.ponderation ?? "egale";
   const lignes: LigneMois[] = [], barres: Barre[] = [];
   let solde = CAPITAL, ecartMax = 0, demarre = false;
   let prec = new Set<string>(), investiPrec = false;
+  let finsPrec = new Map<string, number>(); // ticker → valeur de fin du mois précédent
 
   mois.forEach((m, k) => {
     const investi = m.investi && m.retenus.length > 0;
     if (!demarre) { if (!investi) { prec = new Set(); investiPrec = false; return; } demarre = true; }
     const avant = solde, lot: LigneMois[] = [];
+    let cashDormant = 0; // mode dérivante : l'argent qu'aucune entrante ne réclame
     if (investi) {
       const mise = avant / m.retenus.length;
+      // Mode dérivante : les reconduites reprennent leur valeur de fin du mois
+      // précédent ; les entrantes se partagent le reste. S'il n'y a aucune entrante
+      // et que des sortantes ont libéré du cash, il dort jusqu'au mois suivant —
+      // c'est exactement ce que ferait le compte réel.
+      const entrees = m.retenus.filter((t) => !investiPrec || !prec.has(t));
+      const reconduites = m.retenus.filter((t) => investiPrec && prec.has(t));
+      const totalReconduites = reconduites.reduce((x, t) => x + (finsPrec.get(t) ?? 0), 0);
+      const miseEntrante = entrees.length ? (avant - totalReconduites) / entrees.length : 0;
+      if (!entrees.length) cashDormant = avant - totalReconduites;
       for (const t of m.retenus) {
         const s = carte.get(t)!;
         const entree = !investiPrec || !prec.has(t);
         const a = achatDe(s, m.reb, entree), v = apres(s, m.next)!;
         const div = dividendesEntre(divs, s, a.date, v.date).somme;
         const ret = (v.prix + div) / a.prix - 1;
-        const frais = entree ? cout(a.prix) * mise : 0;
+        const miseLigne = PONDERATION === "derivante"
+          ? (entree ? miseEntrante : finsPrec.get(t) ?? 0)
+          : mise;
+        const frais = entree ? cout(a.prix) * miseLigne : 0;
         lot.push({ mois: m.next.slice(0, 7), reb: m.reb, next: m.next, ticker: t, secteur: secteurDe(t), achatDate: a.date,
-          achatPrix: a.prix, venteDate: v.date, ventePrix: v.prix, div, ret, mise, frais,
-          fin: mise * (1 + ret) - frais, resultat: mise * ret - frais, entree, k });
+          achatPrix: a.prix, venteDate: v.date, ventePrix: v.prix, div, ret, mise: miseLigne, frais,
+          fin: miseLigne * (1 + ret) - frais, resultat: miseLigne * ret - frais, entree, k });
       }
     }
     const apresSolde = avant + lot.reduce((x, l) => x + l.resultat, 0);
-    ecartMax = Math.max(ecartMax, Math.abs(apresSolde - avant * (1 + m.net)) / Math.max(1, avant));
+    finsPrec = new Map(lot.map((l) => [l.ticker, l.fin]));
+    // La réconciliation contre m.net (équipondéré du moteur) n'a de sens qu'en mode égal.
+    if (PONDERATION === "egale")
+      ecartMax = Math.max(ecartMax, Math.abs(apresSolde - avant * (1 + m.net)) / Math.max(1, avant));
+    void cashDormant; // porté par apresSolde (les lots ne le consomment pas)
     lignes.push(...lot);
     barres.push({ mois: m.next.slice(0, 7), reb: m.reb, next: m.next, investi, n: lot.length,
       avant, apres: apresSolde, net: m.net, frais: lot.reduce((x, l) => x + l.frais, 0) });
