@@ -77,6 +77,16 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
   base (ils mûriraient DANS le système et entreraient d'eux-mêmes via les filtres), ou
   attendre l'alerte de maturation.
 - 27/08 16 h 45 : le backtest publié — « L'élargissement CDR » (artifact 12d89168).
+- 27/08 16 h 35 : **décision de Jean : ajouter les CDR mûrissants tout de suite.** Les 22
+  CDR techno/industrie (dv ≥ 300 k$) sont backfillés dans la base (comptes identiques à la
+  sonde locale, base à 97 Mo/500, 133 tickers), inscrits dans `bars_coverage` (max_range 6y)
+  et au seed des secteurs. Vérifié : l'univers du labo passe à 102 séries (CSCO entre, les
+  21 immatures attendent leurs 253 barres), signal et ordres inchangés, conformité
+  moteur ↔ rapport OK. Le refresh de 17 h les adopte (last_refresh null = priorité).
+  Protocole (section 01, périmètre CDR + note de révision) et document « L'élargissement
+  CDR » (décision + vérification) republiés. **Reste à faire** : dividendes des CDR non
+  couverts par la table `dividends` (à alimenter quand un CDR approche l'éligibilité —
+  IBM/TXN/QCOM paient), et la commande `npm run inventaire` elle-même.
   Détail du verdict : CSCO réellement éligible 2 mois (juin-juillet 2026), classé 28ᵉ/69
   puis 22ᵉ/68, momentum +73 % quand le 10ᵉ retenu est à +118 % — jamais proche d'entrer.
   Le document porte aussi le calendrier de maturation des 21 CDR suivis (Micron 99 M$/j,
