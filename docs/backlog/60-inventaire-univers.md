@@ -76,3 +76,8 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
   Question posée à Jean : ajouter dès maintenant les CDR techno/industrie liquides à la
   base (ils mûriraient DANS le système et entreraient d'eux-mêmes via les filtres), ou
   attendre l'alerte de maturation.
+- 27/08 16 h 45 : le backtest publié — « L'élargissement CDR » (artifact 12d89168).
+  Détail du verdict : CSCO réellement éligible 2 mois (juin-juillet 2026), classé 28ᵉ/69
+  puis 22ᵉ/68, momentum +73 % quand le 10ᵉ retenu est à +118 % — jamais proche d'entrer.
+  Le document porte aussi le calendrier de maturation des 21 CDR suivis (Micron 99 M$/j,
+  mesurable vers 2026-10 ; Intel, Broadcom, Palantir… échelonnés jusqu'en 2027).
