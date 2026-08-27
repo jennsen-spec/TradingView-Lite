@@ -1,6 +1,6 @@
 # #60 — Inventaire mensuel de l'univers
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 L'univers doit grandir avec la bourse. Aujourd'hui le rafraîchissement quotidien ne fait
@@ -32,11 +32,16 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
 - **Source de la liste** : TMX publie l'inventaire officiel (fichiers quotidiens) ; Cboe
   Canada publie la liste de ses inscriptions (dont les ~60 CDR) ; le screener Yahoo est
   plus simple mais non exhaustif. À trancher à l'implémentation.
-- **Éligibilité des `.NE`** : la détection est tranchée (décision du 27/08, ci-dessus) ;
-  reste à décider, mesure en main, si le filtre d'univers s'élargit à `.NE`. Contexte :
-  les CDR `.TO` sont déjà gardés dans le duo (mesure du 23/08 : ×50,5 contre ×40,7) ;
-  les CDR n'existent que depuis 2021-2022, donc l'élargissement ne change les backtests
-  que sur les dernières années.
+- ~~Éligibilité des `.NE`~~ — **mesurée et refermée le 27/08** : le backtest d'élargissement
+  demandé par Jean n'a rien trouvé à élargir. Les seuls `.NE` avec un historique réel
+  (AAPL, MSFT, NVDA, AMD, ~1 100-1 200 barres) sont les jumeaux des `.TO` déjà dans
+  l'univers — les ajouter compterait le même instrument deux fois. Les autres CDR
+  techno/industrie sondés (CSCO, ORCL, IBM, AVGO, TXN, MU, PLTR, UBER, BA, CAT, GE, HON,
+  UNP, UPS, DE, LMT, RTX, MMM…) n'ont que 1-2 barres exploitables chez Yahoo — cotés ou
+  couverts depuis la mi-juillet 2026, quasi sans échanges ; SNOW/DELL/SQ/ARM absents.
+  **Décision de Jean : on reste sur la stratégie actuelle.** L'inventaire surveillera la
+  maturation de ces CDR (barres accumulées, volume) et la question rouvrira quand l'un
+  d'eux approchera l'éligibilité (253 barres + dv50 ≥ 500 k$).
 
 ## Plan technique
 1. Commande `labo/src/inventaire.ts` : récupérer la liste des cotés, classifier
@@ -45,9 +50,15 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
 2. Alerte dans le rapport (section réserves) quand manquants > 0. → vérif : injection
    d'un manquant factice.
 3. Documenter l'ajout d'un ticker (backfill_ticker + secteur au seed). → vérif : ajout réel.
-4. **Si l'éligibilité `.NE` est envisagée** : backtest de l'univers élargi (duo + CDR/`.NE`
-   des deux secteurs) contre la référence, présenté à Jean. S'il élargit : refaire les
-   backtests et **régénérer les artefacts chiffrés sur le duo** — protocole, « Protéger le
-   momentum canadien », grand livre, journal des transactions, les deux comparatifs
-   d'interrupteur, « Les douze mois du duo », rapport mensuel — chacun avec sa date de
-   mesure. Les v1 archivées ne sont jamais retouchées. → vérif : liste cochée.
+4. L'inventaire suit les CDR `.NE` immatures : pour chacun, barres accumulées et volume
+   médian ; alerte quand l'un approche l'éligibilité (253 barres + dv50 ≥ 500 k$) — c'est
+   le déclencheur qui rouvrira la question de l'élargissement. Si elle rouvre et que Jean
+   élargit : backtests refaits et artefacts chiffrés régénérés (protocole, « Protéger le
+   momentum canadien », grand livre, journal des transactions, comparatifs d'interrupteur,
+   « Les douze mois du duo », rapport mensuel) ; les v1 archivées jamais retouchées.
+   → vérif : la sortie de la commande montre la maturation.
+
+## Journal du sprint
+- 27/08 16 h : sondage Yahoo des 37 candidats CDR/`.NE` (script local, base non touchée) —
+  résultat ci-dessus, question d'éligibilité refermée. Sprint démarré sur décision de Jean
+  (#60, #61, #62).

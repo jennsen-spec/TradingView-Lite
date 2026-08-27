@@ -1,6 +1,6 @@
 # #62 — Coût des poids dérivants (reconduites non redimensionnées)
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Priorité** : —
+**Statut** : 🏗️ En cours · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Priorité** : —
 
 ## Objectif
 Le backtest remet les dix lignes à parts égales chaque mois, reconduites comprises, sans

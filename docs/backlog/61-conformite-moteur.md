@@ -1,6 +1,6 @@
 # #61 — Test de conformité moteur ↔ rapport
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : 🏗️ En cours · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 Le rapport (cycleCalc) et le backtest (moteur) sont deux implémentations de la même
