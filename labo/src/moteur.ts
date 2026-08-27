@@ -208,6 +208,32 @@ function indicateurMarche(
     return ref.open[i] < m && ref.close[i] < m ? 1 : 0;
   }
 
+  // « <ticker>_mois_sous_sma<N> » et « <ticker>_moisfin_sous_sma<N> » : 1 si la
+  // BOUGIE MENSUELLE du mois du signal s'est ouverte ET fermée sous la moyenne.
+  // L'ouverture du mois = ouverture de la PREMIÈRE séance du mois civil ; la clôture
+  // = clôture de la dernière (= reb). Les deux variantes diffèrent par la valeur de
+  // moyenne opposée à l'ouverture : « mois » la lit au jour de l'ouverture (lecture
+  // graphique : chaque point contre la moyenne du moment), « moisfin » la lit en fin
+  // de mois (une seule valeur de moyenne pour toute la bougie).
+  // Demandé par Jean le 26/08 : il avait pensé l'interrupteur en mensuel, pas en
+  // journalier — ceci permet de mesurer l'écart entre les deux lectures.
+  const ms = /^([a-z]+)_(mois|moisfin)_sous_(sma\d+)$/.exec(nom);
+  if (ms) {
+    const ref = refs.get(ms[1].toUpperCase() + ".TO");
+    if (!ref) return NaN;
+    let i = ref.dates.length - 1;
+    while (i >= 0 && ref.dates[i] > reb) i--;
+    if (i < 0) return NaN;
+    const civil = ref.dates[i].slice(0, 7);
+    let d = i;
+    while (d - 1 >= 0 && ref.dates[d - 1].slice(0, 7) === civil) d--;
+    const moy = colonne(ref, ms[3]);
+    const mFin = moy[i];
+    const mDeb = ms[2] === "moisfin" ? mFin : moy[d];
+    if (Number.isNaN(mFin) || Number.isNaN(mDeb)) return NaN;
+    return ref.open[d] < mDeb && ref.close[i] < mFin ? 1 : 0;
+  }
+
   // « <ticker>_sur_sma<N> » : cours de la référence rapporté à sa moyenne N jours.
   // > 1 = au-dessus de sa moyenne.
   const m = /^([a-z]+)_sur_(sma\d+)$/.exec(nom);

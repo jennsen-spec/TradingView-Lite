@@ -395,3 +395,42 @@ les deux jeux ferait apparaître un écart qui ne viendrait que de l'hypothèse.
 de sensibilité qui comparent exprès les deux) et **renvoie l'hypothèse appliquée** ;
 le rapport l'affiche au lieu de la forcer, et signale en gras si elle n'est pas
 celle du dossier. Vérifié : les deux jeux reproduisent 702 188 $ et 554 017 $.
+
+### Mesure du 26/08 (soir) — l'interrupteur lu en mensuel : écarté
+Jean avait pensé l'interrupteur sur la **bougie mensuelle** (le mois qui ouvre *et*
+ferme sous la moyenne), pas sur une seule séance. Deux lectures possibles, toutes
+deux mesurées : moyenne lue à chaque bout de la bougie (`mois_sous_smaN`) ou une
+seule valeur en fin de mois (`moisfin_sous_smaN`).
+
+| | ×final | 2004-2015 | 2016-2026 | pire baisse | ép. −20 % | mois liquide |
+|---|---|---|---|---|---|---|
+| MM150 séance entière *(retenue)* | ×52,9 | 19,9 % | 18,6 % | −27,8 % | **1** | 67 |
+| MM150 bougie mensuelle | ×39,2 | 17,2 % | 18,3 % | −28,9 % | 2 | 50 |
+| MM150 bougie, moyenne de fin | ×32,0 | 17,8 % | 15,4 % | −28,9 % | 2 | 52 |
+| MM200 séance entière | ×51,9 | 19,5 % | 18,9 % | −32,6 % | 1 | 64 |
+| MM200 bougie mensuelle | ×54,9 | 17,3 % | 22,0 % | −28,9 % | 3 | 50 |
+| MM200 bougie, moyenne de fin | ×49,4 | 16,3 % | 22,0 % | −28,9 % | 3 | 49 |
+| Sans interrupteur | ×90,2 | 18,3 % | 26,7 % | −42,3 % | 4 | 0 |
+
+**Le défaut est structurel, pas statistique.** Pour qu'une bougie mensuelle soit
+entièrement sous la moyenne, il faut que le mois ait *déjà ouvert* dessous — or un
+krach part toujours d'en haut. Mars 2020 le montre : la séance du 28 février s'ouvre
+et ferme sous la MM150, la règle retenue coupe et fait 0 % ; la bougie de février
+s'était ouverte le 3 bien au-dessus, la lecture mensuelle reste investie et encaisse
+**−22,4 %**. Sur les 25 mois de divergence en MM150, la règle retenue cumule +8,3 %
+contre −13,5 %.
+
+**MM200 mensuel est le seul piège.** Capital final supérieur (×54,9), mais 7ᵉ sur
+neuf en première moitié et 2ᵉ en seconde — le classement s'inverse, signature du
+bruit. Les trois premières places de la seconde moitié sont tenues par les trois
+configurations qui protègent le moins (0, 50 et 49 mois en liquidités) : cette
+moitié ne contient pas 2008, donc moins d'assurance y paraît toujours meilleur.
+
+`indicateurMarche` accepte désormais `<ref>_mois_sous_smaN` et
+`<ref>_moisfin_sous_smaN`. **Non porté dans `cycleCalc`** : la règle vivante reste
+`xsp_jour_sous_sma150`, inutile de compliquer le chemin de production.
+
+### Correctif du 26/08 (soir) — une ligne périmée dans le protocole
+La ligne « sans interrupteur » de la section 04 était restée à ×69,8 / −45,9 % / 5
+épisodes alors que la mesure sur les règles courantes donne **×90,2 / −42,3 % / 4**.
+Elle avait échappé à la relecture du 26/08 au matin, qui l'annonçait pourtant corrigée.

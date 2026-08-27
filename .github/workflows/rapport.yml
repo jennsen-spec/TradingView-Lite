@@ -10,10 +10,17 @@ name: Rapport mensuel
 #
 # Les jours 1 et 2 servent de rattrapage : si les barres du dernier jour n'étaient
 # pas encore ingérées le 31, le passage suivant produit le bon signal et corrige.
+#
+# HEURE (26/08/2026) : 17 h 30 à Toronto, demandé par Jean — le rafraîchissement des
+# cours tourne à 17 h. Cron ne connaît pas l'heure d'été : on lance DEUX passages,
+# 21 h 30 et 22 h 30 UTC, soit 17 h 30 et 18 h 30 l'été, 16 h 30 et 17 h 30 l'hiver.
+# Aucun calcul d'heure n'est nécessaire — c'est le contrôle de fraîcheur ci-dessous
+# qui écarte le passage trop précoce, et le contrôle « signal inchangé » qui rend le
+# passage en trop silencieux. L'heure locale utile est donc 17 h 30 toute l'année.
 
 on:
   schedule:
-    - cron: "30 23 28,29,30,31,1,2 * *" # 23h30 UTC = 19h30 ET, 3h30 après la clôture
+    - cron: "30 21,22 28,29,30,31,1,2 * *" # 17 h 30 ET (voir la note sur l'heure d'été)
   workflow_dispatch: # déclenchement manuel depuis l'onglet Actions
 
 permissions:
@@ -32,8 +39,35 @@ jobs:
         with:
           node-version: 22
 
+      # Garde-fou de fraîcheur. `calculerCycle` tolère jusqu'à 4 jours d'écart entre
+      # la dernière barre et la fin du mois civil — indispensable pour les mois qui
+      # se terminent un week-end, mais dangereux ici : un passage lancé AVANT le
+      # rafraîchissement de 17 h prendrait la barre de l'avant-veille pour la fin du
+      # mois et publierait un signal périmé sans rien signaler. On exige donc, un
+      # jour de semaine, que la base porte bien une barre datée d'aujourd'hui.
+      # Un jour férié la condition échoue : le passage de rattrapage du 1er s'en charge.
+      - name: Fraîcheur des données
+        id: frais
+        run: |
+          set -euo pipefail
+          BASE="https://cucshrxmtwwizzzqthcj.supabase.co/rest/v1/bars"
+          CLE="sb_publishable_mbSe0WzTCQixT5Do_WILRg_U2F6DgTE"
+          DERNIERE=$(curl -sf -H "apikey: $CLE" \
+            "$BASE?select=bar_date&interval=eq.1d&order=bar_date.desc&limit=1" \
+            | sed -n 's/.*"bar_date":"\([0-9-]*\)".*/\1/p')
+          AUJ=$(TZ=America/Toronto date +%F)
+          JOUR=$(TZ=America/Toronto date +%u)
+          echo "Dernière barre : ${DERNIERE:-aucune} · aujourd'hui : $AUJ (jour $JOUR)"
+          if [ "$JOUR" -le 5 ] && [ "$DERNIERE" != "$AUJ" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Cours pas encore rafraîchis ($DERNIERE) — passage suivant."
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Générer le rapport
         id: gen
+        if: steps.frais.outputs.ok == 'true'
         run: |
           set -euo pipefail
           AVANT=$(cat portefeuille/dernier-signal.txt 2>/dev/null || echo "aucun")
@@ -63,7 +97,7 @@ jobs:
           git push
 
       - name: Rien à publier
-        if: steps.gen.outputs.change != 'true'
+        if: steps.frais.outputs.ok == 'true' && steps.gen.outputs.change != 'true'
         run: |
           echo "Le dernier signal complet est toujours ${{ steps.gen.outputs.apres }}."
           echo "Le rapport en ligne est à jour ; aucun commit."
