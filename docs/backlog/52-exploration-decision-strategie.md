@@ -434,3 +434,13 @@ moitié ne contient pas 2008, donc moins d'assurance y paraît toujours meilleur
 La ligne « sans interrupteur » de la section 04 était restée à ×69,8 / −45,9 % / 5
 épisodes alors que la mesure sur les règles courantes donne **×90,2 / −42,3 % / 4**.
 Elle avait échappé à la relecture du 26/08 au matin, qui l'annonçait pourtant corrigée.
+
+### Relevé par Jean le 27/08 — la contradiction pondération / exécution
+Le protocole disait à la fois « un titre reconduit est redimensionné chaque mois »
+(section 01) et « un titre reconduit ne fait l'objet d'aucun ordre » (section 02).
+Les deux clauses nomment désormais la réalité : le BACKTEST remet les dix lignes à
+parts égales chaque mois, sans ordre et sans frais (vérifié dans `journal.ts` :
+`mise = solde / n` chaque mois, l'écart porté par `ajustements`) ; la PRATIQUE ne
+retouche pas une ligne reconduite, donc les poids réels dérivent. C'est la seule
+divergence assumée entre le modèle et la pratique. **Son coût n'est pas mesuré** —
+mesure proposée à Jean (variante du moteur à poids dérivants sur les reconduites).
