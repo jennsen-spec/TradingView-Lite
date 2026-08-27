@@ -27,6 +27,28 @@ const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Num
 const j = await construireJournal({ jeu: c.etat.regles.jeu as string });
 const etat = c.etat as any;
 
+// #61 — test de conformité moteur ↔ rapport. Deux implémentations de la même
+// stratégie : le moteur du backtest (journal) et le calcul du cycle (rapport).
+// On rejoue le rapport sur le dernier mois investi que le moteur connaît et on
+// exige la même sélection. Un écart = un rapport faux quelque part → on ne
+// publie PAS (échec du processus, même mécanique que le garde-fou de fraîcheur).
+let conformite = "conformité moteur : non vérifiable (aucun mois investi au journal)";
+if (j.moteurDernier) {
+  const verif = await calculerCycle({ signal: j.moteurDernier.reb });
+  const a = j.moteurDernier.retenus, b = [...verif.detenus].sort();
+  const identiques = a.length === b.length && a.every((t, i) => t === b[i]);
+  if (!identiques || !verif.marche.investi) {
+    console.error(` CONFORMITÉ MOTEUR ↔ RAPPORT : ÉCHEC sur ${j.moteurDernier.reb}`);
+    console.error(`   moteur  (${a.length}) : ${a.join(", ")}`);
+    console.error(`   rapport (${b.length}) : ${b.join(", ")}`);
+    if (!verif.marche.investi) console.error(`   et le rapport lit l'interrupteur COUPÉ là où le moteur était investi.`);
+    console.error(` Rien ne doit être publié tant que l'écart n'est pas expliqué (#61).`);
+    process.exit(1);
+  }
+  conformite = `conformité moteur : OK — mois vérifié ${j.moteurDernier.reb}`;
+  console.log(` ${conformite}`);
+}
+
 const r = (x: number, n: number) => Number(x.toFixed(n));
 const donnees = {
   barres: j.barres.map((b) => [b.mois, b.reb, b.next, b.investi ? 1 : 0, b.n, r(b.avant, 2), r(b.apres, 2), r(b.net, 6), r(b.frais, 2)]),
@@ -263,6 +285,7 @@ ${c.marche.investi ? `
   jeu de règles <span class="mono">${etat.regles.jeu}</span> ·
   univers Industrials + Technology ·
   frais : commission 0 $ + fourchette de 2 pas de cotation ·
+  ${conformite} ·
   données Yahoo Finance via Supabase
 </footer>
 </div>

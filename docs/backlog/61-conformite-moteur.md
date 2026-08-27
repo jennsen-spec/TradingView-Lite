@@ -1,6 +1,6 @@
 # #61 — Test de conformité moteur ↔ rapport
 
-**Statut** : 🏗️ En cours · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 Le rapport (cycleCalc) et le backtest (moteur) sont deux implémentations de la même
@@ -10,12 +10,12 @@ tourne sur le même univers et la sélection est comparée automatiquement. Dema
 le 27/08 (« on en est certain ? »).
 
 ## Critères d'acceptation
-- [ ] À chaque `npm run rapport`, la sélection du moteur est comparée à celle du rapport
+- [x] À chaque `npm run rapport`, la sélection du moteur est comparée à celle du rapport
       sur le dernier mois que le moteur sait tracer.
-- [ ] Écart détecté → la commande échoue avec les deux listes affichées ; l'Action ne
+- [x] Écart détecté → la commande échoue avec les deux listes affichées ; l'Action ne
       publie pas (même mécanique que le garde-fou de fraîcheur).
-- [ ] Conformité affichée dans le rapport : « conformité moteur : OK — mois vérifié AAAA-MM ».
-- [ ] Le coût est nul en pratique (le journal du backtest est déjà construit par page.ts).
+- [x] Conformité affichée dans le rapport : « conformité moteur : OK — mois vérifié AAAA-MM ».
+- [x] Le coût est nul en pratique (le journal du backtest est déjà construit par page.ts).
 
 ## Décisions
 - **Bloquer, pas avertir** : un rapport dont la sélection diverge du backtest est un
@@ -36,3 +36,12 @@ le 27/08 (« on en est certain ? »).
 - Si les deux implémentations divergent sur un point que le mois vérifié n'exerce pas
   (ex. égalité de momentum jamais rencontrée), le test ne le voit pas — c'est un filet,
   pas une preuve. La revue manuelle reste la référence à chaque changement de règles.
+
+## Journal du sprint
+- 27/08 16 h 30 : implémenté. `journal.ts` expose `moteurDernier` (dernier mois investi du
+  moteur, tickers triés) ; `page.ts` rejoue `calculerCycle` sur ce signal et compare —
+  écart → deux listes affichées, `process.exit(1)`, l'Action ne publie pas. Ligne
+  « conformité moteur : OK — mois vérifié AAAA-MM » au pied du rapport. Vérifs : OK sur
+  les données courantes (2026-06-30, 10/10 identiques) ; divergence injectée (liste
+  amputée) → échec propre, code 1, listes lisibles ; code restauré, re-run OK.
+  UAT réelle : la répétition générale du soir même l'exerce de bout en bout.

@@ -42,6 +42,9 @@ export interface Barre {
 export interface Journal {
   capital: number; soldeFinal: number; ecartMax: number;
   differe: "aucun" | "cloture" | "lendemain"; // l'hypothèse RÉELLEMENT appliquée
+  // #61 — le dernier mois INVESTI que le moteur connaît, tickers triés : le test de
+  // conformité vérifie que le rapport (cycleCalc) retient les mêmes titres à ce signal.
+  moteurDernier: { reb: string; retenus: string[] } | null;
 
   barres: Barre[]; positions: Position[]; lignes: LigneMois[];
   depuis: string; jusqua: string;
@@ -144,6 +147,8 @@ export async function construireJournal(opts: {
   }
   positions.sort((a, b) => (a.venteDate === b.venteDate ? (a.ticker < b.ticker ? -1 : 1) : a.venteDate < b.venteDate ? -1 : 1));
 
+  const mDernier = [...tous].reverse().find((m) => m.retenus.length > 0) ?? null;
   return { capital: CAPITAL, soldeFinal: solde, ecartMax, differe: DIFFERE, barres, positions, lignes,
+    moteurDernier: mDernier ? { reb: mDernier.reb, retenus: [...mDernier.retenus].sort() } : null,
     depuis: barres[0].mois, jusqua: barres[barres.length - 1].mois };
 }
