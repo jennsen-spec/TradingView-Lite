@@ -1,60 +1,222 @@
 {
- "version": 2,
- "maj": "2026-08-23",
- "repartition_apports": {
-  "commentaire": "Découpe de CHAQUE APPORT de Jean — jamais des avoirs détenus. Aucun rééquilibrage : les poches dérivent librement ensuite. Modifiable (100 % duo un jour).",
-  "duo": 0.3,
-  "ZEQT.TO": 0.4,
-  "HXS.TO": 0.15,
-  "VMO.TO": 0.15
- },
- "regles": {
-  "jeu": "c-duo-plaf5-p1-seance",
-  "lignes": 10,
-  "plafond_secteur": 5,
-  "candidats_affiches_par_secteur": 10,
-  "exclure_cdr": false,
-  "cdr": [
-   "AAPL.TO",
-   "AMD.TO",
-   "AMZN.TO",
-   "COST.TO",
-   "CSCO.TO",
-   "GOOG.TO",
-   "HOOD.TO",
-   "LLY.TO",
-   "MA.TO",
-   "META.TO",
-   "MSFT.TO",
-   "NFLX.TO",
-   "NVDA.TO",
-   "TSLA.TO"
+  "version": 2,
+  "maj": "2026-08-27",
+  "repartition_apports": {
+    "commentaire": "Découpe de CHAQUE APPORT de Jean — jamais des avoirs détenus. Aucun rééquilibrage : les poches dérivent librement ensuite. Modifiable (100 % duo un jour).",
+    "duo": 0.3,
+    "ZEQT.TO": 0.4,
+    "HXS.TO": 0.15,
+    "VMO.TO": 0.15
+  },
+  "regles": {
+    "jeu": "c-duo-plaf5-p1-seance",
+    "lignes": 10,
+    "plafond_secteur": 5,
+    "candidats_affiches_par_secteur": 10,
+    "exclure_cdr": false,
+    "cdr": [
+      "AAPL.TO",
+      "AMD.TO",
+      "AMZN.TO",
+      "COST.TO",
+      "CSCO.TO",
+      "GOOG.TO",
+      "HOOD.TO",
+      "LLY.TO",
+      "MA.TO",
+      "META.TO",
+      "MSFT.TO",
+      "NFLX.TO",
+      "NVDA.TO",
+      "TSLA.TO"
+    ],
+    "commentaire_cdr": "Certificats canadiens (Cboe Canada) adosses a une action americaine, en CAD. RY/TD/LSPD n'y sont PAS : vraies societes canadiennes cotees aussi a New York. Quatre seulement entrent dans l'univers du duo : AAPL, AMD, MSFT, NVDA.",
+    "commentaire_interrupteur": "Interrupteur a SEANCE ENTIERE depuis le 26/08/2026 : liquidites seulement si XSP a OUVERT et CLOTURE sous sa MM150 le jour du signal. Mesure : x52,8 contre x41,7, meme pire baisse (-27,8 %), meme 2008 (-3,8 %). Preuve mince (7 mois divergents sur 270, t=1,05 sur 98 ans de S&P 500) mais risque borne : la regle ne sort JAMAIS plus tot que l ancienne."
+  },
+  "poche_duo": {
+    "montant_initial": 5000,
+    "date_initiale": null,
+    "liquidites": 0,
+    "commentaire": "5 000 $ — décision de Jean du 26/08/2026 (était 15 000 avant sa décision finale)."
+  },
+  "etf": {
+    "commentaire": "EN ATTENTE — parts détenues. Jean doit d'abord acheter (retour semaine du 31/08).",
+    "ZEQT.TO": {
+      "parts": null,
+      "liquidites": 0
+    },
+    "HXS.TO": {
+      "parts": null,
+      "liquidites": 0
+    },
+    "VMO.TO": {
+      "parts": null,
+      "liquidites": 0
+    }
+  },
+  "apports": [],
+  "cycles": [
+    {
+      "signal": "2026-08-27",
+      "execution": null,
+      "publie": "2026-08-27",
+      "investi": true,
+      "poche": 5000,
+      "ligne": 500,
+      "detenus": [
+        "DBO.TO",
+        "KEEL.TO",
+        "AMD.TO",
+        "ARE.TO",
+        "BBD-A.TO",
+        "QTRH.TO",
+        "BB.TO",
+        "MTL.TO",
+        "HPS-A.TO",
+        "FTG.TO"
+      ],
+      "sortants": [],
+      "prescrit": [
+        {
+          "ticker": "DBO.TO",
+          "action": "acheter",
+          "quantite": 454,
+          "cloture": 1.1,
+          "limite": 1.16,
+          "momentum": 1.9762
+        },
+        {
+          "ticker": "KEEL.TO",
+          "action": "acheter",
+          "quantite": 102,
+          "cloture": 4.87,
+          "limite": 5.12,
+          "momentum": 1.9607
+        },
+        {
+          "ticker": "AMD.TO",
+          "action": "acheter",
+          "quantite": 5,
+          "cloture": 86.11,
+          "limite": 90.42,
+          "momentum": 1.6612
+        },
+        {
+          "ticker": "ARE.TO",
+          "action": "acheter",
+          "quantite": 10,
+          "cloture": 45.53,
+          "limite": 47.81,
+          "momentum": 1.3916
+        },
+        {
+          "ticker": "BBD-A.TO",
+          "action": "acheter",
+          "quantite": 1,
+          "cloture": 325.76,
+          "limite": 342.05,
+          "momentum": 1.262
+        },
+        {
+          "ticker": "QTRH.TO",
+          "action": "acheter",
+          "quantite": 189,
+          "cloture": 2.64,
+          "limite": 2.78,
+          "momentum": 1.1818
+        },
+        {
+          "ticker": "BB.TO",
+          "action": "acheter",
+          "quantite": 41,
+          "cloture": 11.97,
+          "limite": 12.57,
+          "momentum": 1.1708
+        },
+        {
+          "ticker": "MTL.TO",
+          "action": "acheter",
+          "quantite": 19,
+          "cloture": 25.76,
+          "limite": 27.05,
+          "momentum": 1.0672
+        },
+        {
+          "ticker": "HPS-A.TO",
+          "action": "acheter",
+          "quantite": 2,
+          "cloture": 245.71,
+          "limite": 258,
+          "momentum": 1.0474
+        },
+        {
+          "ticker": "FTG.TO",
+          "action": "acheter",
+          "quantite": 23,
+          "cloture": 21,
+          "limite": 22.05,
+          "momentum": 1.0164
+        }
+      ],
+      "execute": {
+        "suivi": "integral",
+        "decide_le": "2026-08-27",
+        "encan": "2026-08-28",
+        "ordres": [
+          {
+            "ticker": "DBO.TO",
+            "quantite": 454,
+            "prix": null
+          },
+          {
+            "ticker": "KEEL.TO",
+            "quantite": 102,
+            "prix": null
+          },
+          {
+            "ticker": "AMD.TO",
+            "quantite": 5,
+            "prix": null
+          },
+          {
+            "ticker": "ARE.TO",
+            "quantite": 10,
+            "prix": null
+          },
+          {
+            "ticker": "BBD-A.TO",
+            "quantite": 1,
+            "prix": null
+          },
+          {
+            "ticker": "QTRH.TO",
+            "quantite": 189,
+            "prix": null
+          },
+          {
+            "ticker": "BB.TO",
+            "quantite": 41,
+            "prix": null
+          },
+          {
+            "ticker": "MTL.TO",
+            "quantite": 19,
+            "prix": null
+          },
+          {
+            "ticker": "HPS-A.TO",
+            "quantite": 2,
+            "prix": null
+          },
+          {
+            "ticker": "FTG.TO",
+            "quantite": 23,
+            "prix": null
+          }
+        ],
+        "note": "UAT #59 — Jean suit les 10 ordres tel quel, déposés le 27 au soir. Prix = encan d'ouverture du 28, à inscrire après la séance."
+      }
+    }
   ],
-  "commentaire_cdr": "Certificats canadiens (Cboe Canada) adosses a une action americaine, en CAD. RY/TD/LSPD n'y sont PAS : vraies societes canadiennes cotees aussi a New York. Quatre seulement entrent dans l'univers du duo : AAPL, AMD, MSFT, NVDA.",
-  "commentaire_interrupteur": "Interrupteur a SEANCE ENTIERE depuis le 26/08/2026 : liquidites seulement si XSP a OUVERT et CLOTURE sous sa MM150 le jour du signal. Mesure : x52,8 contre x41,7, meme pire baisse (-27,8 %), meme 2008 (-3,8 %). Preuve mince (7 mois divergents sur 270, t=1,05 sur 98 ans de S&P 500) mais risque borne : la regle ne sort JAMAIS plus tot que l ancienne."
- },
- "poche_duo": {
-  "montant_initial": 5000,
-  "date_initiale": null,
-  "liquidites": 0,
-  "commentaire": "5 000 $ — décision de Jean du 26/08/2026 (était 15 000 avant sa décision finale)."
- },
- "etf": {
-  "commentaire": "EN ATTENTE — parts détenues. Jean doit d'abord acheter (retour semaine du 31/08).",
-  "ZEQT.TO": {
-   "parts": null,
-   "liquidites": 0
-  },
-  "HXS.TO": {
-   "parts": null,
-   "liquidites": 0
-  },
-  "VMO.TO": {
-   "parts": null,
-   "liquidites": 0
-  }
- },
- "apports": [],
- "cycles": [],
- "derogations": []
+  "derogations": []
 }

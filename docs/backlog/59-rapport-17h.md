@@ -81,3 +81,19 @@ qui précède la séquence de 17 h. **Aucun push pendant l'exercice.**
   publiera rien. Inoffensif, mais attendu.
 - Si `execute` est inscrit pendant l'UAT, le rollback l'efface aussi — c'est voulu,
   l'exercice entier est jetable.
+
+### Journal de la répétition générale
+- **27/08 17 h 00** : le nouveau créneau du refresh a tourné pile — 133/133 tickers (les 22
+  CDR du jour compris). Barre du 27 partout, XSP inclus.
+- **27/08 17 h 10** : rapport en date forgée — signal 2026-08-27, conformité moteur OK,
+  interrupteur ON, cycle inscrit (poche 5 000 $, ligne 500 $, 10 achats). Collection : 12
+  libellés poussés, CSCO.TO entré en réserve de lui-même. Rapport publié en artifact
+  séparé avec bandeau « répétition générale » (c10c7466).
+- **27/08 soir — décision de Jean** : il SUIT les 10 ordres tel quel. `execute` inscrit
+  (quantités prescrites, prix = encan d'ouverture du 28, à remplir après la séance).
+- **L'exercice s'étend au 28/08** : une journée = un mois. Demain 17 h : prix d'exécution
+  réels inscrits, rapport du « mois suivant » (signal 2026-08-28 — conserver/vendre/acheter
+  contre les 10 détenus), collection, et le **« Journal de mon investissement »** demandé
+  par Jean : chaque ligne exécutée valorisée sur sa journée-mois, résultat en $ et %,
+  total du portefeuille contre les 5 000 $. Le rollback reste global : l'exercice entier
+  (jours 1 et 2) s'annule d'un bloc — git a034c6d + collection sauvegardée.
