@@ -1,6 +1,6 @@
 # #59 — Rafraîchissement et rapport à 17 h
 
-**Statut** : 🧪 À valider · **Points** : 2 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 2 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 Avancer la chaîne de fin de mois de 18 h / 19 h 30 à **17 h / 17 h 30 heure de Toronto**, pour que
@@ -105,3 +105,7 @@ qui précède la séquence de 17 h. **Aucun push pendant l'exercice.**
   même URL) : titres 4 518,32 $ + cash 365,36 $ = **4 883,68 $ (−2,33 %)** — une
   journée-mois rouge ordinaire, l'arrondi en actions entières visible (7,3 % du
   capital en liquidités). Verdict de Jean attendu, puis rollback global.
+- **28/08 17 h 50** : **UAT VALIDÉE par Jean.** Rollback déroulé et vérifié : les trois
+  fichiers restaurés depuis a034c6d (cycles vide, signal 2026-07-31), collection cloud
+  reposée à l'octet près depuis la sauvegarde (10 verts + 10 orange de juillet). Le
+  rapport UAT reste publié comme témoin, bandeau « exercice clos ». Ticket ✅.
