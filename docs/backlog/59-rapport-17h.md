@@ -97,3 +97,11 @@ qui précède la séquence de 17 h. **Aucun push pendant l'exercice.**
   par Jean : chaque ligne exécutée valorisée sur sa journée-mois, résultat en $ et %,
   total du portefeuille contre les 5 000 $. Le rollback reste global : l'exercice entier
   (jours 1 et 2) s'annule d'un bloc — git a034c6d + collection sauvegardée.
+- **28/08 17 h 30 (jour 2)** : refresh de 17 h passé (barre du 28 partout). Prix
+  d'exécution réels inscrits (10 ouvertures du 28, engagé 4 634,64 $, cash 365,36 $).
+  Rapport du « mois suivant » : signal 2026-08-28, conformité OK, **les 10 lignes
+  reconduites** — la collection passe tout le vert en bleu, zéro ordre à passer.
+  « Journal de mon investissement » construit et injecté au rapport UAT (republié,
+  même URL) : titres 4 518,32 $ + cash 365,36 $ = **4 883,68 $ (−2,33 %)** — une
+  journée-mois rouge ordinaire, l'arrondi en actions entières visible (7,3 % du
+  capital en liquidités). Verdict de Jean attendu, puis rollback global.
