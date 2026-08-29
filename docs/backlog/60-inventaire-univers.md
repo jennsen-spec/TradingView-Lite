@@ -123,3 +123,12 @@ Le rafraîchissement quotidien adopte le ticker de lui-même (jamais rafraîchi 
   bouge de 702 188 → 699 606 $ (−0,37 %)** : ils ont été retenus dans des mois récents du
   backtest (638 positions contre 636). Conséquence prévue par le plan : les artefacts
   chiffrés doivent être régénérés (en cours). Le seed des secteurs porte les trois.
+- 28/08 tard : **régénération complète des artefacts** sur l'univers courant (96 titres —
+  +ABXX/ACT/AMT/CSCO, −AAPL/QQQ purgés) : protocole v4 (×52,7 · −28,0 %), Protéger le
+  momentum canadien, les deux comparatifs d'interrupteur, le grand livre (699 606 $), le
+  Journal des transactions et Les douze mois — ces deux derniers étaient restés à
+  l'ANCIENNE règle (554 017 $), ils passent d'un coup à la règle courante. Poids
+  dérivants re-mesurés : écart +0,00 pt/an, pire baisse −31,0 %. Benchmark : +0,76
+  (t=2,90) / +0,71 (t=1,56). Générateurs des documents : scratchpad de session
+  (gl-data.ts, tx-gen.ts, saison-gen.ts, mensuel-payload.ts, momentum-payload.ts,
+  jour-sous-payload.ts) — à verser au dépôt un jour si on veut les rejouer hors session.
