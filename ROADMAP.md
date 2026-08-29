@@ -49,14 +49,13 @@
 | [**62**](docs/backlog/62-poids-derivants.md) | **Coût des poids dérivants** | 💼 | 3 | S | | ✅ | Le backtest équipondère les reconduites chaque mois, la pratique non — seule divergence assumée modèle/pratique, coût à chiffrer et à inscrire au protocole. |
 | [**63**](docs/backlog/63-ensembles-dessins.md) | **Ensembles de dessins par symbole** | 🧩 | 5 | M | | ✅ | Sauvegarder l'état des dessins d'un symbole sous un nom, tout effacer sereinement, restaurer (= remplacer) plus tard. Ajout via couper/coller (#64). |
 | [**64**](docs/backlog/64-selection-multiple.md) | **Sélection multiple : tout sélectionner, couper/coller, édition groupée** | 🧩 | 5 | M | | ✅ | Clic droit « Sélectionner tout », couper (Ctrl+X), coller en place après un couper, paramètres communs modifiables en lot. Presse-papier limité au symbole. |
+| [**65**](docs/backlog/65-mesure-unites-duree.md) | **Mesure : choisir les unités de la durée** | 🧩 | 3 | S | | 🧪 | Trois cases Année/Mois/Jour sous « Échelle de temps » (onglet Mesure). Une unité plus grande décochée est **reportée** sur l'inférieure (16 ans 9 mois → 201 mois), une plus petite **tronquée**. *(Renuméroté : rédigé #58 le 28/08, n° déjà pris.)* |
 | — | **Backtest des combinaisons d'ETF** (ZEQT · HXS · VMO) | 💼 | 3 | S | | 📥 | Que donnent les différentes pondérations de la poche ETF ? **Limite connue : ZEQT ne cote que depuis 2022, VMO depuis 2016, HXS depuis 2011** — aucune fenêtre longue commune, donc pas de réponse sur 22 ans. Décider d'un proxy ou assumer une fenêtre courte. |
 | 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | | 📥 | `createPriceLine` + persistance par symbole. |
 | 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | | 📥 | Déclenchement/persistance/notif ; sans #14, au rechargement seulement. |
 | 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | | 📥 | API panes v5 (moveToPane, réordonner) — **spike**. |
 | — | **Aide au rebalancement de portefeuille** | 💼 | ? | — | | 📥 | Positions, allocations cibles, calcul des écarts. À spécifier. |
 | 14 | **Données en temps réel** | ⚙️ | 13 | XL | | 📥 | Pas de flux gratuit fiable ; TSX licence payante ou API broker (IBKR/Questrade) — **spike**. |
-| 37 | **ETF explorer** | 🧩 | ? | — | | 📥 | Explorer les ETF par **pays & devise**, par **catégorie & thème**. À spécifier. |
-| 38 | **ETF breakdown** | 🧩 | ? | — | | 📥 | Afficher **toutes les actions d'un ETF** (composition), **heatmap**… À spécifier. |
 | 39 | ~~Momentum portfolio~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #53 + #54 (et la phase Disnat). |
 | 40 | ~~Backtesting pro~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #50 + #51. |
 | [41](docs/backlog/41-golden-cross-screener.md) | ~~Screener Golden Cross~~ | 🧩 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : la détection quotidienne de figures est abandonnée **comme signal d'achat** (mesurée −5,03/trade, la pire des douze variantes). Le moteur de scan survit dans #49/#53. |

@@ -134,6 +134,12 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
   // Onglet Mesure : disponible pour tous les traits (trait simple ET flèche).
   const isTrend = d.type === "trend";
   const m: MeasureConfig = d.measure ?? defaultMeasure(s.rightCap === "arrow");
+  // Unités de la durée civile (#65) — absents sur les dessins d'avant = tout coché.
+  const durY = m.durY ?? true, durM = m.durM ?? true, durD = m.durD ?? true;
+  const nbUnites = (durY ? 1 : 0) + (durM ? 1 : 0) + (durD ? 1 : 0);
+  // Verrou : désactivé si « Échelle de temps » est décochée, ou si c'est la dernière unité cochée
+  // (sinon la durée disparaîtrait sans le dire).
+  const uniteBloquee = (coche: boolean) => !m.durTime || (coche && nbUnites === 1);
   const setStyle = (patch: Partial<DrawingStyle>) => onChange({ ...d, style: { ...s, ...patch } });
   const setText = (patch: Partial<TextConfig>) => onChange({ ...d, text: { ...d.text, ...patch } });
   const setMeasure = (patch: Partial<MeasureConfig>) => onChange({ ...d, measure: { ...m, ...patch } });
@@ -446,6 +452,20 @@ export default function DrawingOptions({ drawing: d, onChange, onCancel, onOk }:
                     <input type="checkbox" checked={m.durTime} onChange={(e) => setMeasure({ durTime: e.target.checked })} />
                     Échelle de temps
                   </label>
+                  <div className="do-sub-checks">
+                    <label className="is-check">
+                      <input type="checkbox" disabled={uniteBloquee(durY)} checked={durY} onChange={(e) => setMeasure({ durY: e.target.checked })} />
+                      Année
+                    </label>
+                    <label className="is-check">
+                      <input type="checkbox" disabled={uniteBloquee(durM)} checked={durM} onChange={(e) => setMeasure({ durM: e.target.checked })} />
+                      Mois
+                    </label>
+                    <label className="is-check">
+                      <input type="checkbox" disabled={uniteBloquee(durD)} checked={durD} onChange={(e) => setMeasure({ durD: e.target.checked })} />
+                      Jour
+                    </label>
+                  </div>
                   <label className="is-check">
                     <input type="checkbox" checked={m.durBars} onChange={(e) => setMeasure({ durBars: e.target.checked })} />
                     Valeur du graphe (barres)

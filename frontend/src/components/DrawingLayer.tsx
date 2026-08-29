@@ -1205,8 +1205,12 @@ export default function DrawingLayer({
       if (m.durTime) {
         // Au-delà du mois, la durée passe en clair (« 2 ans, 3 mois et 2 jours ») —
         // même format que la mesure Shift+clic ; en deçà, jours/heures/minutes.
-        const civil = dureeEntre(p0.time, p1.time);
-        parts.push(civil.includes("an") || civil.includes("mois") ? civil : fmtDuration(Math.abs(p1.time - p0.time)));
+        // Le régime se décide sur la durée COMPLÈTE ; l'affichage suit les unités
+        // choisies (#65 : report sur l'unité inférieure, troncature des plus petites).
+        const complet = dureeEntre(p0.time, p1.time);
+        parts.push(complet.includes("an") || complet.includes("mois")
+          ? dureeEntre(p0.time, p1.time, { ans: m.durY ?? true, mois: m.durM ?? true, jours: m.durD ?? true })
+          : fmtDuration(Math.abs(p1.time - p0.time)));
       }
       if (m.durBars) {
         const bars = Math.round(Math.abs(timeToLogical(p1.time) - timeToLogical(p0.time)));

@@ -57,6 +57,12 @@ export interface MeasureConfig {
   duration: boolean;  // afficher la durée (interrupteur maître)
   durTime: boolean;   // durée : échelle de temps (temps réel écoulé)
   durBars: boolean;   // durée : valeur du graphe (nombre de barres)
+  // Unités de la durée civile (#65). Absents sur les dessins d'avant → lus avec ?? true.
+  // Une unité plus grande décochée est REPORTÉE sur l'inférieure (16 ans 9 mois → 201 mois),
+  // une plus petite est TRONQUÉE (9 mois et 2 jours, Jour décoché → 9 mois).
+  durY?: boolean;     // durée : afficher les années
+  durM?: boolean;     // durée : afficher les mois
+  durD?: boolean;     // durée : afficher les jours
   position: "left" | "middle" | "right"; // le long du tracé (par extrémité, stable si le trait s'inverse)
   align: "left" | "center" | "right";    // alignement horizontal du bloc
   orientation: "h" | "along";            // sens du texte : horizontal ou le long du tracé
@@ -66,6 +72,9 @@ export const defaultMeasure = (percent = true): MeasureConfig => ({
   duration: false,
   durTime: true,
   durBars: true,
+  durY: true,
+  durM: true,
+  durD: true,
   position: "right",
   align: "center",
   orientation: "h",

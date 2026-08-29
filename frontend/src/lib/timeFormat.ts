@@ -61,7 +61,13 @@ export function fmtCrosshair(time: Time, interval: string): string {
 // (on avance d'abord les ans, puis les mois, puis les jours restants), donc
 // « 1 an » va bien du 15 mars au 15 mars. Demandé par Jean (29/08) pour l'outil
 // de mesure. Vide si moins d'un jour (mesure intraday).
-export function dureeEntre(t0: Time, t1: Time): string {
+// `unites` (#65) : une unité plus grande désactivée est REPORTÉE sur l'inférieure
+// (16 ans 9 mois → 201 mois — on ne l'extrait pas, elle coule dans la suivante) ;
+// une plus petite est TRONQUÉE. Si la troncature ne laisse rien alors que la durée
+// dépasse le jour, on affiche « 0 <unité> » plutôt que rien.
+export interface DureeUnites { ans: boolean; mois: boolean; jours: boolean }
+export function dureeEntre(t0: Time, t1: Time, unites?: DureeUnites): string {
+  const u = unites ?? { ans: true, mois: true, jours: true };
   let a = new Date(Math.min(tsOf(t0), tsOf(t1)) * 1000);
   const b = new Date(Math.max(tsOf(t0), tsOf(t1)) * 1000);
   const avance = (d: Date, mois: number) => {
@@ -71,14 +77,19 @@ export function dureeEntre(t0: Time, t1: Time): string {
     return x;
   };
   let ans = 0, mois = 0;
-  while (avance(a, 12) <= b) { a = avance(a, 12); ans++; }
-  while (avance(a, 1) <= b) { a = avance(a, 1); mois++; }
+  if (u.ans) while (avance(a, 12) <= b) { a = avance(a, 12); ans++; }
+  if (u.mois) while (avance(a, 1) <= b) { a = avance(a, 1); mois++; }
   const jours = Math.floor((b.getTime() - a.getTime()) / 86400000);
   const parts: string[] = [];
-  if (ans) parts.push(`${ans} an${ans > 1 ? "s" : ""}`);
-  if (mois) parts.push(`${mois} mois`);
-  if (jours) parts.push(`${jours} jour${jours > 1 ? "s" : ""}`);
-  if (!parts.length) return "";
+  if (u.ans && ans) parts.push(`${ans} an${ans > 1 ? "s" : ""}`);
+  if (u.mois && mois) parts.push(`${mois} mois`);
+  if (u.jours && jours) parts.push(`${jours} jour${jours > 1 ? "s" : ""}`);
+  if (!parts.length) {
+    // Moins d'un jour : mesure intraday, rien à dire ici (fmtDuration prend le relais).
+    if (jours < 1) return "";
+    // ≥ 1 jour mais tout tronqué (ex. « 12 jours » sans Jour) : « 0 mois », pas le silence.
+    return u.jours ? "0 jour" : u.mois ? "0 mois" : "0 an";
+  }
   return parts.length === 1 ? parts[0]
     : parts.slice(0, -1).join(", ") + " et " + parts[parts.length - 1];
 }

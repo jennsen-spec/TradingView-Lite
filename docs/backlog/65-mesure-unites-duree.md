@@ -1,6 +1,6 @@
-# #58 — Mesure : choisir les unités de la durée (année / mois / jour)
+# #65 — Mesure : choisir les unités de la durée (année / mois / jour)
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
+**Statut** : 🧪 À valider (sprint du 29/08) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
 
 ## Objectif
 Sous « Échelle de temps » (onglet **Mesure** d'un Trait / d'une Flèche), trois cases —
@@ -55,3 +55,24 @@ D'où la règle en deux temps :
   Le nouveau paramètre doit être **optionnel** et par défaut « tout affiché », sinon on modifie #27 sans le vouloir.
 - Le report en jours d'une longue durée donne un grand nombre (« 6118 jours ») : c'est voulu, mais
   à regarder une fois en vrai pour vérifier que ça ne déborde pas de l'étiquette.
+
+## Journal du sprint — 29/08
+**Renuméroté #58 → #65** : le n° 58 était déjà pris (« Base saturée », en cours depuis le 26/08) —
+collision créée à la rédaction du 28/08, corrigée avant le sprint.
+
+**Fait, tel que planifié** : `durY`/`durM`/`durD` optionnels sur `MeasureConfig` (lus `?? true`) ·
+`dureeEntre(t0, t1, unites?)` : une unité plus grande décochée n'est pas extraite (elle **coule**
+dans l'inférieure = report), une plus petite est tronquée · les trois cases sous « Échelle de
+temps », désactivées quand elle est décochée, verrou sur la dernière cochée. La mesure Shift+clic
+(#27) appelle `dureeEntre` sans le paramètre : comportement inchangé.
+
+**Cas limite tranché** (absent du ticket) : quand la troncature ne laisse rien (« 12 jours » sans
+Jour), on affiche « 0 mois » plutôt que rien — même esprit que le verrou : la durée ne disparaît
+jamais en silence.
+
+**Vérifié** : 11 cas de dates connues (dont les trois du ticket : 201 mois · 9 mois · total en
+jours ; et la marche fin de mois 31 janv. + 1 mois) · recette navigateur sur AAPL (flèche 2020→2025 :
+« 5 ans, 2 mois et 20 jours » → sans Année « 62 mois et 20 jours » → sans Mois « 1906 jours »
+avec Jour verrouillé → sans Jour « 5 ans et 2 mois ») · réglage conservé après rechargement complet ·
+flèche de test supprimée, les 9 dessins AAPL de Jean intacts · `tsc` propre. « Définir par défaut »
+suit sans code : les modèles copient l'objet `measure` entier.
