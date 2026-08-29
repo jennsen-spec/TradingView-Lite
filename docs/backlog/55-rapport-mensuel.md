@@ -1,6 +1,6 @@
 # #55 — Rapport mensuel (page HTML archivée)
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : M
+**Statut** : ✅ Fait — réalisé autrement (clos le 29/08/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : M
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : #53
 
 ## Objectif
@@ -28,3 +28,15 @@ ce qui a été écarté et pourquoi, et comment le run précédent s'est comport
 
 ## Notes / risques
 - La section « limites » doit rappeler que le rendement absolu mesuré est **biaisé par le survivant** et n'est **pas une prévision**. Seul l'**écart contre benchmark apparié** est défendable.
+
+---
+
+## Clôture — 29/08/2026 : réalisé autrement
+Le rapport existe et est en production : `frontend/public/rapport.html`, page autonome produite par
+le pipeline (jamais rédigée), publiée par l'Action à chaque signal et **archivée par git** (un commit
+par signal — l'audit « dans un an » passe par l'historique, pas par une URL par mois). Il porte
+l'état de l'interrupteur en clair, la sélection avec momentum, le journal de l'investissement,
+la ligne de conformité moteur ([#61](61-conformite-moteur.md)) et l'alerte d'inventaire
+([#60](60-inventaire-univers.md)). Écarts avec la lettre : pas de section « écartés avec motif »
+systématique, pas de comparaison XIU/XWD par run — le suivi de performance réelle est prévu par la
+« revue du glissement d'exécution » (backlog, hiver 2026-2027).

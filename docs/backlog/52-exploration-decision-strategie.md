@@ -1,6 +1,6 @@
 # #52 — Exploration & décision de stratégie  *(porte de validation)*
 
-**Statut** : 🔍 Affiné · **Points** : 8 · **Catégorie** : 💼 Portefeuille · **Taille** : L · **Priorité** : ⭐
+**Statut** : ✅ Fait — porte franchie (clos le 29/08/2026) · **Points** : 8 · **Catégorie** : 💼 Portefeuille · **Taille** : L · **Priorité** : ⭐
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : #50 · **Bloque** : #53, #54, #55
 
 ## Objectif
@@ -444,3 +444,40 @@ parts égales chaque mois, sans ordre et sans frais (vérifié dans `journal.ts`
 retouche pas une ligne reconduite, donc les poids réels dérivent. C'est la seule
 divergence assumée entre le modèle et la pratique. **Son coût n'est pas mesuré** —
 mesure proposée à Jean (variante du moteur à poids dérivants sur les reconduites).
+
+---
+
+## 🚪 Consignation finale — porte franchie, clos le 29/08/2026
+
+La configuration provisoire du 23/08 (pan-canadien, top-20, plafond 4) **n'est pas celle qui a été
+retenue**. L'exploration a continué du 24 au 28/08 et a abouti à la stratégie mise en production :
+
+```
+UNIVERS       duo Industrials + Technology, bourses .TO/.V (CDR compris)
+TRIER         momentum 12-1 (close[t-21]/close[t-252] − 1), top-10 équipondéré
+FILTRER       dv50 ≥ 500 k$/jour · prix ≥ 1 $ · historique ≥ 253 séances
+PLAFOND       5 lignes par secteur
+INTERRUPTEUR  XSP.TO : dernière séance du mois OUVERTE ET CLOSE sous sa SMA150 (séance entière, journalier)
+EXÉCUTION     vendre d'abord, achat différé à la clôture · découpage sélection ≤ 2015-12-31
+```
+
+Jeu de règles : `c-duo-plaf5-p1-seance`. Chiffres de référence (univers élargi aux CDR, 28/08) :
+**×52,7 sur 2004-2026, pire baisse −28,0 %** — vécue plutôt comme −31 % en poids dérivants
+([#62](62-poids-derivants.md)). Le détail canonique est dans l'artefact **Protocole v4**.
+
+### Les critères de la porte, un à un
+- **Stop mesuré** ✅ — mesuré les 22-23/08, **écarté** (il empire la pire baisse) : la stratégie
+  retenue n'a ni stop ni cible, et c'est un résultat, pas un oubli.
+- **Weinstein / régime avec découpage** ✅ — mesuré : n'apporte rien une fois l'interrupteur en place.
+- **Seuil de liquidité unique + plancher de prix** ✅ — 500 k$/jour et 1 $, identiques backtest/production.
+- **Écart apparié positif des deux côtés du découpage** ✅ — oui ; la significativité plus faible
+  côté validation est assumée et documentée au protocole.
+- **Pire baisse < 40 %** ✅ — −28,0 % (modèle) / ~−31 % (vécue).
+- **Deux univers** ⚠️ — le chemin a changé : l'univers research (106 titres) a été supprimé le 22/08 ;
+  la validation repose sur le découpage temporel 2004-2015 / 2016-2026, pas sur un second univers.
+- **Accord explicite de Jean** ✅ — protocole v4 validé, **5 000 $ engagés**, premier signal réel le
+  31/08/2026 à 17 h 30, premiers ordres le 1ᵉʳ septembre.
+
+### Resté non mesuré — consigné, pas caché
+Cible 52 semaines (sans objet : pas de cible dans la stratégie) · momentum 6-1 · RSI en tempérage ·
+sensibilité fine du nombre de lignes. À rouvrir seulement avec une nouvelle phase d'exploration.

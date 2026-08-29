@@ -10,11 +10,13 @@
 
 ## 🔍 Prêt (DoR)  *— affinés, priorisés par l'ordre*
 
-> ⏸️ **#50 à #55 sont en pause** (décision du 22/08) : on remet l'analyse technique et le rapport mensuel de côté
-> le temps d'assainir le socle. Le code du labo reste dans `labo/`, inoffensif. Résultats archivés dans
+> ✅ **L'épopée #47 est close (29/08/2026)** : « un seul produit » existe — TVLite + signal mensuel 100 % cloud +
+> rapport + collection automatiques, et Jean décide (5 000 $ engagés, premier signal réel le 31/08). Le chemin réel
+> a différé du plan (duo sectoriel, pas de stops, pas de tables `reco.*`) : consigné ticket par ticket, porte #52 comprise.
+> #51 est 🚫 caduc (besoin servi par les artefacts). Résultats du labo archivés dans
 > [`docs/archive/labo-resultats-2026-08-22.md`](docs/archive/labo-resultats-2026-08-22.md).
 
-### 🎯 Épopée [**#47 — Un seul produit**](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)*
+### 🎯 Épopée [**#47 — Un seul produit**](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)* — ✅ close le 29/08/2026
 > TVLite scrape la bourse canadienne, trie techniquement, dépose chaque mois une **collection** + des **positions longues justifiées**, et **Jean décide**.
 > Principe : **le momentum trie, la technique raconte** — trois emplacements distincts (**trier** / **filtrer** / **interrupteur**).
 > Absorbe **#39**, **#40**, **#41**, **#42**. Porte de validation en **#52** : rien d'exécutif avant l'accord.
@@ -22,13 +24,13 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
 | [**48**](docs/backlog/48-reconciliation-cloud.md) | **Réconciliation cloud ↔ local** (cloud-clobber) — *bloquant #54* | ⚙️ | 5 | M | ⭐ | ✅ |
-| [**49**](docs/backlog/49-terrain-unifie.md) | **Une seule base** — robots coupés, ancien monde jeté, 907 titres / 650 à historique complet + 20 ETF de référence | ⚙️ | 8 | L | ⭐ | 🧪 |
-| [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | ⏸️ |
-| [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | ⏸️ |
-| [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte, accord de Jean requis* | 💼 | 8 | L | ⭐ | ⏸️ |
-| [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — `reco.runs` / `reco.items`, Weinstein en interrupteur | 💼 | 8 | L | | ⏸️ |
-| [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection + dessins `longpos` **fusionnés** + panneau Reco | 🧩 | 8 | L | ⭐ | ⏸️ |
-| [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** (HTML autonome archivé) | 🧩 | 5 | M | | ⏸️ |
+| [**49**](docs/backlog/49-terrain-unifie.md) | **Une seule base** — robots coupés, ancien monde jeté, 907 titres / 650 à historique complet + 20 ETF de référence | ⚙️ | 8 | L | ⭐ | ✅ |
+| [**50**](docs/backlog/50-labo-mesure-cli.md) | **Labo de mesure (CLI)** — trier/filtrer/interrupteur, benchmark apparié, cartouches | 💼 | 13 | XL | ⭐ | ✅ |
+| [**51**](docs/backlog/51-page-recherche.md) | **Page « Recherche »** (lecture seule) — tableau comparatif des jeux de règles | 🧩 | 5 | M | | 🚫 |
+| [**52**](docs/backlog/52-exploration-decision-strategie.md) | **Exploration & décision de stratégie** — *porte franchie : duo top-10, interrupteur séance entière, protocole v4* | 💼 | 8 | L | ⭐ | ✅ |
+| [**53**](docs/backlog/53-pipeline-mensuel.md) | **Pipeline mensuel** — réalisé autrement : cycle + Action 17 h 30 + conformité #61 | 💼 | 8 | L | | ✅ |
+| [**54**](docs/backlog/54-restitution-tvlite.md) | **Restitution TVLite** — collection livrée ; `longpos`/panneau caducs (pas de stops) | 🧩 | 8 | L | ⭐ | ✅ |
+| [**55**](docs/backlog/55-rapport-mensuel.md) | **Rapport mensuel** — réalisé autrement : rapport.html publié par l'Action, archivé par git | 🧩 | 5 | M | | ✅ |
 | [**57**](docs/backlog/57-divergence.md) | **Dessin « Divergence »** — une flèche dans l'indicateur + son miroir accroché aux bougies ; couleur par pente | 🧩 | 8 | L | ⭐ | ✅ |
 | [**56**](docs/backlog/56-rs-mansfield.md) | **Force relative (RS Mansfield)** — panneau dédié, référence réglable, cours ajustés | 🧩 | 8 | L | ⭐ | ✅ |
 
@@ -37,12 +39,13 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
-| [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | 🏗️ | **Bloquant** : 499 Mo sur 500, le rafraîchissement ne tourne plus depuis le 22/08 et le signal du 31 août ne peut pas être calculé. Déplacer les barres hors duo vers le second projet (10 Mo/500), résoudre les 47 secteurs inconnus, et enfin inventorier ce qui manque en industrie + techno. |
+| [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | ✅ | Migration faite le 26/08 : base à 87,8 Mo (17,6 % du quota), signal du 31 août sauvé, chaîne vérifiée à froid. Secteurs/CSCO.TO/inventaire livrés via #60 ; archive = fichier local `bars.ndjson`. Reliquat purge → ligne backlog ci-dessous. |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
 | 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |
 | — | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | ⭐ | 📥 | Bot Telegram prévenant Jean dès que l'Action publie un nouveau signal. À spécifier : bot, jeton en secret GitHub, message (signal + lien). |
 | — | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | ⭐ | 📥 | Comparer prix obtenus / prix d'ouverture du backtest, chiffrer le manque à gagner contre « si tout s'était passé comme prévu ». **1re échéance : hiver 2026-2027**, puis à répéter. La stratégie ne tolère que ~0,9 %/entrée : c'est le facteur le plus dangereux du montage. |
+| — | **Purge mensuelle des réinsertions TVLite** | ⚙️ | 2 | XS | | 📥 | Reliquat de #58 (accord du 29/08) : redéplacer hors base les barres que TVLite ré-insère en consultant un titre hors duo (~0,5 Mo/titre). Non urgent : base à 17,6 % du quota, garde-fou du cron à 400 Mo. |
 | [**59**](docs/backlog/59-rapport-17h.md) | **Rafraîchissement et rapport à 17 h** | ⚙️ | 2 | XS | | ✅ | Passé de 18 h / 19 h 30 à **17 h / 17 h 30 ET**, heure fixe toute l'année (le cron UTC dérivait d'une heure l'hiver). Deux correctifs au passage : les barres des 5 derniers jours sont réécrites (une barre incomplète ne gelait jamais autrement), et l'Action refuse de publier si la base ne porte pas de barre du jour. UAT = la chaîne du 31 août. |
 | [**61**](docs/backlog/61-conformite-moteur.md) | **Test de conformité moteur ↔ rapport** | ⚙️ | 3 | S | ⭐ | ✅ | À chaque rapport, le moteur tourne sur le même univers et la sélection est comparée ; écart → pas de publication. Suite de l'audit du 27/08 (3 écarts trouvés à la main). |
 | [**60**](docs/backlog/60-inventaire-univers.md) | **Inventaire mensuel de l'univers** | ⚙️ | 5 | M | ⭐ | ✅ | L'univers doit grandir avec la bourse : comparer chaque mois les cotés industrie+techno **en CAD** (TSX, TSXV, Cboe/`.NE`) à la base, alerte dans le rapport. Décision 27/08 : détection `.NE` incluse ; l'éligibilité passera par des backtests refaits + artefacts régénérés. |

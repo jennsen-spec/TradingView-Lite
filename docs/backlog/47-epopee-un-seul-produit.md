@@ -1,6 +1,6 @@
 # #47 — Épopée : Un seul produit
 
-**Statut** : 🔍 Affiné (épopée) · **Points** : ~60 · **Catégorie** : 💼 Portefeuille · **Taille** : XXL · **Priorité** : ⭐
+**Statut** : ✅ Close (29/08/2026) · **Points** : ~60 · **Catégorie** : 💼 Portefeuille · **Taille** : XXL · **Priorité** : ⭐
 
 ## Objectif
 Réunir le scraper, l'analyse technique et l'interface graphique en **un seul produit — TVLite** :
@@ -56,3 +56,25 @@ Cours swing interactif · Disnat / quantités réelles (phase 5, à ouvrir aprè
 - **La stratégie n'est pas validée.** Rien d'exécutif ne se construit sur des paramètres non mesurés : c'est le sens de la porte #52.
 - **Le stop et la cible du `longpos` ne sont adossés à aucune mesure** aujourd'hui (le protocole momentum n'a jamais été testé avec un stop). Soit #52 les mesure, soit #54/#55 disent explicitement que ce sont les garde-fous de Jean.
 - **Modèle recommandé** : Fable pour #50/#52 (raisonnement statistique — une erreur de méthode est invisible) ; un modèle plus léger suffit pour le câblage une fois le ticket précis.
+
+---
+
+## Clôture de l'épopée — 29/08/2026
+
+**« Un seul produit » existe.** TVLite affiche les graphiques, le pipeline calcule le signal chaque
+fin de mois (17 h / 17 h 30, 100 % cloud), le rapport se publie seul, la collection se met à jour
+seule — et **Jean décide** : premier signal réel le 31/08/2026, 5 000 $ engagés le 1ᵉʳ septembre.
+
+Le chemin réel a différé du plan, et c'est consigné ticket par ticket :
+- le pan-canadien 30 000 $ est devenu le **duo Industrials+Technology à 5 000 $** (décision #52) ;
+- les stops et plans de trade ont été **mesurés et écartés** — pas de `longpos` prescrits ;
+- les tables `reco.*` sont devenues `portefeuille/etat.json` versionné + conformité #61 ;
+- le panneau Reco est devenu le rapport mensuel.
+
+Enfants : [#48](48-reconciliation-cloud.md) ✅ · [#49](49-terrain-unifie.md) ✅ ·
+[#50](50-labo-mesure-cli.md) ✅ · [#51](51-page-recherche.md) 🚫 caduc ·
+[#52](52-exploration-decision-strategie.md) ✅ porte franchie · [#53](53-pipeline-mensuel.md) ✅ ·
+[#54](54-restitution-tvlite.md) ✅ · [#55](55-rapport-mensuel.md) ✅
+(+ [#56](56-rs-mansfield.md) et [#57](57-divergence.md) ✅ en cours de route).
+Les engagements de principe survivent à l'épopée : aucun texte du produit ne promet une performance,
+et les dérogations de Jean restent visibles dans le journal (`execute` vs signal).

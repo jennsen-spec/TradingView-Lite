@@ -1,6 +1,6 @@
 # #50 — Labo de mesure (CLI)
 
-**Statut** : 🧪 À valider (UAT) · **Points** : 13 · **Catégorie** : 💼 Portefeuille · **Taille** : XL
+**Statut** : ✅ Fait (clos le 29/08/2026) · **Points** : 13 · **Catégorie** : 💼 Portefeuille · **Taille** : XL
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : #49 · Suivi de : #51
 
 ## Objectif
@@ -77,3 +77,14 @@ se reproduit exactement ; les décimales bougent avec le millésime des données
 - la cartouche est **procédurale, pas cryptographique** : elle compte les regards, elle ne les empêche pas.
 
 **Une cartouche (n° 1) a été consommée** pour la recette du mécanisme — journalisée dans `research.validation_log`.
+
+---
+
+## Clôture — 29/08/2026
+UAT de fait par l'usage : ce CLI a produit **toute** la campagne de mesure de fin août — duo
+industrie+techno, interrupteurs (jour/mois, MM150/MM200, séance entière), plafond sectoriel,
+poids dérivants ([#62](62-poids-derivants.md)), élargissement CDR — et c'est sur ses sorties que
+le protocole v4 et la décision de [#52](52-exploration-decision-strategie.md) reposent.
+Dérive assumée depuis le 22/08 : le schéma `research` en base n'existe plus ; les jeux de règles
+restent versionnés dans `labo/rulesets/`, les résultats vivent en fichiers, artefacts et
+`docs/archive/`. Le moteur sert désormais aussi la production (cycle mensuel, conformité #61).

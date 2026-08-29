@@ -1,6 +1,6 @@
 # #58 — Base saturée : déplacer les secteurs hors stratégie et inventorier ce qui manque
 
-**Statut** : 🏗️ En cours (sprint lancé le 26/08) · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Priorité** : ⭐ bloquant
+**Statut** : ✅ Fait (clos le 29/08/2026) · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Priorité** : ⭐ bloquant
 **Plan vérifié le 26/08 (2ᵉ passe)** — trois défauts corrigés, voir Décisions.
 
 ## Objectif
@@ -144,3 +144,15 @@ d'abord » : à harmoniser ou assumer.
   réutilisable dans une table devenue petite. C'est le comportement voulu ; ne pas s'en alarmer.
 - Élargir la couverture ne corrigera pas le biais du survivant (voir la réserve du document des
   courbes) : les tickers ajoutés seront eux aussi des survivants.
+
+## Clôture — 29/08/2026
+L'objectif est atteint depuis le 26/08 (base à 87,8 Mo, signal du 31 août sauvé, chaîne de fin de
+mois vérifiée à froid) ; le reliquat s'est réglé dans la semaine. Sort des critères restés ouverts :
+- **`bars_ca`** — caduque : Jean a supprimé le projet 2 pendant l'opération ; l'archive de référence
+  est `labo/.cache/archive/bars.ndjson` (+ Yahoo), lue par `chargerUniversComplet`.
+- **13 courbes sur l'archive** — validé en substance le 28/08 : tous les artefacts (courbes,
+  comparatifs, grand livre) ont été régénérés depuis l'archive lors de l'élargissement CDR.
+- **47 secteurs / CSCO.TO / inventaire** — livrés par [#60](60-inventaire-univers.md) ✅
+  (seed commité, classification en lots, CSCO.TO en base, alerte dans le rapport).
+- **Purge rejouable mensuelle** — **non construite, déplacée au backlog** (accord de Jean, 29/08) :
+  à 17,6 % du quota avec garde-fou à 400 Mo, ce n'est plus un prérequis de clôture.

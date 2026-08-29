@@ -1,6 +1,6 @@
 # #53 — Pipeline mensuel (runs & recommandations)
 
-**Statut** : 🔍 Affiné · **Points** : 8 · **Catégorie** : 💼 Portefeuille · **Taille** : L
+**Statut** : ✅ Fait — réalisé autrement (clos le 29/08/2026) · **Points** : 8 · **Catégorie** : 💼 Portefeuille · **Taille** : L
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : #49, **accord de #52**
 
 ## Objectif
@@ -41,3 +41,14 @@ Poche satellite **30 000 $** · `budget_risque_pct` par défaut **1,0**.
 
 ## Notes / risques
 - `strategie` est ce qui permettra de mesurer plus tard la performance réelle des recommandations **par version** : ne jamais le laisser vide.
+
+---
+
+## Clôture — 29/08/2026 : réalisé autrement
+L'objectif — **un run mensuel reproductible** — est en production, avec une tuyauterie plus simple
+que la lettre du ticket : `calculerCycle` (TypeScript) + pg_cron 17 h + GitHub Action 17 h 30,
+état versionné dans `portefeuille/etat.json` (qui joue le rôle de `reco.runs`/`reco.items`),
+rejouabilité **prouvée à chaque publication** par le test de conformité [#61](61-conformite-moteur.md).
+Écarts assumés : pas de plan de trade entrée/stop/cible (stops **mesurés et écartés** en #52) ;
+Weinstein remplacé par l'interrupteur XSP (mesuré : n'apporte rien en plus) ; un mois d'interrupteur
+produit bien un cycle « liquidités » publié — l'absence de recommandation reste une information.

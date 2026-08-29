@@ -1,6 +1,6 @@
 # #51 — Page « Recherche » (lecture seule)
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : M
+**Statut** : 🚫 Caduc — wont do (29/08/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : M
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : #50
 
 ## Objectif
@@ -31,3 +31,11 @@ résultats **là où sont ses graphiques** — pas dans un terminal à part. C'e
 
 ## Notes / risques
 - Ne pas dupliquer la logique de calcul côté front : la page **affiche**, elle ne mesure rien.
+
+---
+
+## Clôture — 29/08/2026 : caduc (won't do)
+Décision de Jean : le besoin est **servi autrement**. Les comparatifs de jeux de règles vivent
+dans les artefacts (protocole, courbes, comparatifs d'interrupteurs), l'exploration est close
+([#52](52-exploration-decision-strategie.md) ✅) et la stratégie est en production — la page en
+lecture seule n'a plus de client. À rouvrir seulement si une nouvelle phase d'exploration s'ouvre.

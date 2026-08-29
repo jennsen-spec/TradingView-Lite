@@ -1,6 +1,6 @@
 # #54 — Restitution dans TVLite (collection + dessins + panneau Reco)
 
-**Statut** : 🔍 Affiné · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
+**Statut** : ✅ Fait — partiel, le reste caduc (clos le 29/08/2026) · **Points** : 8 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : L · **Priorité** : ⭐
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis : **#48** (bloquant), #53
 
 ## Objectif
@@ -36,3 +36,15 @@ pré-rempli sur chaque titre retenu, un panneau qui explique. L'aller-retour ave
 
 ## Notes / risques
 - **#48 est un prérequis dur.** Sans la réconciliation, tout ce que ce ticket écrit meurt au rechargement suivant.
+
+---
+
+## Clôture — 29/08/2026 : partiel livré, le reste caduc
+**Livré** : la collection mensuelle automatisée — `labo/src/collection.ts` pousse les libellés
+« Duo Sec Momentum » après chaque publication (garde-fou : seules les sections Industrials et
+Technology sont gérées, tout le reste appartient à Jean). L'app Golden Cross a bien disparu.
+**Caduc** : les `longpos` pré-remplis — la stratégie retenue n'a **ni stop ni cible** (mesurés et
+écartés en [#52](52-exploration-decision-strategie.md)), il n'y a donc plus de plan de trade à
+dessiner. Le panneau « Reco » est remplacé par le **rapport mensuel** (bouton « Rapport » dans TVLite).
+Le principe « fusion, jamais remplacement » a survécu au ticket : il est devenu la règle générale
+du cloud ([#48](48-reconciliation-cloud.md), et la leçon du 28/08 sur les collections).

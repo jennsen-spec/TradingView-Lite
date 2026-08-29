@@ -1,6 +1,6 @@
 # #49 — Terrain unifié (un dépôt, un Supabase, quatre schémas)
 
-**Statut** : 🔍 Affiné · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Taille** : L
+**Statut** : ✅ Fait (clos le 29/08/2026) · **Points** : 8 · **Catégorie** : ⚙️ Technique · **Taille** : L
 Épopée : [#47](47-epopee-un-seul-produit.md) · Prérequis de #50
 
 ## Objectif
@@ -200,3 +200,15 @@ rafraîchissement des cours.
 - [ ] Ajouter le **RS** dans TVLite (données prêtes).
 - [ ] Rattraper `BLX.TO`, absent de `bars`.
 - [ ] Vérifier à la main le correctif « trait droit avec shift » (non vérifiable par le harnais).
+
+---
+
+## Clôture — 29/08/2026
+La refonte « une seule base » du 22/08 a tourné une semaine en production sans incident, a porté
+toute la campagne de mesure de fin août, puis a été re-structurée par [#58](58-espace-supabase-couverture.md)
+(105 tickers opérationnels + archive locale). Les critères d'origine (4 schémas, rapatriement
+Swing Mastery) ont été **remplacés par le pivot assumé** documenté ci-dessus. Reliquats soldés :
+- RS dans TVLite → livré ([#56](56-rs-mansfield.md) ✅).
+- `adj_close` → tranché autrement : table `dividends` chargée le 22/08, rendements totaux côté labo.
+- `BLX.TO` → sans objet depuis #58 (hors duo ; l'univers complet vit dans l'archive locale).
+- Vérif manuelle « trait droit avec shift » → couverte par l'usage quotidien des dessins depuis.
