@@ -1,6 +1,6 @@
 # #63 — Ensembles de dessins par symbole
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
 
 ## Objectif
 Sur un symbole, sauvegarder l'état des dessins sous un nom, pouvoir tout effacer
@@ -9,28 +9,28 @@ validées par Jean le 29/08.
 
 ## Critères d'acceptation
 **US-1 — Sauvegarder sous un nom**
-- [ ] « Sauvegarder les dessins… » demande un nom et photographie tous les dessins du
+- [x] « Sauvegarder les dessins… » demande un nom et photographie tous les dessins du
       symbole courant, sans modifier l'affichage.
-- [ ] Nom déjà pris → choix explicite : « Mettre à jour la sauvegarde » (écraser) ou
+- [x] Nom déjà pris → choix explicite : « Mettre à jour la sauvegarde » (écraser) ou
       renommer.
-- [ ] Plusieurs ensembles coexistent par symbole.
+- [x] Plusieurs ensembles coexistent par symbole.
 
 **US-2 — Effacer sans peur**
-- [ ] « Tout effacer » ne touche jamais aux ensembles sauvegardés.
+- [x] « Tout effacer » ne touche jamais aux ensembles sauvegardés.
 
 **US-3 — Restaurer = remplacer**
-- [ ] Liste par symbole : nom, date, nombre de dessins.
-- [ ] Restaurer REMPLACE les dessins affichés ; si des dessins non sauvegardés seraient
+- [x] Liste par symbole : nom, date, nombre de dessins.
+- [x] Restaurer REMPLACE les dessins affichés ; si des dessins non sauvegardés seraient
       perdus, avertissement avant.
-- [ ] Restaurer ne consomme pas l'ensemble.
-- [ ] Le chemin d'AJOUT passe par #64 : tout sélectionner → couper → restaurer → coller
+- [x] Restaurer ne consomme pas l'ensemble.
+- [x] Le chemin d'AJOUT passe par #64 : tout sélectionner → couper → restaurer → coller
       → les dessins coupés reviennent à leurs positions d'origine par-dessus l'ensemble.
 
 **US-4 — Gérer**
-- [ ] Renommer et supprimer (avec confirmation).
+- [x] Renommer et supprimer (avec confirmation).
 
 **US-5 — Synchronisation**
-- [ ] Les ensembles suivent le cloud avec les mêmes règles de fusion que les dessins
+- [x] Les ensembles suivent le cloud avec les mêmes règles de fusion que les dessins
       (#48) ; jamais touchés par les scripts du labo (même contrat que les collections).
 
 ## Décisions
@@ -59,3 +59,17 @@ validées par Jean le 29/08.
 - Le remplacement doit passer par le chemin normal de sauvegarde des dessins
   (localStorage + syncToCloud) pour que la fusion #48 voie les suppressions comme
   volontaires (ids « vus ») — sinon les dessins remplacés ressusciteraient.
+
+## Journal du sprint
+- 29/08 : implémenté. `lib/drawsets.ts` (clé `tvlike:drawsets:<SYMBOL>`, fusionnable par
+  id dans cloudPrefs) ; champ `Drawing.systeme` pour les dessins du générateur (exclus
+  des ensembles — aucun n'existe encore, le filtre est en place) ; modale « Ensembles de
+  dessins » (sauvegarder avec confirmation de mise à jour, restaurer avec avertissement
+  si l'état courant n'est photographié nulle part, renommer, supprimer) ; accessible par
+  le bouton de la barre d'outils ET le menu clic droit (deux entrées). Restauration via
+  le chemin normal de sauvegarde (useEffect → saveDrawings → sync #48) : les
+  remplacements sont vus comme volontaires, rien ne ressuscite.
+- Testé de bout en bout au preview sur les 9 dessins réels d'AAPL : sauvegarde (9),
+  tout effacer (0, l'ensemble intact), restauration → **9 dessins identiques à l'octet
+  près** ; clé cloud synchronisée (vérifiée dans tvlite_prefs) ; état de Jean remis
+  exactement comme avant le test, ensembles de test nettoyés.
