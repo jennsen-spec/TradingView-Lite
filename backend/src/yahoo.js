@@ -10,13 +10,13 @@ const CACHE_TTL_MS = 1000 * 60 * 60 * 12; // 12h.
 // Clés d'intervalle (front) -> intervalles Yahoo natifs.
 const INTERVAL_MAP = {
   "1m": "1m", "2m": "2m", "5m": "5m", "15m": "15m", "30m": "30m", "1h": "60m",
-  "1d": "1d", "1w": "1wk", "1mo": "1mo", "3mo": "3mo",
+  "1d": "1d", "1w": "1wk", "1mo": "1mo",
 };
 // Fenêtre d'historique par intervalle Yahoo.
 // NB: range=max fait downsampler Yahoo (~168 pts) → pour hebdo/mensuel on borne le range.
 const RANGE_FOR = {
   "1m": "7d", "2m": "60d", "5m": "60d", "15m": "60d", "30m": "60d", "60m": "730d",
-  "1d": "10y", "1wk": "30y", "1mo": "30y", "3mo": "max",
+  "1d": "10y", "1wk": "30y", "1mo": "30y",
 };
 // Intervalles intraday : on renvoie un timestamp (secondes) au lieu d'une date.
 const INTRADAY = new Set(["1m", "2m", "5m", "15m", "30m", "60m", "90m"]);
@@ -33,11 +33,12 @@ function weekKey(dateStr) {
 //   parfois corrompus, ex. ZEQT.TO ~3× le prix ; le journalier est fiable → on l'agrège nous-mêmes).
 //   Range 30 ans sur la base journalière pour conserver l'historique long (réutilise le cache SMA).
 // - 4h  = fenêtres de 4h "horloge" sur le 1h (time intraday = ts+gmt déjà en secondes locales)
-// - 6mo/12mo = semestre / année civile sur le mensuel (désormais propre car agrégé du journalier)
+// - 3mo/6mo/12mo = trimestre / semestre / année CIVILS sur le mensuel (désormais propre car agrégé du journalier)
 const AGG = {
   "1w": { base: "1d", range: "30y", bucket: (t) => weekKey(t) },
   "1mo": { base: "1d", range: "30y", bucket: (t) => t.slice(0, 7) },
   "4h": { base: "1h", bucket: (t) => Math.floor(t / (4 * 3600)) },
+  "3mo": { base: "1mo", bucket: (t) => { const d = new Date(t + "T00:00:00Z"); return d.getUTCFullYear() * 4 + Math.floor(d.getUTCMonth() / 3); } },
   "6mo": { base: "1mo", bucket: (t) => { const d = new Date(t + "T00:00:00Z"); return d.getUTCFullYear() * 2 + (d.getUTCMonth() < 6 ? 0 : 1); } },
   "12mo": { base: "1mo", bucket: (t) => new Date(t + "T00:00:00Z").getUTCFullYear() },
 };

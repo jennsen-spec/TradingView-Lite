@@ -23,7 +23,7 @@ import IndicatorCatalog from "./IndicatorCatalog";
 import DrawingLayer from "./DrawingLayer";
 import type { IndicatorSettings as IndSettings, LineStyleName, IndType } from "../lib/indicatorSettings";
 import { rgba, visibleForInterval, loadIndicators, saveIndicators, smaDefault, SMA_COLORS } from "../lib/indicatorSettings";
-import { fmtTimeByInterval } from "../lib/timeFormat";
+import { fmtTimeByInterval, fmtCrosshair } from "../lib/timeFormat";
 
 // Temps -> secondes (nombre). Date "YYYY-MM-DD" → Date.parse ; intraday = déjà un timestamp.
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
@@ -431,6 +431,10 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     if (!same) setLayout(boxes);
   }, []);
 
+  // L'intervalle courant, lisible depuis la closure du graphique (créé une seule fois).
+  const intervalRef = useRef(interval);
+  intervalRef.current = interval;
+
   // Création unique du graphique + des séries (panes).
   useEffect(() => {
     if (!chartElRef.current) return;
@@ -452,6 +456,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       // Crosshair libre : le prix affiché suit le niveau du curseur (pas la donnée la plus proche).
       crosshair: { mode: CrosshairMode.Normal },
       timeScale: { borderColor: th.border, timeVisible: false, rightOffset: RIGHT_OFFSET },
+      // Curseur : date complète avec jour de la semaine (Lun. … Dim.), demandé par Jean le 28/08.
+      localization: { timeFormatter: (t: UTCTimestamp) => fmtCrosshair(t as any, intervalRef.current) },
       // Glisser sur un axe le met à l'échelle (drag vertical sur l'axe des prix = zoom vertical).
       handleScale: { axisPressedMouseMove: { time: true, price: true } },
     });

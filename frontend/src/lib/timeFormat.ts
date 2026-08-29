@@ -18,6 +18,9 @@ function detailForInterval(interval: string): Detail {
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+// Jour de la semaine, abréviations demandées par Jean (28/08) — l'index suit getUTCDay (0 = dimanche).
+const JOURS = ["Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."];
+const MOIS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "août", "sept.", "oct.", "nov.", "déc."];
 
 // style "numeric" → 01-01-2026 / 01-2026 / 2026 / 01-01-2026 09:30
 // style "letter"  → 01 jan '26 / jan '26 / 2026 / 01 jan '26 09:30
@@ -28,15 +31,27 @@ export function fmtTimeByInterval(time: Time, interval: string, style: "numeric"
   const dd = p(d.getUTCDate()), mm = p(d.getUTCMonth() + 1), yyyy = d.getUTCFullYear();
   const HH = p(d.getUTCHours()), MM = p(d.getUTCMinutes());
 
+  const jour = JOURS[d.getUTCDay()];
   if (style === "letter") {
     const mmm = MONTHS[d.getUTCMonth()], yy = String(yyyy).slice(2);
     if (detail === "year") return String(yyyy);
     if (detail === "month") return `${mmm} '${yy}`;
-    const base = `${dd} ${mmm} '${yy}`;
+    const base = `${jour} ${dd} ${mmm} '${yy}`;
     return detail === "time" ? `${base} ${HH}:${MM}` : base;
   }
   if (detail === "year") return String(yyyy);
   if (detail === "month") return `${mm}-${yyyy}`;
-  const base = `${dd}-${mm}-${yyyy}`;
+  const base = `${jour} ${dd}-${mm}-${yyyy}`;
   return detail === "time" ? `${base} ${HH}:${MM}` : base;
+}
+
+// Libellé du CURSEUR (axe du temps) : toujours la date complète de la bougie, avec le
+// jour de la semaine — c'est lui que Jean lit pour dater une bougie, quel que soit
+// l'intervalle. En français, comme l'affichait la locale du navigateur avant lui.
+// Intraday : l'heure s'ajoute. (Les graduations de l'axe, elles, ne changent pas.)
+export function fmtCrosshair(time: Time, interval: string): string {
+  const d = new Date(tsOf(time) * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  const base = `${JOURS[d.getUTCDay()]} ${p(d.getUTCDate())} ${MOIS_FR[d.getUTCMonth()]} '${String(d.getUTCFullYear()).slice(2)}`;
+  return detailForInterval(interval) === "time" ? `${base} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` : base;
 }
