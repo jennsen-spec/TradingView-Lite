@@ -116,3 +116,10 @@ Le rafraîchissement quotidien adopte le ticker de lui-même (jamais rafraîchi 
   avant le signal du 31/08. Et 4 restes dans la base : AAPL + QQQ (cotations américaines
   historiques, rafraîchies quotidiennement pour rien) et AMZN.NE + TSLA.NE (CDR
   d'avant-migration) — signalés, à purger seulement sur décision.
+- 28/08 soir : **ABXX.TO, ACT.TO et AMT.V ajoutés à la base** (décision de Jean) — les
+  trois ont ≥ 253 barres (les historiques ont suivi les migrations de bourse), donc tous
+  immédiatement éligibles. Effet mesuré : **top 10 du signal courant inchangé** (aucun des
+  trois n'approche le classement — hors du top 10 de leur secteur), mais le **grand livre
+  bouge de 702 188 → 699 606 $ (−0,37 %)** : ils ont été retenus dans des mois récents du
+  backtest (638 positions contre 636). Conséquence prévue par le plan : les artefacts
+  chiffrés doivent être régénérés (en cours). Le seed des secteurs porte les trois.

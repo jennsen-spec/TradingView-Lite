@@ -23,6 +23,10 @@
   "industrie": "Gold",
   "secteur": "Basic Materials"
  },
+ "ABXX.TO": {
+  "industrie": "Software - Application",
+  "secteur": "Technology"
+ },
  "AC.TO": {
   "industrie": "Airlines",
   "secteur": "Industrials"
@@ -42,6 +46,10 @@
  "ACQ.TO": {
   "industrie": "Auto & Truck Dealerships",
   "secteur": "Consumer Cyclical"
+ },
+ "ACT.TO": {
+  "industrie": "Pollution & Treatment Controls",
+  "secteur": "Industrials"
  },
  "ACX.TO": {
   "industrie": "Oil & Gas Drilling",
@@ -133,6 +141,10 @@
  },
  "AMD.TO": {
   "industrie": "Semiconductors",
+  "secteur": "Technology"
+ },
+ "AMT.V": {
+  "industrie": "Software - Application",
   "secteur": "Technology"
  },
  "AMZN.TO": {
