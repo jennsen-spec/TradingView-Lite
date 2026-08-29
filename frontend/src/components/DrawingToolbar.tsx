@@ -126,10 +126,11 @@ const TOOLS: ToolDef[] = [
 interface Props {
   active: Tool;
   onSelect: (t: Tool) => void;
+  onSets?: () => void; // ouvre la boîte « Ensembles de dessins » (#63)
 }
 
 // Barre horizontale ; repli en dropdown « ⋯ » quand la place manque (responsive).
-export default function DrawingToolbar({ active, onSelect }: Props) {
+export default function DrawingToolbar({ active, onSelect, onSets }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -179,6 +180,20 @@ export default function DrawingToolbar({ active, onSelect }: Props) {
           </button>
         ))}
       </div>
+
+      {onSets && (
+        <button
+          className="dt-btn dt-sets"
+          title="Ensembles de dessins (sauvegarder / restaurer)"
+          aria-label="Ensembles de dessins"
+          onClick={onSets}
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 3 21 8 12 13 3 8" />
+            <polyline points="3 13 12 18 21 13" />
+          </svg>
+        </button>
+      )}
 
       {collapsed && (
         <div className="dt-collapsed">

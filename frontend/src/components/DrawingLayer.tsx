@@ -9,6 +9,7 @@ import {
   newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
 } from "../lib/drawings";
 import { applyTemplateDefault } from "../lib/templates";
+import { loadDrawSets, saveDrawSets, empreinte, type DrawSet } from "../lib/drawsets";
 
 // Prix sur la droite de base (p0→p1) au temps `time` (interpolation linéaire).
 const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
@@ -118,6 +119,58 @@ export default function DrawingLayer({
     undoRef.current.push(drawingsRef.current);
     setDrawings(redoRef.current.pop()!);
     setSelectedIds([]);
+  };
+
+  // ── Ensembles de dessins (#63) : sauvegarder / restaurer l'état par symbole ──
+  const [setsOpen, setSetsOpen] = useState(false);
+  const [sets, setSets] = useState<DrawSet[]>([]);
+  const [setName, setSetName] = useState("");
+  const ouvrirEnsembles = () => { setSets(loadDrawSets(symbol)); setSetName(""); setSetsOpen(true); setChartMenu(null); };
+  // Les dessins « à Jean » : tout sauf ceux posés par le système (cycle mensuel).
+  const dessinsDeJean = () => drawingsRef.current.filter((d) => !d.systeme);
+  const sauvegarderEnsemble = () => {
+    const nom = setName.trim();
+    if (!nom) return;
+    const dessins = JSON.parse(JSON.stringify(dessinsDeJean())) as Drawing[];
+    const liste = loadDrawSets(symbol);
+    const existant = liste.find((x) => x.nom === nom);
+    if (existant) {
+      if (!window.confirm(`« ${nom} » existe déjà. Mettre à jour cette sauvegarde ?`)) return;
+      existant.dessins = dessins; existant.date = new Date().toISOString();
+    } else {
+      liste.push({ id: genDrawingId(), nom, date: new Date().toISOString(), dessins });
+    }
+    saveDrawSets(symbol, liste); setSets([...liste]); setSetName("");
+  };
+  const restaurerEnsemble = (ens: DrawSet) => {
+    const courants = dessinsDeJean();
+    // Restaurer = REMPLACER (décision du 29/08). Si l'état courant n'est photographié
+    // dans aucun ensemble, prévenir avant de l'écraser.
+    if (courants.length) {
+      const e = empreinte(courants);
+      const sauvegarde = loadDrawSets(symbol).some((x) => empreinte(x.dessins) === e);
+      if (!sauvegarde && !window.confirm(
+        `Restaurer « ${ens.nom} » remplacera ${courants.length} dessin${courants.length > 1 ? "s" : ""} ` +
+        `non sauvegardé${courants.length > 1 ? "s" : ""}. Continuer ? (Annuler pour les sauvegarder d'abord.)`)) return;
+    }
+    pushUndo();
+    const systeme = drawingsRef.current.filter((d) => d.systeme);
+    setDrawings([...systeme, ...(JSON.parse(JSON.stringify(ens.dessins)) as Drawing[])]);
+    setSelectedIds([]);
+    setSetsOpen(false);
+  };
+  const renommerEnsemble = (ens: DrawSet) => {
+    const nom = window.prompt("Nouveau nom :", ens.nom)?.trim();
+    if (!nom || nom === ens.nom) return;
+    const liste = loadDrawSets(symbol);
+    if (liste.some((x) => x.nom === nom)) { window.alert(`« ${nom} » existe déjà.`); return; }
+    const cible = liste.find((x) => x.id === ens.id);
+    if (cible) { cible.nom = nom; saveDrawSets(symbol, liste); setSets([...liste]); }
+  };
+  const supprimerEnsemble = (ens: DrawSet) => {
+    if (!window.confirm(`Supprimer l'ensemble « ${ens.nom} » (${ens.dessins.length} dessin${ens.dessins.length > 1 ? "s" : ""}) ?`)) return;
+    const liste = loadDrawSets(symbol).filter((x) => x.id !== ens.id);
+    saveDrawSets(symbol, liste); setSets([...liste]);
   };
 
   // Temps des bougies (secondes) pour l'interpolation temps <-> logical (ancrage cross-intervalle).
@@ -1258,7 +1311,7 @@ export default function DrawingLayer({
 
   return (
     <>
-      {slot && createPortal(<DrawingToolbar active={activeTool} onSelect={selectTool} />, slot)}
+      {slot && createPortal(<DrawingToolbar active={activeTool} onSelect={selectTool} onSets={ouvrirEnsembles} />, slot)}
 
       {p0 && (
         <svg className="draw-svg" style={{ pointerEvents: "none" }}>
@@ -1333,6 +1386,12 @@ export default function DrawingLayer({
         const n = drawings.filter((d) => !d.locked).length;
         return (
           <div className="draw-chart-menu" style={{ left: chartMenu.x, top: chartMenu.y }} onMouseDown={(e) => e.stopPropagation()}>
+            <button className="dcm-item" onClick={ouvrirEnsembles}>
+              Sauvegarder les dessins…
+            </button>
+            <button className="dcm-item" onClick={ouvrirEnsembles}>
+              Ensembles de dessins…
+            </button>
             <button
               className="dcm-item"
               onClick={() => {
@@ -1347,6 +1406,47 @@ export default function DrawingLayer({
           </div>
         );
       })()}
+      {setsOpen && (
+        <>
+          <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={() => setSetsOpen(false)} />
+          <div className="is-modal sets-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="sets-title">Ensembles de dessins — {symbol}</div>
+            <div className="sets-save">
+              <input
+                type="text"
+                placeholder="Nom de la sauvegarde…"
+                value={setName}
+                onChange={(e) => setSetName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") sauvegarderEnsemble(); }}
+              />
+              <button className="sets-btn" disabled={!setName.trim() || dessinsDeJean().length === 0} onClick={sauvegarderEnsemble}>
+                Sauvegarder ({dessinsDeJean().length})
+              </button>
+            </div>
+            {sets.length === 0 ? (
+              <div className="sets-vide">Aucun ensemble sauvegardé pour ce symbole.</div>
+            ) : (
+              <div className="sets-liste">
+                {sets.map((ens) => (
+                  <div className="sets-ligne" key={ens.id}>
+                    <div className="sets-infos">
+                      <span className="sets-nom">{ens.nom}</span>
+                      <span className="sets-meta">{ens.dessins.length} dessin{ens.dessins.length > 1 ? "s" : ""} · {ens.date.slice(0, 10)}</span>
+                    </div>
+                    <button className="sets-btn" onClick={() => restaurerEnsemble(ens)}>Restaurer</button>
+                    <button className="sets-btn sets-sec" title="Renommer" onClick={() => renommerEnsemble(ens)}>✎</button>
+                    <button className="sets-btn sets-sec" title="Supprimer" onClick={() => supprimerEnsemble(ens)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="sets-pied">
+              <span>Restaurer <b>remplace</b> les dessins affichés. Pour ajouter&nbsp;: couper, restaurer, coller.</span>
+              <button className="sets-btn sets-sec" onClick={() => setSetsOpen(false)}>Fermer</button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

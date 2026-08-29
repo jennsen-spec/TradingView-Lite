@@ -19,7 +19,7 @@ const headers = { apikey: PREFS_KEY, "Content-Type": "application/json" };
 const isSynced = (k: string) => k.startsWith("tvlike:");
 
 // Clés dont la valeur est un tableau d'objets `{id}` → fusionnables entrée par entrée.
-const isMergeable = (k: string) => k === "tvlike:collections" || k.startsWith("tvlike:drawings:");
+const isMergeable = (k: string) => k === "tvlike:collections" || k.startsWith("tvlike:drawings:") || k.startsWith("tvlike:drawsets:");
 
 // Méta locales. Préfixe volontairement HORS `tvlike:` → jamais synchronisées vers le cloud.
 const TS_KEY = "tvlite__sync_ts";     // { clé: horodatage de la dernière écriture locale }

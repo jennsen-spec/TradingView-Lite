@@ -2451,3 +2451,49 @@ body {
 .r-add:hover {
   color: var(--accent);
 }
+
+/* ── Ensembles de dessins (#63) ── */
+.sets-modal {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(420px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.sets-title { font-weight: 600; font-size: 14px; }
+.sets-save { display: flex; gap: 8px; }
+.sets-save input {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-2, rgba(127, 127, 127, 0.12));
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.35));
+  border-radius: 6px;
+  color: inherit;
+  padding: 6px 9px;
+  font-size: 13px;
+}
+.sets-btn {
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.35));
+  background: var(--panel-2, rgba(127, 127, 127, 0.12));
+  color: inherit;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sets-btn:hover:not(:disabled) { border-color: #3f8cff; }
+.sets-btn:disabled { opacity: 0.45; cursor: default; }
+.sets-btn.sets-sec { padding: 5px 8px; opacity: 0.85; }
+.sets-liste { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.sets-ligne { display: flex; align-items: center; gap: 8px; }
+.sets-infos { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sets-nom { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sets-meta { font-size: 11.5px; opacity: 0.65; }
+.sets-vide { font-size: 12.5px; opacity: 0.65; padding: 6px 0; }
+.sets-pied { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11.5px; opacity: 0.85; border-top: 1px solid var(--border, rgba(127,127,127,0.25)); padding-top: 9px; }

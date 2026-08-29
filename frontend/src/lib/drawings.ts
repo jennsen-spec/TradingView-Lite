@@ -196,6 +196,10 @@ export interface Drawing {
   visibility: Visibility;
   locked: boolean;
   title: string;
+  // Dessin posé par le SYSTÈME (générateur du rapport : rectangles « Annonce »,
+  // positions prescrites) — jamais par Jean. Exclu des ensembles (#63) : il
+  // appartient au cycle mensuel, pas aux analyses sauvegardées.
+  systeme?: boolean;
 }
 
 export const defaultVisibility = (): Visibility => ({
