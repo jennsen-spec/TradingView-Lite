@@ -81,3 +81,11 @@ communs d'une sélection. User stories validées par Jean le 29/08.
   les dessins. Corrigé : le bouton reste et ouvre des **Options de groupe** (éditeur de
   visibilité par intervalle, appliqué à toute la sélection ; un seul cran d'annulation).
   Vérifié : décocher « minutes » touche les 9 dessins d'un coup, Ctrl+Z remet tout.
+- 29/08 (retour d'UAT n°2 de Jean) : « tout sélectionner » incluait la position longue,
+  et le changement de couleur groupé prétendait la piloter alors qu'elle a ses couleurs
+  sémantiques propres (zones verte/rouge) — pareil pour Fibonacci (couleur par niveau)
+  et divergence (couleurs de pente). Corrigé : le contrôle de couleur du groupe ne
+  s'affiche que si TOUS les dessins sélectionnés traitent la couleur simplement
+  (trait, vertical, canal, surligneur, rectangle) ; sinon il disparaît plutôt que de
+  mentir. Vérifié : sélection avec position longue → couleur absente, visibilité de
+  groupe/verrou/corbeille présents.

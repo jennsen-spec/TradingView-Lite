@@ -12,6 +12,12 @@ import type { Visibility } from "../lib/indicatorSettings";
 import { applyTemplateDefault } from "../lib/templates";
 import { loadDrawSets, saveDrawSets, empreinte, type DrawSet } from "../lib/drawsets";
 
+// Types dont la couleur du style EST la couleur du dessin. Les autres — position
+// longue (zones verte/rouge), Fibonacci (couleur par niveau), divergence (couleurs
+// de pente) — ont des couleurs sémantiques propres : le contrôle de couleur du
+// groupe ne doit pas prétendre les piloter (relevé par Jean à l'UAT du 29/08).
+const COULEUR_SIMPLE = new Set(["trend", "vline", "channel", "brush", "rect"]);
+
 // Copier/coller (#64) — au niveau MODULE : le composant est remonté à chaque
 // changement de symbole (key={symbol}), le presse-papier doit y survivre pour que
 // le garde-fou « coller est limité à son symbole » puisse s'exprimer (toast).
@@ -1441,6 +1447,7 @@ export default function DrawingLayer({
           top={ctx.top}
           type={ctx.d.type}
           mixed={new Set(drawings.filter((d) => selectedIds.includes(d.id)).map((d) => d.type)).size > 1}
+          styleCommun={drawings.filter((d) => selectedIds.includes(d.id)).every((d) => COULEUR_SIMPLE.has(d.type))}
           style={ctx.d.style}
           locked={ctx.d.locked}
           count={selectedIds.length}

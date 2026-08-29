@@ -12,6 +12,7 @@ interface Props {
   locked: boolean;
   count: number; // nb de dessins sélectionnés (corbeille = suppression groupée)
   mixed?: boolean; // sélection hétérogène (#64) : contrôles COMMUNS seulement
+  styleCommun?: boolean; // tous les sélectionnés ont une couleur « simple » (pas de position/fib/divergence)
   onStyle: (patch: Partial<DrawingStyle>) => void;
   onToggleLock: () => void;
   onOptions: () => void;
@@ -67,14 +68,16 @@ function BrushWidth({ value, onPick }: { value: number; onPick: (w: number) => v
 
 // Barre flottante de raccourcis pour le(s) dessin(s) sélectionné(s).
 export default function DrawingContextBar({
-  left, top, type, style, locked, count, mixed, onStyle, onToggleLock, onOptions, onDelete,
+  left, top, type, style, locked, count, mixed, styleCommun = true, onStyle, onToggleLock, onOptions, onDelete,
 }: Props) {
   return (
     <div className="draw-ctxbar" style={{ left, top }} onMouseDown={(e) => e.stopPropagation()}>
-      {/* Sélection hétérogène : l'intersection des paramètres partagés — couleur,
-          opacité, épaisseur, style de trait — appliquée à toute la sélection.
-          Les réglages propres à un type (Options) exigent une sélection homogène. */}
-      {!mixed && type === "brush" ? (
+      {/* Sélection hétérogène : l'intersection des paramètres partagés, appliquée à
+          toute la sélection. La couleur n'en fait partie que si TOUS les dessins la
+          traitent simplement — une position longue, un Fibonacci ou une divergence ont
+          leurs propres couleurs sémantiques, le contrôle disparaît plutôt que de
+          prétendre les piloter. */}
+      {mixed && !styleCommun ? null : !mixed && type === "brush" ? (
         <>
           {/* Surligneur : couleur + opacité, puis épaisseur du pinceau (pas de style de ligne). */}
           <ColorButton
