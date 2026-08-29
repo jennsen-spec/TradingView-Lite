@@ -6,8 +6,9 @@ import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings"
 import { fmtTimeByInterval, dureeEntre } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
-  newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
+  newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment, defaultVisibility,
 } from "../lib/drawings";
+import type { Visibility } from "../lib/indicatorSettings";
 import { applyTemplateDefault } from "../lib/templates";
 import { loadDrawSets, saveDrawSets, empreinte, type DrawSet } from "../lib/drawsets";
 
@@ -22,6 +23,7 @@ const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
 import DrawingToolbar, { type Tool } from "./DrawingToolbar";
 import DrawingContextBar from "./DrawingContextBar";
 import DrawingOptions from "./DrawingOptions";
+import VisibilityEditor from "./VisibilityEditor";
 import FibOptions from "./FibOptions";
 import LongPosOptions from "./LongPosOptions";
 
@@ -877,7 +879,24 @@ export default function DrawingLayer({
   };
 
   // --- Options (dialogue) ---
+  // Options de GROUPE (#64, retour d'UAT du 29/08) : en sélection hétérogène, le
+  // bouton Options ouvre les réglages COMMUNS à tous les dessins — la visibilité
+  // par intervalle — appliqués à toute la sélection. (Couleur/épaisseur/style sont
+  // déjà dans la barre.) En sélection homogène : les options complètes du dessin.
+  const [groupOptions, setGroupOptions] = useState(false);
+  const groupUndoRef = useRef(false);
+  const groupVisibilite = () => {
+    const id = [...selRef.current].reverse().find((i) => drawingsRef.current.some((d) => d.id === i));
+    return drawingsRef.current.find((d) => d.id === id)?.visibility ?? defaultVisibility();
+  };
+  const changerVisibiliteGroupe = (v: Visibility) => {
+    if (!groupUndoRef.current) { pushUndo(); groupUndoRef.current = true; }
+    const sel = selRef.current;
+    setDrawings((prev) => prev.map((d) => (sel.includes(d.id) ? { ...d, visibility: JSON.parse(JSON.stringify(v)) } : d)));
+  };
   const openOptions = () => {
+    const types = new Set(drawings.filter((d) => selectedIds.includes(d.id)).map((d) => d.type));
+    if (types.size > 1) { groupUndoRef.current = false; setGroupOptions(true); return; }
     const id = [...selectedIds].reverse().find((i) => drawings.some((d) => d.id === i));
     if (!id) return;
     optionsSnapRef.current = drawings.find((d) => d.id === id) ?? null;
@@ -1432,6 +1451,23 @@ export default function DrawingLayer({
         />
       )}
 
+      {groupOptions && (
+        <>
+          <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={() => setGroupOptions(false)} />
+          <div className="is-modal sets-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="sets-title">Options de groupe — {selectedIds.length} dessins</div>
+            <div style={{ fontSize: "12px", opacity: 0.7, margin: "-4px 0 4px" }}>
+              Visibilité par intervalle, appliquée à toute la sélection. Couleur, épaisseur et
+              style se règlent dans la barre au-dessus des dessins.
+            </div>
+            <VisibilityEditor visibility={groupVisibilite()} onChange={changerVisibiliteGroupe} />
+            <div className="sets-pied">
+              <span>Les réglages propres à un type (texte, niveaux…) demandent une sélection d'un seul type.</span>
+              <button className="sets-btn sets-sec" onClick={() => setGroupOptions(false)}>Fermer</button>
+            </div>
+          </div>
+        </>
+      )}
       {optionsDrawing && (
         <>
           {/* Fond bloquant : le panel passe au-dessus de tout et empêche d'agir sur le graphe (redimensionnement des panneaux, etc.). */}

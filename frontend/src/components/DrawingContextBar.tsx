@@ -102,7 +102,7 @@ export default function DrawingContextBar({
           }
         />
       )}
-      {!mixed && <button className="dcb-btn" title="Options" onClick={onOptions}>{IcoOptions}</button>}
+      <button className="dcb-btn" title={mixed ? "Options de groupe (visibilité…)" : "Options"} onClick={onOptions}>{IcoOptions}</button>
       <button
         className={`dcb-btn${locked ? " active" : ""}`}
         title={locked ? "Déverrouiller" : "Verrouiller"}

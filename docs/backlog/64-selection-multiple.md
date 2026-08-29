@@ -76,3 +76,8 @@ communs d'une sélection. User stories validées par Jean le 29/08.
   ensembles de test nettoyés. Deux bugs attrapés en route : réassignation d'une const
   (le presse-papier ne se remplissait pas) et le presse-papier d'instance perdu à la
   navigation.
+- 29/08 (retour d'UAT de Jean) : le bouton Options disparaissait complètement en
+  sélection hétérogène — impossible d'atteindre la visibilité, pourtant commune à tous
+  les dessins. Corrigé : le bouton reste et ouvre des **Options de groupe** (éditeur de
+  visibilité par intervalle, appliqué à toute la sélection ; un seul cran d'annulation).
+  Vérifié : décocher « minutes » touche les 9 dessins d'un coup, Ctrl+Z remet tout.
