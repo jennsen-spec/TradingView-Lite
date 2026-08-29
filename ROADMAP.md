@@ -38,7 +38,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | 📥 | Lib drag & drop ; modèle arborescent ; back kv déjà prêt. |
+| [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | ✅ | Constaté à l'affinage (29/08) : déjà livré sous le nom « Collections » — listes nommées, sections, drag & drop, prix + variation, persistance cloud. |
 | [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | ✅ | Migration faite le 26/08 : base à 87,8 Mo (17,6 % du quota), signal du 31 août sauvé, chaîne vérifiée à froid. Secteurs/CSCO.TO/inventaire livrés via #60 ; archive = fichier local `bars.ndjson`. Reliquat purge → ligne backlog ci-dessous. |
 | [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
 | 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
