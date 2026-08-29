@@ -1,6 +1,6 @@
 # #63 — Ensembles de dessins par symbole
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
 
 ## Objectif
 Sur un symbole, sauvegarder l'état des dessins sous un nom, pouvoir tout effacer
@@ -79,3 +79,5 @@ validées par Jean le 29/08.
   et « Sauvegarder… » n'apparaissent que quand ils ont un sens ; « Ensembles de
   dessins… » est toujours là. Vérifié sur un symbole vierge (COST) : menu → boîte →
   liste vide, « Sauvegarder (0) » désactivé.
+
+**UAT validée par Jean le 29/08/2026** → ✅ Fait.

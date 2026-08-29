@@ -1,6 +1,6 @@
 # #64 — Sélection multiple : tout sélectionner, couper/coller, édition groupée
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
+**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
 
 ## Objectif
 Compléter la sélection multiple existante (Ctrl/Cmd+clic, copier/coller décalé) :
