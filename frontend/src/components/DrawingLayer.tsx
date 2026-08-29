@@ -697,9 +697,9 @@ export default function DrawingLayer({
         if (!sel.includes(hit.id)) setSelectedIds(multi ? [...sel, hit.id] : [hit.id]);
         return;
       }
-      // Clic droit dans le vide → menu « Supprimer N dessins » (#36), si ≥1 dessin supprimable.
-      const deletable = drawingsRef.current.filter((d) => !d.locked).length;
-      if (deletable === 0) return;
+      // Clic droit dans le vide → menu du graphique (#36, #63). Il s'ouvre même sans
+      // dessin : l'accès aux ensembles doit rester possible après un « tout effacer »
+      // (relevé par Jean à l'UAT du 29/08 — le menu natif reprenait la main).
       e.preventDefault();
       const wrap = wrapRef.current;
       if (!wrap) return;
@@ -1386,23 +1386,27 @@ export default function DrawingLayer({
         const n = drawings.filter((d) => !d.locked).length;
         return (
           <div className="draw-chart-menu" style={{ left: chartMenu.x, top: chartMenu.y }} onMouseDown={(e) => e.stopPropagation()}>
-            <button className="dcm-item" onClick={ouvrirEnsembles}>
-              Sauvegarder les dessins…
-            </button>
+            {dessinsDeJean().length > 0 && (
+              <button className="dcm-item" onClick={ouvrirEnsembles}>
+                Sauvegarder les dessins…
+              </button>
+            )}
             <button className="dcm-item" onClick={ouvrirEnsembles}>
               Ensembles de dessins…
             </button>
-            <button
-              className="dcm-item"
-              onClick={() => {
-                pushUndo();
-                setDrawings((prev) => prev.filter((d) => d.locked)); // les verrouillés sont épargnés
-                setSelectedIds([]);
-                setChartMenu(null);
-              }}
-            >
-              Supprimer {n} dessin{n > 1 ? "s" : ""}
-            </button>
+            {n > 0 && (
+              <button
+                className="dcm-item"
+                onClick={() => {
+                  pushUndo();
+                  setDrawings((prev) => prev.filter((d) => d.locked)); // les verrouillés sont épargnés
+                  setSelectedIds([]);
+                  setChartMenu(null);
+                }}
+              >
+                Supprimer {n} dessin{n > 1 ? "s" : ""}
+              </button>
+            )}
           </div>
         );
       })()}

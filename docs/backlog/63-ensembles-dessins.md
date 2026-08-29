@@ -73,3 +73,9 @@ validées par Jean le 29/08.
   tout effacer (0, l'ensemble intact), restauration → **9 dessins identiques à l'octet
   près** ; clé cloud synchronisée (vérifiée dans tvlite_prefs) ; état de Jean remis
   exactement comme avant le test, ensembles de test nettoyés.
+- 29/08 (retour d'UAT de Jean) : à zéro dessin, le clic droit rendait la main au menu
+  natif du navigateur — l'étape « restaurer après tout effacer » était inatteignable par
+  ce chemin. Corrigé : le menu du graphique s'ouvre même sans dessin ; « Supprimer N »
+  et « Sauvegarder… » n'apparaissent que quand ils ont un sens ; « Ensembles de
+  dessins… » est toujours là. Vérifié sur un symbole vierge (COST) : menu → boîte →
+  liste vide, « Sauvegarder (0) » désactivé.
