@@ -1,6 +1,6 @@
 # #64 — Sélection multiple : tout sélectionner, couper/coller, édition groupée
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : —
 
 ## Objectif
 Compléter la sélection multiple existante (Ctrl/Cmd+clic, copier/coller décalé) :
@@ -89,3 +89,5 @@ communs d'une sélection. User stories validées par Jean le 29/08.
   (trait, vertical, canal, surligneur, rectangle) ; sinon il disparaît plutôt que de
   mentir. Vérifié : sélection avec position longue → couleur absente, visibilité de
   groupe/verrou/corbeille présents.
+
+**UAT validée par Jean le 29/08/2026** (deux retours intégrés : options de groupe, couleur des dessins composites) → ✅ Fait.
