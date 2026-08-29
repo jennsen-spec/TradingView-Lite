@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import type { IChartApi, ISeriesApi } from "lightweight-charts";
 import type { Candle, Time } from "../lib/indicators";
 import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings";
-import { fmtTimeByInterval } from "../lib/timeFormat";
+import { fmtTimeByInterval, dureeEntre } from "../lib/timeFormat";
 import {
   type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
   newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment,
@@ -1063,7 +1063,12 @@ export default function DrawingLayer({
     }
     if (hasDur) {
       const parts: string[] = [];
-      if (m.durTime) parts.push(fmtDuration(Math.abs(p1.time - p0.time)));
+      if (m.durTime) {
+        // Au-delà du mois, la durée passe en clair (« 2 ans, 3 mois et 2 jours ») —
+        // même format que la mesure Shift+clic ; en deçà, jours/heures/minutes.
+        const civil = dureeEntre(p0.time, p1.time);
+        parts.push(civil.includes("an") || civil.includes("mois") ? civil : fmtDuration(Math.abs(p1.time - p0.time)));
+      }
       if (m.durBars) {
         const bars = Math.round(Math.abs(timeToLogical(p1.time) - timeToLogical(p0.time)));
         parts.push(`${bars} ${bars <= 1 ? "barre" : "barres"}`);
