@@ -23,7 +23,7 @@ import IndicatorCatalog from "./IndicatorCatalog";
 import DrawingLayer from "./DrawingLayer";
 import type { IndicatorSettings as IndSettings, LineStyleName, IndType } from "../lib/indicatorSettings";
 import { rgba, visibleForInterval, loadIndicators, saveIndicators, smaDefault, SMA_COLORS } from "../lib/indicatorSettings";
-import { fmtTimeByInterval, fmtCrosshair } from "../lib/timeFormat";
+import { fmtTimeByInterval, fmtCrosshair, dureeEntre } from "../lib/timeFormat";
 
 // Temps -> secondes (nombre). Date "YYYY-MM-DD" → Date.parse ; intraday = déjà un timestamp.
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
@@ -1313,7 +1313,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     left: number; top: number; width: number; height: number;
     labelX: number; labelTop: number;
     ax: number; bx: number; tBottom: number; t0Str: string; t1Str: string;
-    up: boolean; priceChange: number; pct: number; bars: number;
+    up: boolean; priceChange: number; pct: number; bars: number; duree: string;
   } | null = null;
   if (meas) {
     const a = ptToXY(meas.p0);
@@ -1322,6 +1322,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       const priceChange = meas.p1.price - meas.p0.price;
       const pct = meas.p0.price ? (priceChange / meas.p0.price) * 100 : 0;
       const bars = Math.round(Math.abs(meas.p1.logical - meas.p0.logical));
+      // Durée civile entre les deux bougies de la mesure (vide en intraday court).
+      const timeAt = (logical: number) => candles[Math.max(0, Math.min(candles.length - 1, Math.round(logical)))]?.time;
+      const duree = candles.length ? dureeEntre(timeAt(meas.p0.logical)!, timeAt(meas.p1.logical)!) : "";
       const up = priceChange >= 0;
       measRender = {
         left: Math.min(a.x, b.x), top: Math.min(a.y, b.y),
@@ -1329,7 +1332,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         labelX: (a.x + b.x) / 2, labelTop: Math.min(a.y, b.y), // toujours au-dessus du carré (dates en bas)
         ax: a.x, bx: b.x, tBottom: Math.max(a.y, b.y),
         t0Str: logicalToTimeStr(meas.p0.logical), t1Str: logicalToTimeStr(meas.p1.logical),
-        up, priceChange, pct, bars,
+        up, priceChange, pct, bars, duree,
       };
     }
   }
@@ -1402,6 +1405,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
               </div>
               <div className="ml-sub">
                 {measRender.bars} barre{measRender.bars > 1 ? "s" : ""}
+                {measRender.duree ? ` · ${measRender.duree}` : ""}
               </div>
             </div>
             {/* Étiquettes horaires au début et à la fin de la mesure. */}

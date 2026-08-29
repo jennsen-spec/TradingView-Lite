@@ -55,3 +55,30 @@ export function fmtCrosshair(time: Time, interval: string): string {
   const base = `${JOURS[d.getUTCDay()]} ${p(d.getUTCDate())} ${MOIS_FR[d.getUTCMonth()]} '${String(d.getUTCFullYear()).slice(2)}`;
   return detailForInterval(interval) === "time" ? `${base} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` : base;
 }
+
+// Durée civile entre deux instants, en clair : « 2 ans, 3 mois et 2 jours »,
+// « 1 an et 15 jours », « 3 mois », « 12 jours ». Décomposition calendaire
+// (on avance d'abord les ans, puis les mois, puis les jours restants), donc
+// « 1 an » va bien du 15 mars au 15 mars. Demandé par Jean (29/08) pour l'outil
+// de mesure. Vide si moins d'un jour (mesure intraday).
+export function dureeEntre(t0: Time, t1: Time): string {
+  let a = new Date(Math.min(tsOf(t0), tsOf(t1)) * 1000);
+  const b = new Date(Math.max(tsOf(t0), tsOf(t1)) * 1000);
+  const avance = (d: Date, mois: number) => {
+    const x = new Date(d); x.setUTCMonth(x.getUTCMonth() + mois);
+    // Fin de mois : « 31 janv. + 1 mois » déborde sur le 2-3 mars → rabattre au dernier jour de février.
+    if (x.getUTCDate() < d.getUTCDate()) x.setUTCDate(0);
+    return x;
+  };
+  let ans = 0, mois = 0;
+  while (avance(a, 12) <= b) { a = avance(a, 12); ans++; }
+  while (avance(a, 1) <= b) { a = avance(a, 1); mois++; }
+  const jours = Math.floor((b.getTime() - a.getTime()) / 86400000);
+  const parts: string[] = [];
+  if (ans) parts.push(`${ans} an${ans > 1 ? "s" : ""}`);
+  if (mois) parts.push(`${mois} mois`);
+  if (jours) parts.push(`${jours} jour${jours > 1 ? "s" : ""}`);
+  if (!parts.length) return "";
+  return parts.length === 1 ? parts[0]
+    : parts.slice(0, -1).join(", ") + " et " + parts[parts.length - 1];
+}
