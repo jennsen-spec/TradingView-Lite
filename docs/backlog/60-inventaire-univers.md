@@ -1,6 +1,6 @@
 # #60 — Inventaire mensuel de l'univers
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 L'univers doit grandir avec la bourse. Aujourd'hui le rafraîchissement quotidien ne fait
@@ -132,3 +132,5 @@ Le rafraîchissement quotidien adopte le ticker de lui-même (jamais rafraîchi 
   (t=2,90) / +0,71 (t=1,56). Générateurs des documents : scratchpad de session
   (gl-data.ts, tx-gen.ts, saison-gen.ts, mensuel-payload.ts, momentum-payload.ts,
   jour-sous-payload.ts) — à verser au dépôt un jour si on veut les rejouer hors session.
+
+**UAT validée par Jean le 29/08/2026** → ✅ Fait.

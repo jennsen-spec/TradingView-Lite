@@ -1,6 +1,6 @@
 # #61 — Test de conformité moteur ↔ rapport
 
-**Statut** : 🧪 À valider · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 Le rapport (cycleCalc) et le backtest (moteur) sont deux implémentations de la même
@@ -45,3 +45,5 @@ le 27/08 (« on en est certain ? »).
   les données courantes (2026-06-30, 10/10 identiques) ; divergence injectée (liste
   amputée) → échec propre, code 1, listes lisibles ; code restauré, re-run OK.
   UAT réelle : la répétition générale du soir même l'exerce de bout en bout.
+
+**UAT validée par Jean le 29/08/2026** → ✅ Fait.

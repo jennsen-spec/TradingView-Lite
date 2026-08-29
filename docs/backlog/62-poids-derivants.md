@@ -1,6 +1,6 @@
 # #62 — Coût des poids dérivants (reconduites non redimensionnées)
 
-**Statut** : 🧪 À valider · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Priorité** : —
 
 ## Objectif
 Le backtest remet les dix lignes à parts égales chaque mois, reconduites comprises, sans
@@ -46,3 +46,5 @@ chiffre au protocole.
   · −30,1 %.** Écart +0,05 pt/an — sous le seuil de 0,5 : aucune décision forcée, ne rien
   retoucher est validé. Chiffre inscrit au protocole (clause Pondération). La leçon utile :
   le −27,8 % du modèle se vivra plutôt comme un −30 %.
+
+**UAT validée par Jean le 29/08/2026** → ✅ Fait.
