@@ -1,6 +1,6 @@
 # #65 — Mesure : choisir les unités de la durée (année / mois / jour)
 
-**Statut** : 🧪 À valider (sprint du 29/08) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
 
 ## Objectif
 Sous « Échelle de temps » (onglet **Mesure** d'un Trait / d'une Flèche), trois cases —
@@ -76,3 +76,5 @@ jours ; et la marche fin de mois 31 janv. + 1 mois) · recette navigateur sur AA
 avec Jour verrouillé → sans Jour « 5 ans et 2 mois ») · réglage conservé après rechargement complet ·
 flèche de test supprimée, les 9 dessins AAPL de Jean intacts · `tsc` propre. « Définir par défaut »
 suit sans code : les modèles copient l'objet `measure` entier.
+
+**UAT validée par Jean le 29/08/2026** → ✅ Fait.
