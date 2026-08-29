@@ -65,6 +65,13 @@ jobs:
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # #60 — l'inventaire de l'univers tourne avant le rapport ; s'il trouve des
+      # titres du duo absents de la base, le rapport porte une alerte visible.
+      # Non bloquant : un pépin réseau chez Cboe ne doit pas empêcher le signal.
+      - name: Inventaire de l'univers
+        if: steps.frais.outputs.ok == 'true'
+        run: npm run inventaire -- --max-yahoo 30 || echo "::warning::inventaire indisponible ce soir"
+
       - name: Générer le rapport
         id: gen
         if: steps.frais.outputs.ok == 'true'

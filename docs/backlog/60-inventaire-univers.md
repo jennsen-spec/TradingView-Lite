@@ -1,6 +1,6 @@
 # #60 — Inventaire mensuel de l'univers
 
-**Statut** : 🏗️ En cours · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
+**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : ⚙️ Technique · **Priorité** : —
 
 ## Objectif
 L'univers doit grandir avec la bourse. Aujourd'hui le rafraîchissement quotidien ne fait
@@ -10,13 +10,13 @@ n'entre jamais toute seule. Comparer chaque mois la liste réelle des titres cot
 le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
 
 ## Critères d'acceptation
-- [ ] Une commande `npm run inventaire` liste les titres industrie/techno cotés **en CAD**
+- [x] Une commande `npm run inventaire` liste les titres industrie/techno cotés **en CAD**
       au TSX, au TSXV **et chez Cboe Canada (`.NE`, CDR compris)** absents de la base, et
       les titres de la base qui ne cotent plus.
-- [ ] Le rapport mensuel affiche une alerte quand l'inventaire trouve des manquants.
-- [ ] Ajouter un manquant = une commande simple (backfill d'un ticker), pas une migration.
-- [ ] Aucun retrait automatique : un ticker radié est signalé, jamais supprimé.
-- [ ] La politique CDR est tranchée et documentée au protocole (voir questions).
+- [x] Le rapport mensuel affiche une alerte quand l'inventaire trouve des manquants.
+- [x] Ajouter un manquant = une commande simple (backfill d'un ticker), pas une migration.
+- [x] Aucun retrait automatique : un ticker radié est signalé, jamais supprimé.
+- [x] La politique CDR est tranchée et documentée au protocole (voir questions).
 
 ## Décisions
 - Cadence mensuelle : le momentum 12-1 exige 253 séances, une IPO n'est éligible qu'un an
@@ -91,3 +91,28 @@ le 27/08. (Reprend l'étape 8 de #58, jamais faite.)
   puis 22ᵉ/68, momentum +73 % quand le 10ᵉ retenu est à +118 % — jamais proche d'entrer.
   Le document porte aussi le calendrier de maturation des 21 CDR suivis (Micron 99 M$/j,
   mesurable vers 2026-10 ; Intel, Broadcom, Palantir… échelonnés jusqu'en 2027).
+
+## Procédure d'ajout d'un manquant (validée le 27/08 sur les 22 CDR)
+1. `select public.backfill_ticker('X.TO', 6);` (SQL, le serveur va chercher chez Yahoo)
+2. `insert into bars_coverage (ticker, interval, max_range, currency, name, fetched_at)
+   values ('X.TO','1d','6y','CAD','NOM', now());`
+3. Ajouter le ticker à `labo/data/secteurs-seed.json` (secteur + industrie), committer.
+4. S'il paie des dividendes : les charger dans la table `dividends`.
+Le rafraîchissement quotidien adopte le ticker de lui-même (jamais rafraîchi = priorité).
+
+## Journal du sprint (fin)
+- 28/08 soir : `labo/src/inventaire.ts` construit (`npm run inventaire`). Source : CSV
+  officiel Cboe (tout le marché canadien consolidé, mic → .TO/.V/.NE, CDR inclus via le
+  nom). Classification : seed + cache d'abord, Yahoo par lots limités (`--max-yahoo`,
+  défaut 40) — la file converge sans marteler l'API (455 → 415 inconnus au 1er lot).
+  Maturation : comptage des barres des titres duo < 253 (les 21 CDR, datés). Radiés :
+  signalés, jamais supprimés. Écrit `labo/.cache/inventaire.json` ; `page.ts` affiche un
+  encart d'alerte si manquants (testé) et date l'inventaire au pied du rapport ; le
+  workflow lance l'inventaire avant le rapport (non bloquant).
+- **Trouvailles du premier passage réel** : 3 titres du duo cotés et absents de la base —
+  ABXX.TO (Technology, 5,2 M$/j, 491 barres), AMT.V (Technology, 1,2 M$/j), ACT.TO
+  (Industrials, 0,7 M$/j, 444 barres). ABXX et ACT ont > 253 barres (migrations de
+  bourse, l'historique suit) : **éligibles dès leur ajout** → décision de Jean requise
+  avant le signal du 31/08. Et 4 restes dans la base : AAPL + QQQ (cotations américaines
+  historiques, rafraîchies quotidiennement pour rien) et AMZN.NE + TSLA.NE (CDR
+  d'avant-migration) — signalés, à purger seulement sur décision.

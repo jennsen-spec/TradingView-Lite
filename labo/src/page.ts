@@ -49,6 +49,24 @@ if (j.moteurDernier) {
   console.log(` ${conformite}`);
 }
 
+// #60 — l'inventaire de l'univers, si un passage récent existe (l'Action le lance
+// juste avant). Des manquants du duo → encart d'alerte visible dans le rapport ;
+// un fichier absent ou vieux → rien, le rapport reste ce qu'il était.
+let inventaire: { date: string; manquantsDuo: { ticker: string; nom: string; dv: number }[]; radies: string[] } | null = null;
+try {
+  const inv = JSON.parse(readFileSync(new URL("../.cache/inventaire.json", import.meta.url).pathname, "utf8"));
+  const age = (Date.now() - new Date(inv.date + "T00:00:00Z").getTime()) / 86400000;
+  if (age <= 40) inventaire = inv;
+} catch { /* pas d'inventaire : pas d'alerte */ }
+const blocInventaire = inventaire && inventaire.manquantsDuo.length > 0
+  ? `<div style="max-width:1120px;margin:18px auto 0;padding:14px 20px;border:2px solid #B4402E;border-radius:10px;font-family:inherit">
+      <b>⚠ Inventaire du ${inventaire.date} : ${inventaire.manquantsDuo.length} titre(s) du duo cotés mais absents de la base.</b>
+      Le classement de ce rapport ne les voit pas.
+      ${inventaire.manquantsDuo.map((m) => `<span class="mono">${m.ticker}</span> (${(m.dv / 1e6).toFixed(1).replace(".", ",")}&nbsp;M$/j)`).join(" · ")}
+      — procédure d'ajout : en-tête de <span class="mono">labo/src/inventaire.ts</span>.</div>`
+  : "";
+if (inventaire?.manquantsDuo.length) console.log(` ⚠ inventaire : ${inventaire.manquantsDuo.length} manquant(s) du duo — alerte au rapport`);
+
 const r = (x: number, n: number) => Number(x.toFixed(n));
 const donnees = {
   barres: j.barres.map((b) => [b.mois, b.reb, b.next, b.investi ? 1 : 0, b.n, r(b.avant, 2), r(b.apres, 2), r(b.net, 6), r(b.frais, 2)]),
@@ -181,6 +199,7 @@ footer{padding:32px 0 0;color:var(--ink-3);font-size:.85rem;border-top:1px solid
 
 <div class="env">
 
+${blocInventaire}
 <header class="tete">
   <div class="barre">
     <span class="oeil">TVLite · Rapport mensuel · duo industrie-techno</span>
@@ -286,6 +305,7 @@ ${c.marche.investi ? `
   univers Industrials + Technology ·
   frais : commission 0 $ + fourchette de 2 pas de cotation ·
   ${conformite} ·
+  ${inventaire ? `inventaire de l'univers du ${inventaire.date}${inventaire.manquantsDuo.length ? "" : " : complet"}` : "inventaire : aucun passage récent"} ·
   données Yahoo Finance via Supabase
 </footer>
 </div>
