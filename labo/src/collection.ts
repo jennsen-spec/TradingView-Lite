@@ -11,6 +11,11 @@
 //   violet #9c27b0  Dérogation de Jean — JAMAIS touché par ce script
 //   aucun            Archive — plus candidat ; aucun symbole n'est jamais retiré
 //
+// PÉRIMÈTRE STRICT (leçon du 28/08 : le rollback UAT avait écrasé la section
+// « INTERRUPTEUR » ajoutée par Jean) : ce script ne modifie QUE les sections
+// « Industrials » et « Technology » de la collection. Toute autre section — et
+// tout ce que Jean y range — est intouchable : symboles, flags et ordre.
+//
 // Interrupteur coupé : les détenus passent rouges (tout est vendu), aucun vert,
 // bleu ni orange — rien n'est « en réserve » d'un achat qui n'aura pas lieu.
 //
@@ -85,8 +90,11 @@ for (const it of coll.items) {
 }
 blocs.push(courant);
 
-const present = new Set(coll.items.filter((i) => i.type === "symbol").map((i) => i.sym!));
+const SECTIONS_GEREES = new Set(["Industrials", "Technology"]);
+const gere = (b: Bloc) => b.tete !== null && SECTIONS_GEREES.has(b.tete.name ?? "");
+const present = new Set(blocs.filter(gere).flatMap((b) => b.symboles.map((i) => i.sym!)));
 for (const bloc of blocs) {
+  if (!gere(bloc)) continue; // les sections de Jean (INTERRUPTEUR, …) : intouchables
   for (const it of bloc.symboles) {
     if (it.flag === VIOLET) { violets.push(it.sym!); continue; } // dérogation : intouchable
     const v = attendu.get(it.sym!);
@@ -116,6 +124,7 @@ const poids = (it: Item): [number, number] => {
   return [4, 0];
 };
 for (const bloc of blocs) {
+  if (!gere(bloc)) continue;
   const indices = new Map(bloc.symboles.map((it, i) => [it.id, i]));
   bloc.symboles.sort((a, b) => {
     const [ga, ra] = poids(a), [gb, rb] = poids(b);
