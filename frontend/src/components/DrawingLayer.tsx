@@ -11,6 +11,11 @@ import {
 import { applyTemplateDefault } from "../lib/templates";
 import { loadDrawSets, saveDrawSets, empreinte, type DrawSet } from "../lib/drawsets";
 
+// Copier/coller (#64) — au niveau MODULE : le composant est remonté à chaque
+// changement de symbole (key={symbol}), le presse-papier doit y survivre pour que
+// le garde-fou « coller est limité à son symbole » puisse s'exprimer (toast).
+let clipboard: { symbole: string; coupe: boolean; dessins: Drawing[] } = { symbole: "", coupe: false, dessins: [] };
+
 // Prix sur la droite de base (p0→p1) au temps `time` (interpolation linéaire).
 const basePriceAt = (p0: DPoint, p1: DPoint, time: number) =>
   p1.time === p0.time ? p0.price : p0.price + (p1.price - p0.price) * ((time - p0.time) / (p1.time - p0.time));
@@ -98,7 +103,15 @@ export default function DrawingLayer({
   const intervalRef = useRef(interval); intervalRef.current = interval;
   const dragRef = useRef<DragState | null>(null);
   const optionsSnapRef = useRef<Drawing | null>(null);
-  const clipboardRef = useRef<Drawing[]>([]); // copier/coller
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const montrerToast = (msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2200);
+  };
+  const [drawMenu, setDrawMenu] = useState<{ x: number; y: number } | null>(null);
+  const drawMenuRef = useRef(drawMenu); drawMenuRef.current = drawMenu;
   // Historique (undo/redo) : piles de snapshots de `drawings`.
   const undoRef = useRef<Drawing[][]>([]);
   const redoRef = useRef<Drawing[][]>([]);
@@ -468,6 +481,7 @@ export default function DrawingLayer({
       if (e.shiftKey && !drawingNow) return;
       if (inUi(e.target)) return; // clic sur l'UI dessins : ne pas intercepter
       if (chartMenuRef.current) setChartMenu(null); // un clic ailleurs ferme le menu contextuel
+      if (drawMenuRef.current) setDrawMenu(null);
 
       const tool = toolRef.current;
       // Mode dessin 2 points (Trait / Flèche / Fibonacci / Rectangle) : 1er clic démarre, 2e finalise.
@@ -690,11 +704,16 @@ export default function DrawingLayer({
       if (inUi(e.target)) return;
       const hit = hitTest(e.clientX, e.clientY);
       if (hit) {
-        // Clic droit sur un dessin → le sélectionne (barre contextuelle).
+        // Clic droit sur un dessin → le sélectionne + menu de sélection (#64).
         e.preventDefault();
         const multi = e.metaKey || e.ctrlKey;
         const sel = selRef.current;
         if (!sel.includes(hit.id)) setSelectedIds(multi ? [...sel, hit.id] : [hit.id]);
+        const wrap0 = wrapRef.current;
+        if (wrap0) {
+          const rect0 = wrap0.getBoundingClientRect();
+          setDrawMenu({ x: e.clientX - rect0.left, y: e.clientY - rect0.top });
+        }
         return;
       }
       // Clic droit dans le vide → menu du graphique (#36, #63). Il s'ouvre même sans
@@ -714,50 +733,27 @@ export default function DrawingLayer({
       // Annuler / Rétablir (dessins).
       if (mod && (e.key === "z" || e.key === "Z") && !e.shiftKey) { e.preventDefault(); undo(); return; }
       if (mod && ((e.key === "y" || e.key === "Y") || ((e.key === "z" || e.key === "Z") && e.shiftKey))) { e.preventDefault(); redo(); return; }
-      // Copier la sélection.
-      if (mod && (e.key === "c" || e.key === "C")) {
-        const sel = selRef.current;
-        if (sel.length) {
-          clipboardRef.current = drawingsRef.current.filter((d) => sel.includes(d.id)).map((d) => JSON.parse(JSON.stringify(d)));
-          e.preventDefault();
-        }
+      // Sélection multiple (#64) : tout sélectionner / copier / couper / coller.
+      if (mod && (e.key === "a" || e.key === "A")) {
+        if (drawingsRef.current.length) { e.preventDefault(); toutRef.current(); }
         return;
       }
-      // Coller : recrée les dessins copiés, décalés (~26 px bas-droite), et les sélectionne.
+      if (mod && (e.key === "c" || e.key === "C")) {
+        if (selRef.current.length) { e.preventDefault(); copierRef.current(); }
+        return;
+      }
+      if (mod && (e.key === "x" || e.key === "X")) {
+        if (selRef.current.length) { e.preventDefault(); couperRef.current(); }
+        return;
+      }
       if (mod && (e.key === "v" || e.key === "V")) {
-        if (!clipboardRef.current.length) return;
+        if (!clipboard.dessins.length) return;
         e.preventDefault();
-        const chart = chartRef.current;
-        let dLogical = 3;
-        if (chart) {
-          const l1 = chart.timeScale().coordinateToLogical(100 as any);
-          const l2 = chart.timeScale().coordinateToLogical(126 as any);
-          if (l1 != null && l2 != null) dLogical = (l2 as number) - (l1 as number);
-        }
-        // Décalage de prix calculé dans le panneau du dessin (RSI ≠ prix ≠ volume).
-        const dPriceForPane = (pane: number) => {
-          const s = seriesForPane(pane);
-          const pA = s?.coordinateToPrice(100), pB = s?.coordinateToPrice(126);
-          return pA != null && pB != null ? (pB as number) - (pA as number) : 0;
-        };
-        const pasted = clipboardRef.current.map((d) => {
-          const clone = JSON.parse(JSON.stringify(d)) as Drawing;
-          const dPrice = dPriceForPane(clone.pane ?? 0);
-          return {
-            ...clone,
-            id: genDrawingId(),
-            locked: false,
-            points: clone.points.map((p) => ({ time: logicalToTime(timeToLogical(p.time) + dLogical), price: p.price + dPrice })),
-          };
-        });
-        pushUndo();
-        setDrawings((prev) => [...prev, ...pasted]);
-        setSelectedIds(pasted.map((p) => p.id));
-        clipboardRef.current = pasted.map((p) => JSON.parse(JSON.stringify(p))); // collages successifs en cascade
+        collerRef.current();
         return;
       }
       if (e.key === "Escape") {
-        if (chartMenuRef.current) setChartMenu(null);
+        if (chartMenuRef.current || drawMenuRef.current) { setChartMenu(null); setDrawMenu(null); }
         else if (draftRef.current || chanDraftRef.current || brushingRef.current) {
           brushingRef.current = null; setDraft(null); setChanDraft(null); setBrushDraft(null); setActiveTool("cursor");
         }
@@ -788,6 +784,71 @@ export default function DrawingLayer({
   }, []);
 
   // --- Mutations groupées (barre contextuelle) ---
+  // ── Sélection multiple (#64) : tout sélectionner, copier, couper, coller ──
+  const toutSelectionner = () => {
+    setSelectedIds(drawingsRef.current.map((d) => d.id));
+    setChartMenu(null); setDrawMenu(null);
+  };
+  const copierSelection = () => {
+    const sel = selRef.current;
+    if (!sel.length) return;
+    clipboard = { symbole: symbol, coupe: false,
+      dessins: drawingsRef.current.filter((d) => sel.includes(d.id)).map((d) => JSON.parse(JSON.stringify(d))) };
+    setDrawMenu(null);
+  };
+  const couperSelection = () => {
+    const sel = selRef.current;
+    const cibles = drawingsRef.current.filter((d) => sel.includes(d.id) && !d.locked);
+    if (!cibles.length) return;
+    clipboard = { symbole: symbol, coupe: true, dessins: cibles.map((d) => JSON.parse(JSON.stringify(d))) };
+    pushUndo();
+    const ids = new Set(cibles.map((d) => d.id));
+    setDrawings((prev) => prev.filter((d) => !ids.has(d.id)));
+    setSelectedIds([]);
+    setDrawMenu(null);
+  };
+  const collerSelection = () => {
+    const clip = clipboard;
+    setDrawMenu(null); setChartMenu(null);
+    if (!clip.dessins.length) return;
+    if (clip.symbole !== symbol) { montrerToast(`Presse-papier de ${clip.symbole} — coller est limité à son symbole.`); return; }
+    // Après un COUPER, le premier collage repose les dessins à leurs positions
+    // d'origine (aucun décalage) ; après un copier — ou les collages suivants —
+    // le décalage (~26 px) distingue le duplicata de l'original.
+    let dLogical = 3;
+    const chart = chartRef.current;
+    if (chart) {
+      const l1 = chart.timeScale().coordinateToLogical(100 as any);
+      const l2 = chart.timeScale().coordinateToLogical(126 as any);
+      if (l1 != null && l2 != null) dLogical = (l2 as number) - (l1 as number);
+    }
+    const dPriceForPane = (pane: number) => {
+      const se = seriesForPane(pane);
+      const pA = se?.coordinateToPrice(100), pB = se?.coordinateToPrice(126);
+      return pA != null && pB != null ? (pB as number) - (pA as number) : 0;
+    };
+    const enPlace = clip.coupe;
+    const pasted = clip.dessins.map((d) => {
+      const clone = JSON.parse(JSON.stringify(d)) as Drawing;
+      const dPrice = enPlace ? 0 : dPriceForPane(clone.pane ?? 0);
+      const dl = enPlace ? 0 : dLogical;
+      return {
+        ...clone,
+        id: genDrawingId(),
+        locked: false,
+        points: clone.points.map((pt) => ({ time: dl ? logicalToTime(timeToLogical(pt.time) + dl) : pt.time, price: pt.price + dPrice })),
+      };
+    });
+    pushUndo();
+    setDrawings((prev) => [...prev, ...pasted]);
+    setSelectedIds(pasted.map((pd) => pd.id));
+    clipboard = { symbole: symbol, coupe: false, dessins: pasted.map((pd) => JSON.parse(JSON.stringify(pd))) };
+  };
+  const collerRef = useRef(collerSelection); collerRef.current = collerSelection;
+  const couperRef = useRef(couperSelection); couperRef.current = couperSelection;
+  const copierRef = useRef(copierSelection); copierRef.current = copierSelection;
+  const toutRef = useRef(toutSelectionner); toutRef.current = toutSelectionner;
+
   const styleSelected = (patch: Partial<DrawingStyle>) => {
     const clean = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) as Partial<DrawingStyle>;
     pushUndo();
@@ -1360,6 +1421,7 @@ export default function DrawingLayer({
           left={ctx.left}
           top={ctx.top}
           type={ctx.d.type}
+          mixed={new Set(drawings.filter((d) => selectedIds.includes(d.id)).map((d) => d.type)).size > 1}
           style={ctx.d.style}
           locked={ctx.d.locked}
           count={selectedIds.length}
@@ -1386,6 +1448,16 @@ export default function DrawingLayer({
         const n = drawings.filter((d) => !d.locked).length;
         return (
           <div className="draw-chart-menu" style={{ left: chartMenu.x, top: chartMenu.y }} onMouseDown={(e) => e.stopPropagation()}>
+            {n > 0 && (
+              <button className="dcm-item" onClick={toutSelectionner}>
+                Sélectionner tous les dessins
+              </button>
+            )}
+            {clipboard.dessins.length > 0 && (
+              <button className="dcm-item" onClick={collerSelection}>
+                Coller {clipboard.dessins.length} dessin{clipboard.dessins.length > 1 ? "s" : ""}
+              </button>
+            )}
             {dessinsDeJean().length > 0 && (
               <button className="dcm-item" onClick={ouvrirEnsembles}>
                 Sauvegarder les dessins…
@@ -1410,6 +1482,34 @@ export default function DrawingLayer({
           </div>
         );
       })()}
+      {drawMenu && (() => {
+        const nSel = selectedIds.length;
+        const nTous = drawings.length;
+        return (
+          <div className="draw-chart-menu" style={{ left: drawMenu.x, top: drawMenu.y }} onMouseDown={(e) => e.stopPropagation()}>
+            {nSel < nTous && (
+              <button className="dcm-item" onClick={toutSelectionner}>
+                Sélectionner tous les dessins ({nTous})
+              </button>
+            )}
+            <button className="dcm-item" onClick={couperSelection}>
+              Couper {nSel > 1 ? `${nSel} dessins` : "le dessin"}
+            </button>
+            <button className="dcm-item" onClick={copierSelection}>
+              Copier {nSel > 1 ? `${nSel} dessins` : "le dessin"}
+            </button>
+            {clipboard.dessins.length > 0 && (
+              <button className="dcm-item" onClick={collerSelection}>
+                Coller {clipboard.dessins.length} dessin{clipboard.dessins.length > 1 ? "s" : ""}
+              </button>
+            )}
+            <button className="dcm-item" onClick={() => { deleteSelected(); setDrawMenu(null); }}>
+              Supprimer la sélection
+            </button>
+          </div>
+        );
+      })()}
+      {toast && <div className="draw-toast">{toast}</div>}
       {setsOpen && (
         <>
           <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={() => setSetsOpen(false)} />

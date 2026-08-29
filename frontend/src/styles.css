@@ -2497,3 +2497,19 @@ body {
 .sets-meta { font-size: 11.5px; opacity: 0.65; }
 .sets-vide { font-size: 12.5px; opacity: 0.65; padding: 6px 0; }
 .sets-pied { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11.5px; opacity: 0.85; border-top: 1px solid var(--border, rgba(127,127,127,0.25)); padding-top: 9px; }
+
+/* ── Toast discret (#64 : coller hors symbole, etc.) ── */
+.draw-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  z-index: 41;
+  background: rgba(20, 24, 28, 0.92);
+  color: #e8eaed;
+  font-size: 12.5px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  pointer-events: none;
+  white-space: nowrap;
+}

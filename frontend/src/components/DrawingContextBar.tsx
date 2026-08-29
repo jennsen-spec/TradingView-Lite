@@ -11,6 +11,7 @@ interface Props {
   style: DrawingStyle;
   locked: boolean;
   count: number; // nb de dessins sélectionnés (corbeille = suppression groupée)
+  mixed?: boolean; // sélection hétérogène (#64) : contrôles COMMUNS seulement
   onStyle: (patch: Partial<DrawingStyle>) => void;
   onToggleLock: () => void;
   onOptions: () => void;
@@ -66,11 +67,14 @@ function BrushWidth({ value, onPick }: { value: number; onPick: (w: number) => v
 
 // Barre flottante de raccourcis pour le(s) dessin(s) sélectionné(s).
 export default function DrawingContextBar({
-  left, top, type, style, locked, count, onStyle, onToggleLock, onOptions, onDelete,
+  left, top, type, style, locked, count, mixed, onStyle, onToggleLock, onOptions, onDelete,
 }: Props) {
   return (
     <div className="draw-ctxbar" style={{ left, top }} onMouseDown={(e) => e.stopPropagation()}>
-      {type === "brush" ? (
+      {/* Sélection hétérogène : l'intersection des paramètres partagés — couleur,
+          opacité, épaisseur, style de trait — appliquée à toute la sélection.
+          Les réglages propres à un type (Options) exigent une sélection homogène. */}
+      {!mixed && type === "brush" ? (
         <>
           {/* Surligneur : couleur + opacité, puis épaisseur du pinceau (pas de style de ligne). */}
           <ColorButton
@@ -98,7 +102,7 @@ export default function DrawingContextBar({
           }
         />
       )}
-      <button className="dcb-btn" title="Options" onClick={onOptions}>{IcoOptions}</button>
+      {!mixed && <button className="dcb-btn" title="Options" onClick={onOptions}>{IcoOptions}</button>}
       <button
         className={`dcb-btn${locked ? " active" : ""}`}
         title={locked ? "Déverrouiller" : "Verrouiller"}
