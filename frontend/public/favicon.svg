@@ -1,19 +1,24 @@
-<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-  <!-- TVLite — « le relief » : l'aire sous la courbe des prix.
-       Une masse pleine plutôt qu'un trait : c'est ce qui survit à la réduction en 16 px.
-       Le fond suit la barre d'onglets (prefers-color-scheme), pas le thème de l'app. -->
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TVLite">
+  <title>TVLite — bloc coupé</title>
+  <!--
+    Repris de Bloc_Coupé.svg (Jean). La courbe de prix est un VIDE decoupe dans la
+    masse (masque), pas un trait peint : le fond de l'onglet traverse la coupe.
+    Une masse trouee survit a la reduction la ou un trait fin disparait —
+    coupe de 10 sur 64 = 2,5 px a 16 px.
+
+    Seule adaptation pour l'usage favicon : les couleurs sont figees. L'original
+    utilise `currentColor`, qui n'a aucun parent ici et retomberait sur le noir en
+    permanence — donc invisible sur une barre d'onglets sombre.
+  -->
   <style>
-    .fond  { fill: #f6f7f9; }
-    .aire  { fill: #26a69a; opacity: .24; }
-    .trait { stroke: #0f766e; }
-    @media (prefers-color-scheme: dark) {
-      .fond  { fill: #131722; }
-      .aire  { opacity: .38; }
-      .trait { stroke: #26a69a; }
-    }
+    .bloc { fill: #101014; }
+    @media (prefers-color-scheme: dark) { .bloc { fill: #f2f4f7; } }
   </style>
-  <rect class="fond" width="48" height="48" rx="11"/>
-  <path class="aire" d="M8 37 L19 23 L27 30 L40 11 L40 37 Z"/>
-  <polyline class="trait" points="8,37 19,23 27,30 40,11" fill="none"
-            stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <mask id="sv-coupe">
+    <rect x="0" y="0" width="64" height="64" rx="13" fill="#fff"/>
+    <path d="M-8 74 L20 44 L34 54 L72 -8"
+          fill="none" stroke="#000" stroke-width="10"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <rect class="bloc" x="0" y="0" width="64" height="64" rx="13" mask="url(#sv-coupe)"/>
 </svg>
