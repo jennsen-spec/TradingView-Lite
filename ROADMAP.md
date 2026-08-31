@@ -10,6 +10,10 @@
 
 ## 🔍 Prêt (DoR)  *— affinés, priorisés par l'ordre*
 
+| # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
+|---|------|:---:|:---:|:---:|:---:|---|---|
+| [**71**](docs/backlog/71-ordre-collections.md) | **Réordonner les collections** (menu + accès rapide) | 🧩 | 3 | S | | 🔍 | Glisser-déposer dans le menu ; les pastilles favorites suivent (ordre dérivé, une seule source de vérité). Vigilance : la fusion cloud (#48) doit préserver l'ordre — audit QA en cours. Pas de drag des pastilles en v1. |
+
 > ✅ **L'épopée #47 est close (29/08/2026)** : « un seul produit » existe — TVLite + signal mensuel 100 % cloud +
 > rapport + collection automatiques, et Jean décide (5 000 $ engagés, premier signal réel le 31/08). Le chemin réel
 > a différé du plan (duo sectoriel, pas de stops, pas de tables `reco.*`) : consigné ticket par ticket, porte #52 comprise.
@@ -34,36 +38,30 @@
 | [**57**](docs/backlog/57-divergence.md) | **Dessin « Divergence »** — une flèche dans l'indicateur + son miroir accroché aux bougies ; couleur par pente | 🧩 | 8 | L | ⭐ | ✅ |
 | [**56**](docs/backlog/56-rs-mansfield.md) | **Force relative (RS Mansfield)** — panneau dédié, référence réglable, cours ajustés | 🧩 | 8 | L | ⭐ | ✅ |
 
-## 📥 Backlog  *— pas encore affinés, priorisés par l'ordre*
+## 📥 Backlog  *— priorisé : NOW / THEN / LATER (l'ordre fait foi)*
 
-| # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
-|---|------|:---:|:---:|:---:|:---:|---|---|
-| [**2**](docs/backlog/02-watchlists.md) | **Watchlists** (listes + sous-sections) | 💼 | 13 | XL | ⭐ | ✅ | Constaté à l'affinage (29/08) : déjà livré sous le nom « Collections » — listes nommées, sections, drag & drop, prix + variation, persistance cloud. |
-| [**58**](docs/backlog/58-espace-supabase-couverture.md) | **Base saturée : déplacer les secteurs hors stratégie** | ⚙️ | 8 | L | ⭐ | ✅ | Migration faite le 26/08 : base à 87,8 Mo (17,6 % du quota), signal du 31 août sauvé, chaîne vérifiée à froid. Secteurs/CSCO.TO/inventaire livrés via #60 ; archive = fichier local `bars.ndjson`. Reliquat purge → ligne backlog ci-dessous. |
-| [**1**](docs/backlog/01-comparaison.md) | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | ⭐ | 📥 | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
-| 29 | **Magnet price** (aimant) | 🧩 | 3 | S | | 📥 | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
-| 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | | 📥 | Compte à rebours jusqu'à la clôture de la bougie courante / de la séance (façon TradingView). À affiner : source des horaires de séance (Yahoo meta `currentTradingPeriod` ?), placement/affichage. |
-| 66 | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | ⭐ | 📥 | Bot Telegram prévenant Jean dès que l'Action publie un nouveau signal. À spécifier : bot, jeton en secret GitHub, message (signal + lien). |
-| 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | ⭐ | 📥 | Comparer prix obtenus / prix d'ouverture du backtest, chiffrer le manque à gagner contre « si tout s'était passé comme prévu ». **1re échéance : hiver 2026-2027**, puis à répéter. La stratégie ne tolère que ~0,9 %/entrée : c'est le facteur le plus dangereux du montage. |
-| [**59**](docs/backlog/59-rapport-17h.md) | **Rafraîchissement et rapport à 17 h** | ⚙️ | 2 | XS | | ✅ | Passé de 18 h / 19 h 30 à **17 h / 17 h 30 ET**, heure fixe toute l'année (le cron UTC dérivait d'une heure l'hiver). Deux correctifs au passage : les barres des 5 derniers jours sont réécrites (une barre incomplète ne gelait jamais autrement), et l'Action refuse de publier si la base ne porte pas de barre du jour. UAT = la chaîne du 31 août. |
-| [**61**](docs/backlog/61-conformite-moteur.md) | **Test de conformité moteur ↔ rapport** | ⚙️ | 3 | S | ⭐ | ✅ | À chaque rapport, le moteur tourne sur le même univers et la sélection est comparée ; écart → pas de publication. Suite de l'audit du 27/08 (3 écarts trouvés à la main). |
-| [**60**](docs/backlog/60-inventaire-univers.md) | **Inventaire mensuel de l'univers** | ⚙️ | 5 | M | ⭐ | ✅ | L'univers doit grandir avec la bourse : comparer chaque mois les cotés industrie+techno **en CAD** (TSX, TSXV, Cboe/`.NE`) à la base, alerte dans le rapport. Décision 27/08 : détection `.NE` incluse ; l'éligibilité passera par des backtests refaits + artefacts régénérés. |
-| [**62**](docs/backlog/62-poids-derivants.md) | **Coût des poids dérivants** | 💼 | 3 | S | | ✅ | Le backtest équipondère les reconduites chaque mois, la pratique non — seule divergence assumée modèle/pratique, coût à chiffrer et à inscrire au protocole. |
-| [**63**](docs/backlog/63-ensembles-dessins.md) | **Ensembles de dessins par symbole** | 🧩 | 5 | M | | ✅ | Sauvegarder l'état des dessins d'un symbole sous un nom, tout effacer sereinement, restaurer (= remplacer) plus tard. Ajout via couper/coller (#64). |
-| [**64**](docs/backlog/64-selection-multiple.md) | **Sélection multiple : tout sélectionner, couper/coller, édition groupée** | 🧩 | 5 | M | | ✅ | Clic droit « Sélectionner tout », couper (Ctrl+X), coller en place après un couper, paramètres communs modifiables en lot. Presse-papier limité au symbole. |
-| [**65**](docs/backlog/65-mesure-unites-duree.md) | **Mesure : choisir les unités de la durée** | 🧩 | 3 | S | | ✅ | Trois cases Année/Mois/Jour sous « Échelle de temps » (onglet Mesure). Une unité plus grande décochée est **reportée** sur l'inférieure (16 ans 9 mois → 201 mois), une plus petite **tronquée**. *(Renuméroté : rédigé #58 le 28/08, n° déjà pris.)* |
-| 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | | 📥 | `createPriceLine` + persistance par symbole. |
-| 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | | 📥 | Déclenchement/persistance/notif ; sans #14, au rechargement seulement. |
-| 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | | 📥 | API panes v5 (moveToPane, réordonner) — **spike**. |
-| 70 | **Responsive, vue Mobile / iPad** | 🧩 | 13 | XL | | 📥 | Adapter TVLite aux écrans tactiles : layout (toolbar, volets Collections/détail, modales), interactions au doigt (pan/zoom vs dessin, poignées, clic droit sans souris), points de rupture téléphone et iPad. À affiner : périmètre v1 (consultation seule, ou dessin tactile aussi ?). |
-| 39 | ~~Momentum portfolio~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #53 + #54 (et la phase Disnat). |
-| 40 | ~~Backtesting pro~~ | 💼 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** → devient #50 + #51. |
-| [41](docs/backlog/41-golden-cross-screener.md) | ~~Screener Golden Cross~~ | 🧩 | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : la détection quotidienne de figures est abandonnée **comme signal d'achat** (mesurée −5,03/trade, la pire des douze variantes). Le moteur de scan survit dans #49/#53. |
-| [42](docs/backlog/42-plateforme-data-supabase.md) | ~~Plateforme data partagée~~ | ⚙️ | — | — | | 🗄️ | **Absorbé par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : Phase 1 livrée (TVLite en ligne). Sa décision « schéma DB possédé par `goldencross-radar` » **devient caduque** → passe à TVLite (#49). |
-| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | ⭐ | 📥 | Build front + hébergement du backend proxy ; domaine. **Plan gratuit visé** (confirmé par Jean le 24/08). Attention : le rapport mensuel est servi depuis `frontend/public/` — vérifier que son adresse survit au changement d'hébergeur. |
-| 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | | 📥 | Auth (email / OAuth) ; base utilisateurs. |
-| 24 | **Espace membre** | 🚀 | ? | — | | 📥 | Zone connectée : préférences, contenus liés au compte. |
-| 25 | **Sync multi-appareils** | 🚀 | ? | — | | 📥 | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
+| # | Item | Cat | Pts | Taille | Note |
+|---|------|:---:|:---:|:---:|---|
+| **⚡ NOW** | | | | | |
+| 66 | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | Bot prévenant Jean dès qu'un nouveau signal est publié. À spécifier : bot, jeton (secret GitHub), message (signal + lien). |
+| 70 | **Responsive — vue Mobile / iPad** | 🧩 | 13 | XL | Adapter TVLite au tactile : layout (toolbar, volets, modales), interactions au doigt, ruptures téléphone/iPad. À affiner : v1 consultation seule, ou dessin tactile aussi ? |
+| **⏭️ THEN** | | | | | |
+| 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
+| 24 | **Espace membre** | 🚀 | ? | — | Zone connectée : préférences, contenus liés au compte. |
+| 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
+| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
+| **🗓️ LATER** | | | | | |
+| 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
+| 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | Prix obtenus vs ouverture du backtest ; 1re échéance hiver 2026-27, à répéter. La stratégie ne tolère que ~0,9 %/entrée. |
+| 1 | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
+| 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | `createPriceLine` + persistance par symbole. |
+| 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | Compte à rebours jusqu'à la clôture de la bougie / séance. Source des horaires à affiner. |
+| 29 | **Magnet price** (aimant) | 🧩 | 3 | S | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
+| 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | Déclenchement/persistance/notif ; sans temps réel, au rechargement seulement. |
+| 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | API panes v5 (moveToPane) — spike. |
+
+**✅ Livrés (ex-backlog, rangés)** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
+**🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
 
 ---
 
@@ -74,7 +72,7 @@
 | 14 | ~~Données en temps réel~~ | ⚙️ | Pas de flux gratuit fiable ; TSX licence payante ou API broker — spike sans issue. |
 | 68 | ~~Aide au rebalancement de portefeuille~~ | 💼 | Pas de poids cible du portefeuille (`portefeuille/README.md`) → aucun rééquilibrage à calculer. |
 | 69 | ~~Purge mensuelle des réinsertions TVLite~~ | ⚙️ | Base à 17,6 % du quota, garde-fou du cron à 400 Mo suffit. |
-| 70 | ~~Backtest des combinaisons d'ETF~~ (ZEQT·HXS·VMO) | 💼 | Pas de fenêtre longue commune (ZEQT 2022, VMO 2016, HXS 2011). |
+| 74 | ~~Backtest des combinaisons d'ETF~~ (ZEQT·HXS·VMO) | 💼 | Pas de fenêtre longue commune (ZEQT 2022, VMO 2016, HXS 2011). |
 | 71 | ~~Disnat — quantités réelles~~ (phase 5) | 💼 | Abandonné (0 commencé). |
 | 72 | ~~Délai de recherche de titre~~ | ⚙️ | Abandonné (0 commencé). |
 | 73 | ~~Revue de l'interrupteur à séance entière~~ | 💼 | À rejuger informellement à la revue d'hiver si besoin. |
