@@ -25,15 +25,41 @@ en fermant le menu, les pastilles favorites reflètent le nouvel ordre.
 - **Pas de drag des pastilles rondes en v1** (tranché par Jean le 31/08) : elles sont petites,
   le geste est malcommode, le menu fait le travail.
 
-## Point de vigilance technique
-La clé `tvlike:collections` passe par la **fusion cloud** (#48) : vérifier que la fusion préserve
-l'ordre choisi et ne « re-trie » pas au merge entre deux appareils (scénario : A réordonne et
-pousse ; B, resté sur l'ancien ordre, recharge — voire a modifié une collection entre-temps).
-*Audit QA lancé le 31/08 — conclusions à reporter ici avant le sprint.*
+## Point de vigilance technique — audit QA du 31/08 (conclu)
+**Verdict : ça dépend.** La fusion (#48, `cloudPrefs.ts`) ne trie jamais — mais elle ne fusionne
+pas l'ordre non plus : c'est **le tableau du « gagnant » qui s'impose en bloc** (gagnant = côté au
+tampon le plus récent à l'hydratation ; côté local, toujours, à la poussée).
+- **Un seul appareil actif → l'ordre survit** (scénario A réordonne / B recharge : OK, vérifié pas à pas).
+- **B modifie quoi que ce soit après le réordonnancement de A** (même juste un symbole ajouté,
+  même dans un simple onglet resté ouvert) → sa poussée réécrit le tableau entier avec **l'ancien
+  ordre** : le réordonnancement de A est annulé partout, silencieusement.
+- Défauts **préexistants** relevés au passage, plus larges que ce ticket : la fusion ne sauve que
+  les collections *entièrement nouvelles* (une **modification** d'une collection existante côté
+  perdant est jetée — perte de données possible dès aujourd'hui, sans #76) ; une entrée nouvelle
+  arrive toujours **en fin** de tableau ; l'arbitre compare l'horloge du navigateur à celle du
+  serveur (fiabilité sous la seconde douteuse) ; `labo/src/collection.ts` réécrit le tableau
+  complet hors fusion (fenêtre GET→POST) ; un échec d'hydratation sur localStorage vide pousse le
+  `seed()` et préfixe une collection fantôme.
+
+**Conséquence pour le sprint** : réordonner n'est ni plus ni moins fragile que ce que fait déjà
+« ajouter un symbole » — même clé, mêmes règles du dernier-écrivain. Le critère « survit à la
+synchro multi-appareils » est donc à lire ainsi : **mêmes garanties que les données actuelles des
+collections**, pas mieux. Rendre l'ordre réellement fusionnable (champ de rang par collection +
+arbitrage entrée par entrée) est un chantier #48-bis séparé, qui réglerait aussi la perte de
+modifications préexistante.
 
 ## Plan technique
 1. Poignée de drag sur les lignes `wl-menu-coll` + réordonnancement du tableau `collections`
    (splice par id, comme les items). → vérif : l'ordre du menu change et persiste.
 2. Rien à faire pour les pastilles (dérivées). → vérif : l'ordre des ronds suit.
-3. Selon l'audit fusion : adapter la fusion cloud si elle ne préserve pas l'ordre.
-   → vérif : reproduire le scénario A/B (deux onglets ou set cloud + reload) sans perte d'ordre.
+3. Recette du scénario nominal (un appareil) : réordonner, recharger, set cloud + reload —
+   l'ordre tient. → vérif : pas de POST parasite au démarrage (garde `hydrated` intact —
+   attention à ne pas normaliser le JSON dans `loadCollections`, l'égalité d'octets le protège).
+4. `currentId` est initialisé à `collections[0].id` : le garder sur la collection courante après
+   un déplacement (critère 3), et assumer qu'au rechargement la sélection par défaut suit le
+   nouvel ordre.
+
+## Questions ouvertes
+- Faut-il ouvrir le ticket **« #48-bis — fusion par entrée »** (rang fusionnable, sauvetage des
+  modifications, insertion à la bonne position) ? Recommandation : oui, en 📥 non prioritaire —
+  la perte de modifications existe déjà sans #76 et mérite sa propre ligne.
