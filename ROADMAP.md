@@ -61,7 +61,7 @@
 | 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | Déclenchement/persistance/notif ; sans temps réel, au rechargement seulement. |
 | 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | API panes v5 (moveToPane) — spike. |
 
-**✅ Livrés (ex-backlog, rangés)** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
+**✅ Livrés (ex-backlog, rangés)** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (`<COMPTE>.DEJ.A/B` + TOTAL, panier actuel).
 **🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
 
 ---

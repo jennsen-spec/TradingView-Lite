@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { searchSymbols, type SymbolHit } from "../lib/api";
+import { syntheticHits } from "../lib/portfolios";
 
 interface Props {
   onSelect?: (symbol: string) => void;
@@ -124,11 +125,11 @@ export default function SymbolSearch({ onSelect, onClose, mode = "select", onAdd
     const t = setTimeout(() => {
       searchSymbols(q)
         .then((res) => {
-          setHits(res);
+          setHits([...syntheticHits(q), ...res]); // portefeuilles synthétiques (#76) en tête
           setActive(0);
           setCountry(""); // nouvelle recherche → on réinitialise le filtre pays
         })
-        .catch(() => setHits([]))
+        .catch(() => setHits(syntheticHits(q)))
         .finally(() => setLoading(false));
     }, 250);
     return () => clearTimeout(t);

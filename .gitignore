@@ -14,3 +14,7 @@ backend/data/*.db-journal
 
 # Rapports générés (npm run rapport) — reconstructibles, ~300 Ko chacun
 portefeuille/rapport-*.html
+
+# Données perso (avoirs / historique de transactions) — dépôt PUBLIC, ne jamais committer
+/Historique-*.xlsx
+frontend/src/data/comptes/

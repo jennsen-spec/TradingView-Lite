@@ -1,4 +1,5 @@
 import type { Candle } from "./indicators";
+import { isSynthetic, computeSynthetic, ETF_TICKERS } from "./portfolios";
 
 export interface CandlesResponse {
   symbol: string;
@@ -34,7 +35,7 @@ async function getJson<T>(url: string): Promise<T> {
   return json as T;
 }
 
-export function fetchCandles(symbol: string, interval = "1d", fresh = false, range?: string) {
+function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?: string) {
   if (API_BASE) {
     // Edge Function : pas de cache → le paramètre `fresh` n'a pas d'objet.
     const q = new URLSearchParams({ symbol, interval });
@@ -43,6 +44,25 @@ export function fetchCandles(symbol: string, interval = "1d", fresh = false, ran
   }
   const q = `interval=${interval}${fresh ? "&fresh=1" : ""}${range ? `&range=${range}` : ""}`;
   return getJson<CandlesResponse>(`/api/candles/${encodeURIComponent(symbol)}?${q}`);
+}
+
+// Portefeuilles synthétiques (#76) : calculés côté client depuis les 5 ETF (journalier).
+async function fetchSyntheticCandles(symbol: string, interval: string, fresh: boolean): Promise<CandlesResponse> {
+  const etf: Record<string, Candle[]> = {};
+  await Promise.all(
+    ETF_TICKERS.map(async (t) => {
+      try { etf[t] = (await rawFetchCandles(t, "1d", fresh, "10y")).candles; }
+      catch { etf[t] = []; }
+    })
+  );
+  const res = computeSynthetic(symbol, etf, interval);
+  if (!res) throw new Error(`Symbole synthétique inconnu : ${symbol}`);
+  return { symbol, interval: "1d", cached: false, currency: res.currency, name: res.name, candles: res.candles, fetchedAt: Date.now() };
+}
+
+export function fetchCandles(symbol: string, interval = "1d", fresh = false, range?: string): Promise<CandlesResponse> {
+  if (isSynthetic(symbol)) return fetchSyntheticCandles(symbol, interval, fresh);
+  return rawFetchCandles(symbol, interval, fresh, range);
 }
 
 export function searchSymbols(q: string) {

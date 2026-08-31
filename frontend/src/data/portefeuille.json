@@ -1,0 +1,10 @@
+{
+  "_note": "Poids NORMALISÉS des 5 ETF (proportions de la poche, = l'allocation ~60/10/30). Volontairement SANS quantités/valeur absolues pour ne rien exposer sur le dépôt public. La courbe DEJ.601030 (base 100) ne dépend que de ces ratios.",
+  "weights": {
+    "ZEQT.TO": 0.396536,
+    "VMO.TO": 0.100656,
+    "HXS.TO": 0.042135,
+    "ZAG.TO": 0.284644,
+    "ZGLD.TO": 0.176030
+  }
+}
