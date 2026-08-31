@@ -1,6 +1,6 @@
 # #76 — Réordonner les collections (menu + accès rapide)
 
-**Statut** : 🧪 À valider (sprint du 31/08) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
 
 ## Objectif
 Choisir l'ordre des collections. L'ordre choisi est **le** seul ordre : il s'applique au menu
@@ -77,3 +77,5 @@ menu 25 SP500 · ETF · Duo · Portfolio, pastilles E D P instantanément · rec
 aucune poussée parasite au démarrage (le garde d'égalité d'octets est intact — pas de
 normalisation ajoutée dans `loadCollections`) · ordre d'origine remis par le même geste
 (D E P), noms/favoris/symboles inchangés.
+
+**UAT validée par Jean le 31/08/2026** → ✅ Fait.
