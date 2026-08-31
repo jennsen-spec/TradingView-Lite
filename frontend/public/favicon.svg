@@ -11,8 +11,8 @@
     permanence — donc invisible sur une barre d'onglets sombre.
   -->
   <style>
-    .bloc { fill: #101014; }
-    @media (prefers-color-scheme: dark) { .bloc { fill: #f2f4f7; } }
+    .bloc { fill: #0a0a0c; }
+    @media (prefers-color-scheme: dark) { .bloc { fill: #ffffff; } }
   </style>
   <mask id="sv-coupe">
     <rect x="0" y="0" width="64" height="64" rx="13" fill="#fff"/>
