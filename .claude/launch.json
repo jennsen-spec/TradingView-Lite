@@ -11,6 +11,16 @@
       "port": 5173,
       "cwd": "frontend",
       "autoPort": true
+    },
+    {
+      "name": "tvlite-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 8787,
+      "cwd": "backend"
     }
   ]
 }
