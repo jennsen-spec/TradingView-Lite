@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Stock View">
+  <title>Stock View — Bloc coupé</title>
+  <!--
+    La masse est un carré arrondi, traversé de part en part par la courbe de prix.
+    La coupe est un vrai vide (masque), pas un trait de couleur de fond :
+    le logo fonctionne donc sur n'importe quel arrière-plan.
+    La couleur suit currentColor — il suffit de définir `color` sur le parent.
+    Réglages : stroke-width du chemin = largeur de la coupe (8 à 12 conseillé).
+  -->
+  <mask id="sv-coupe">
+    <rect x="0" y="0" width="64" height="64" rx="13" fill="#fff"/>
+    <path d="M-8 74 L20 44 L34 54 L72 -8"
+          fill="none" stroke="#000" stroke-width="10"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <rect x="0" y="0" width="64" height="64" rx="13" fill="currentColor" mask="url(#sv-coupe)"/>
+</svg>

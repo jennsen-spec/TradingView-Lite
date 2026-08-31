@@ -12,7 +12,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| [**76**](docs/backlog/76-ordre-collections.md) | **Réordonner les collections** (menu + accès rapide) | 🧩 | 3 | S | | 🔍 | Glisser-déposer dans le menu ; les pastilles favorites suivent (ordre dérivé, une seule source de vérité). Vigilance : la fusion cloud (#48) doit préserver l'ordre — audit QA en cours. Pas de drag des pastilles en v1. |
+| [**76**](docs/backlog/76-ordre-collections.md) | **Réordonner les collections** (menu + accès rapide) | 🧩 | 3 | S | | 🧪 | Glisser-déposer dans le menu ; les pastilles favorites suivent (ordre dérivé, une seule source de vérité). Vigilance : la fusion cloud (#48) doit préserver l'ordre — audit QA en cours. Pas de drag des pastilles en v1. |
 
 > ✅ **L'épopée #47 est close (29/08/2026)** : « un seul produit » existe — TVLite + signal mensuel 100 % cloud +
 > rapport + collection automatiques, et Jean décide (5 000 $ engagés, premier signal réel le 31/08). Le chemin réel

@@ -173,6 +173,26 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   const addSymbol = (sym: string) => updateCur((c) => ({ ...c, items: [...c.items, newSymbolItem(sym)] }));
   const removeItem = (id: string) => updateCur((c) => ({ ...c, items: c.items.filter((it) => it.id !== id) }));
   const toggleFav = (id: string) => setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, favorite: !c.favorite } : c)));
+
+  // Réordonner les collections (#76) — glisser-déposer dans le menu déroulant.
+  // L'ordre du tableau est la seule source de vérité : le menu ET les pastilles
+  // favorites (dérivées par filter) le suivent, rien d'autre à synchroniser.
+  const collDragRef = useRef<string | null>(null);
+  const [collDragging, setCollDragging] = useState<string | null>(null);
+  const [collDrop, setCollDrop] = useState<{ id: string; after: boolean } | null>(null);
+  const reorderColl = (srcId: string, targetId: string, after: boolean) => {
+    if (srcId === targetId) return;
+    setCollections((prev) => {
+      const src = prev.find((c) => c.id === srcId);
+      if (!src) return prev;
+      const rest = prev.filter((c) => c.id !== srcId);
+      const ti = rest.findIndex((c) => c.id === targetId);
+      if (ti < 0) return prev;
+      const at = after ? ti + 1 : ti;
+      return [...rest.slice(0, at), src, ...rest.slice(at)];
+    });
+  };
+  const finDragColl = () => { collDragRef.current = null; setCollDragging(null); setCollDrop(null); };
   // Vide la liste courante : les titres partent, la collection reste dans le selecteur.
   const clearList = () => updateCur((c) => ({ ...c, items: [] }));
   // Supprime la collection courante. La derniere ne peut pas partir : le volet
@@ -391,7 +411,26 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
                 <div className="wl-menu-sep" />
                 <div className="wl-menu-label">Collections</div>
                 {collections.map((c) => (
-                  <div key={c.id} className={`wl-menu-coll${c.id === cur.id ? " active" : ""}`}>
+                  <div
+                    key={c.id}
+                    className={`wl-menu-coll${c.id === cur.id ? " active" : ""}${collDragging === c.id ? " wl-dragging" : ""}${collDrop?.id === c.id ? (collDrop.after ? " wl-drop-after" : " wl-drop-before") : ""}`}
+                    draggable
+                    onDragStart={() => { collDragRef.current = c.id; setCollDragging(c.id); }}
+                    onDragOver={(e) => {
+                      if (!collDragRef.current || collDragRef.current === c.id) return;
+                      e.preventDefault();
+                      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const after = e.clientY > r.top + r.height / 2;
+                      setCollDrop((d) => (d && d.id === c.id && d.after === after ? d : { id: c.id, after }));
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (collDragRef.current) reorderColl(collDragRef.current, c.id, collDrop?.after ?? false);
+                      finDragColl();
+                    }}
+                    onDragEnd={finDragColl}
+                    title="Glisser pour réordonner"
+                  >
                     <button className="wl-menu-coll-name" onClick={() => { setCurrentId(c.id); setNameMenu(false); }}>{c.name}</button>
                     <button className={`wl-star${c.favorite ? " on" : ""}`} title="Favori (accès rapide)" onClick={() => toggleFav(c.id)}>★</button>
                   </div>

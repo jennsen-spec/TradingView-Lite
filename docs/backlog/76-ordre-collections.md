@@ -1,6 +1,6 @@
 # #76 — Réordonner les collections (menu + accès rapide)
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
+**Statut** : 🧪 À valider (sprint du 31/08) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
 
 ## Objectif
 Choisir l'ordre des collections. L'ordre choisi est **le** seul ordre : il s'applique au menu
@@ -63,3 +63,17 @@ modifications préexistante.
 - Faut-il ouvrir le ticket **« #48-bis — fusion par entrée »** (rang fusionnable, sauvetage des
   modifications, insertion à la bonne position) ? Recommandation : oui, en 📥 non prioritaire —
   la perte de modifications existe déjà sans #76 et mérite sa propre ligne.
+
+## Journal du sprint — 31/08
+**Fait, tel que planifié** : lignes du menu `wl-menu-coll` rendues glissables (mêmes classes
+visuelles que le drag des symboles : `wl-dragging`, `wl-drop-before/after`, indicateur
+avant/après selon la moitié de la ligne survolée) ; `reorderColl` déplace l'entrée dans le
+tableau `collections` — rien d'autre : la persistance passe par le `useEffect` de sauvegarde
+existant, et les pastilles suivent d'elles-mêmes puisqu'elles dérivent du tableau.
+
+**Recette navigateur sur les vraies collections de Jean** : ETF glissé au-dessus de Duo →
+menu 25 SP500 · ETF · Duo · Portfolio, pastilles E D P instantanément · rechargement complet
+(hydratation cloud comprise) → l'ordre tient, la collection courante reste « 25 SP500 » ·
+aucune poussée parasite au démarrage (le garde d'égalité d'octets est intact — pas de
+normalisation ajoutée dans `loadCollections`) · ordre d'origine remis par le même geste
+(D E P), noms/favoris/symboles inchangés.
