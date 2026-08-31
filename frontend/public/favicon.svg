@@ -1,24 +1,17 @@
 <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TVLite">
   <title>TVLite — bloc coupé</title>
   <!--
-    Repris de Bloc_Coupé.svg (Jean). La courbe de prix est un VIDE decoupe dans la
-    masse (masque), pas un trait peint : le fond de l'onglet traverse la coupe.
-    Une masse trouee survit a la reduction la ou un trait fin disparait —
-    coupe de 10 sur 64 = 2,5 px a 16 px.
-
-    Seule adaptation pour l'usage favicon : les couleurs sont figees. L'original
-    utilise `currentColor`, qui n'a aucun parent ici et retomberait sur le noir en
-    permanence — donc invisible sur une barre d'onglets sombre.
+    Dessin repris de Bloc_Coupé.svg (Jean), mais la courbe est PEINTE, pas decoupee.
+    L'original en fait un vide : elegant sur une page, mais dans une barre d'onglets
+    le vide laisse passer le fond, gris quand l'onglet est inactif et blanc quand il
+    est actif — la courbe changeait donc de couleur selon l'onglet.
+    Tuile opaque a couleurs fixes, comme le favicon TradingView : la courbe reste
+    blanche quel que soit l'etat de l'onglet et le theme du systeme.
   -->
-  <style>
-    .bloc { fill: #0a0a0c; }
-    @media (prefers-color-scheme: dark) { .bloc { fill: #ffffff; } }
-  </style>
-  <mask id="sv-coupe">
-    <rect x="0" y="0" width="64" height="64" rx="13" fill="#fff"/>
-    <path d="M-8 74 L20 44 L34 54 L72 -8"
-          fill="none" stroke="#000" stroke-width="10"
-          stroke-linecap="round" stroke-linejoin="round"/>
-  </mask>
-  <rect class="bloc" x="0" y="0" width="64" height="64" rx="13" mask="url(#sv-coupe)"/>
+  <defs><clipPath id="tuile"><rect width="64" height="64" rx="13"/></clipPath></defs>
+  <g clip-path="url(#tuile)">
+    <rect width="64" height="64" fill="#0a0a0c"/>
+    <path d="M-8 74 L20 44 L34 54 L72 -8" fill="none" stroke="#ffffff"
+          stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
