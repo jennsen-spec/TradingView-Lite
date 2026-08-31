@@ -93,9 +93,15 @@ const TOOLS: ToolDef[] = [
     key: "rect",
     label: "Rectangle",
     icon: (
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <rect x="3.5" y="7" width="17" height="10" rx="1.5" />
-        <line x1="3.5" y1="12" x2="20.5" y2="12" strokeWidth="1.4" strokeDasharray="2 2" opacity="0.6" />
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+        <line x1="7.9" y1="5" x2="16.1" y2="5" />
+        <line x1="7.9" y1="19" x2="16.1" y2="19" />
+        <line x1="5" y1="7.9" x2="5" y2="16.1" />
+        <line x1="19" y1="7.9" x2="19" y2="16.1" />
+        <rect x="2.8" y="2.8" width="4.4" height="4.4" rx="1" />
+        <rect x="16.8" y="2.8" width="4.4" height="4.4" rx="1" />
+        <rect x="2.8" y="16.8" width="4.4" height="4.4" rx="1" />
+        <rect x="16.8" y="16.8" width="4.4" height="4.4" rx="1" />
       </svg>
     ),
   },
