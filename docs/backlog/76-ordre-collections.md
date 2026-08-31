@@ -1,4 +1,4 @@
-# #71 — Réordonner les collections (menu + accès rapide)
+# #76 — Réordonner les collections (menu + accès rapide)
 
 **Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : S
 
