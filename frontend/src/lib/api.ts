@@ -37,9 +37,10 @@ async function getJson<T>(url: string): Promise<T> {
 
 function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?: string) {
   if (API_BASE) {
-    // Edge Function : pas de cache → le paramètre `fresh` n'a pas d'objet.
+    // Edge Function : cache Supabase (TTL 12 h). `fresh=1` le contourne (bouton refresh).
     const q = new URLSearchParams({ symbol, interval });
     if (range) q.set("range", range);
+    if (fresh) q.set("fresh", "1");
     return getJson<CandlesResponse>(`${API_BASE}/candles?${q.toString()}`);
   }
   const q = `interval=${interval}${fresh ? "&fresh=1" : ""}${range ? `&range=${range}` : ""}`;

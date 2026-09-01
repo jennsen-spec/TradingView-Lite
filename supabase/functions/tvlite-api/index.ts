@@ -119,13 +119,13 @@ async function writeDailyCache(symbol: string, range: string, currency: any, nam
   );
 }
 
-async function getTimeSeries(symbol: string, interval = "1d", reqRange: string | null = null): Promise<any> {
+async function getTimeSeries(symbol: string, interval = "1d", reqRange: string | null = null, fresh = false): Promise<any> {
   symbol = symbol.toUpperCase();
   const agg = AGG[interval];
   const baseKey = agg ? interval : (INTERVAL_MAP[interval] || interval);
 
   if (agg) {
-    const src = await getTimeSeries(symbol, agg.base, agg.range || null);
+    const src = await getTimeSeries(symbol, agg.base, agg.range || null, fresh);
     const candles = aggregate(src.candles, agg.bucket);
     return { symbol, interval: baseKey, cached: src.cached, currency: src.currency, name: src.name ?? null, candles, fetchedAt: src.fetchedAt };
   }
@@ -133,7 +133,9 @@ async function getTimeSeries(symbol: string, interval = "1d", reqRange: string |
   const yInterval = baseKey;
   const range = reqRange || RANGE_FOR[yInterval] || "10y";
 
-  if (yInterval === "1d") {
+  // `fresh` (bouton refresh) : on saute la lecture du cache pour forcer un fetch Yahoo,
+  // puis on RÉÉCRIT le cache (writeDailyCache plus bas) → les lectures suivantes sont à jour.
+  if (yInterval === "1d" && !fresh) {
     const hit = await readDailyCache(symbol, range);
     if (hit) return hit;
   }
@@ -403,7 +405,8 @@ Deno.serve(async (req: Request) => {
     if (!symbol) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);
     const interval = url.searchParams.get("interval") || "1d";
     const range = url.searchParams.get("range");
-    const data = await getTimeSeries(symbol, interval, range);
+    const fresh = url.searchParams.get("fresh") === "1";
+    const data = await getTimeSeries(symbol, interval, range, fresh);
     return jsonResponse(data);
   } catch (e) {
     return jsonResponse({ error: (e as Error).message }, 400);
