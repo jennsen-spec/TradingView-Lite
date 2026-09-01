@@ -32,6 +32,7 @@
 | 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
 | 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
 | **🗓️ LATER** | | | | | |
+| 82 | **Analyse Technique & Backtest SYNTH** | 💼 | 8 | L | [ticket](docs/backlog/82-analyse-technique-backtest-synth.md). Faire de l'analyse technique sur les instruments SYNTH (surtout MOM.SYNTH quotidien) et **backtester** des règles de timing (entrée/sortie du portefeuille) : filtre SMA 200j/400j, RSI, croisements, swing… → trouver le meilleur positionnement vs buy-and-hold. Attention overfitting + redondance avec l'interrupteur MM150. Dépend de #79. |
 | 78 | **Fusion cloud par entrée (« 48-bis »)** | ⚙️ | 5 | M | Suite de l'audit du 31/08 : la fusion ne sauve que les collections entièrement nouvelles — une **modification** d'une collection existante côté perdant est jetée (perte possible dès aujourd'hui). À faire : rang fusionnable par collection, arbitrage entrée par entrée, insertion à la bonne position, fiabiliser l'arbitre d'horloges client/serveur. |
 | 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
 | 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | Prix obtenus vs ouverture du backtest ; 1re échéance hiver 2026-27, à répéter. La stratégie ne tolère que ~0,9 %/entrée. |
