@@ -21,9 +21,15 @@ export const ETF_TICKERS = ["ZEQT.TO", "VMO.TO", "HXS.TO", "ZAG.TO", "ZGLD.TO"];
 export const SYNTH_SYMBOL = "EQ.SYNTH";
 const SYNTH_NAME = "EQ.SYNTH — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
 
-// MOM.SYNTH — série pré-calculée (data/duo-mom.json), régénérée par l'Action rapport.
-// Le glob renvoie {} si le fichier est absent → feature désactivée sans casser la compile.
-const duoGlob = import.meta.glob<{ default: { points: { time: string; open: number; high: number; low: number; close: number }[] } }>(
+// MOM.SYNTH — série QUOTIDIENNE pré-calculée (data/duo-mom.json) + panier courant.
+// L'historique est figé jusqu'à `basketCourant.entree` ; le mois en cours est valorisé
+// EN DIRECT (fetch des titres du panier). Glob vide si le fichier est absent → feature off.
+type DuoPoint = { time: string; open: number; high: number; low: number; close: number };
+type DuoData = {
+  basketCourant?: { investi: boolean; tickers: string[]; entree: string; valeurDebut: number };
+  points: DuoPoint[];
+};
+const duoGlob = import.meta.glob<{ default: DuoData }>(
   "../data/duo-mom.json",
   { eager: true },
 );
@@ -158,11 +164,60 @@ function rebase100(candles: Candle[]): Candle[] {
   return candles.map((c) => mk(c.time as string, c.open * k, c.high * k, c.low * k, c.close * k, c.volume));
 }
 
-// MOM.SYNTH : bougies mensuelles OHLC (amplitude réelle = valorisation quotidienne du
-// panier détenu, calculée par l'exporteur). Volume 0.
-function duoMomCandles(): Candle[] {
+// MOM.SYNTH — historique QUOTIDIEN figé (base 100), calculé par l'exporteur. Volume 0.
+function duoHistory(): Candle[] {
   if (!DUO_DATA) return [];
   return DUO_DATA.points.map((p) => mk(p.time, p.open, p.high, p.low, p.close, 0));
+}
+
+// Titres du panier courant (mois en cours) à valoriser en direct. Vide si cash/absent.
+export function duoBasketTickers(): string[] {
+  const b = DUO_DATA?.basketCourant;
+  return DUO_ENABLED && b?.investi ? b.tickers : [];
+}
+
+// Point courant EN DIRECT : valorise le panier détenu (fetché frais) jour par jour
+// depuis la date d'entrée, base 100, en repartant de la valeur du dernier point figé.
+function duoTail(stocks: Record<string, Candle[]>): Candle[] {
+  const b = DUO_DATA?.basketCourant;
+  if (!b || !b.investi || !b.tickers.length) return [];
+  // Cours d'entrée par titre (dernière clôture ≤ date d'entrée) + index date→clôture.
+  const entries: Record<string, number> = {};
+  const closeAt: Record<string, Map<string, number>> = {};
+  const daysSet = new Set<string>();
+  for (const t of b.tickers) {
+    const arr = stocks[t];
+    if (!arr?.length) continue;
+    let entree = 0;
+    const m = new Map<string, number>();
+    for (const c of arr) {
+      const d = c.time as string;
+      m.set(d, c.close);
+      if (d <= b.entree) entree = c.close;
+      else daysSet.add(d);
+    }
+    if (entree > 0) { entries[t] = entree; closeAt[t] = m; }
+  }
+  const noms = Object.keys(entries);
+  if (!noms.length) return [];
+  const jours = [...daysSet].sort();
+  const out: Candle[] = [];
+  let prev = b.valeurDebut; // base 100, = dernier point figé
+  for (const d of jours) {
+    let somme = 0, n = 0;
+    for (const t of noms) { const cl = closeAt[t].get(d); if (cl == null) continue; somme += cl / entries[t]; n++; }
+    if (!n) continue;
+    const eq = b.valeurDebut * (somme / n); // base 100
+    out.push(mk(d, prev, Math.max(prev, eq), Math.min(prev, eq), eq, 0));
+    prev = eq;
+  }
+  return out;
+}
+
+// MOM.SYNTH complet = historique figé + point courant en direct, agrégé à l'intervalle.
+export function computeDuoMom(stocks: Record<string, Candle[]>, interval: string): { candles: Candle[]; currency: string; name: string } {
+  const daily = [...duoHistory(), ...duoTail(stocks)];
+  return { candles: aggregateInterval(daily, interval), currency: "CAD", name: DUO_NAME };
 }
 
 // ---------- Agrégation d'intervalle (journalier/mensuel → hebdo/mensuel/…) ----------
@@ -213,11 +268,8 @@ function aggregateInterval(daily: Candle[], interval: string): Candle[] {
 // ---------- API du module ----------
 
 export function computeSynthetic(sym: string, etf: EtfDaily, interval: string): { candles: Candle[]; currency: string; name: string } | null {
-  const s = sym.toUpperCase();
-  if (DUO_ENABLED && s === DUO_SYMBOL) {
-    return { candles: aggregateInterval(duoMomCandles(), interval), currency: "CAD", name: DUO_NAME };
-  }
-  if (s !== SYNTH_SYMBOL) return null;
+  // MOM.SYNTH est assemblé par computeDuoMom (historique + point courant live) côté api.ts.
+  if (sym.toUpperCase() !== SYNTH_SYMBOL) return null;
   const daily = rebase100(basketCandles(WEIGHTS, etf));
   return { candles: aggregateInterval(daily, interval), currency: "CAD", name: SYNTH_NAME };
 }

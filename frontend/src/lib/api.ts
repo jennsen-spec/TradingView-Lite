@@ -1,5 +1,5 @@
 import type { Candle } from "./indicators";
-import { isSynthetic, computeSynthetic, ETF_TICKERS } from "./portfolios";
+import { isSynthetic, computeSynthetic, computeDuoMom, duoBasketTickers, ETF_TICKERS } from "./portfolios";
 
 export interface CandlesResponse {
   symbol: string;
@@ -49,10 +49,18 @@ function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?:
 
 // Portefeuilles synthétiques (#76/#77) : calculés côté client.
 async function fetchSyntheticCandles(symbol: string, interval: string, fresh: boolean): Promise<CandlesResponse> {
-  // MOM.SYNTH (#77) : série pré-calculée → aucun cours ETF à charger.
+  // MOM.SYNTH (#77/#79) : historique quotidien figé (JSON) + point courant valorisé
+  // EN DIRECT depuis les titres du panier du mois (frais à chaque refresh, comme les actions).
   if (symbol.toUpperCase() === "MOM.SYNTH") {
-    const res = computeSynthetic(symbol, {}, interval);
-    if (!res) throw new Error(`Symbole synthétique inconnu : ${symbol}`);
+    const tickers = duoBasketTickers();
+    const stocks: Record<string, Candle[]> = {};
+    await Promise.all(
+      tickers.map(async (t) => {
+        try { stocks[t] = (await rawFetchCandles(t, "1d", fresh, "1y")).candles; }
+        catch { stocks[t] = []; }
+      })
+    );
+    const res = computeDuoMom(stocks, interval);
     return { symbol, interval, cached: false, currency: res.currency, name: res.name, candles: res.candles, fetchedAt: Date.now() };
   }
   const etf: Record<string, Candle[]> = {};

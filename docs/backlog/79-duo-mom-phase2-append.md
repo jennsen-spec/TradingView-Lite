@@ -16,6 +16,13 @@ donc le nouveau mois complet apparaît tout seul et le **backfill est inhérent*
   dernier mois n'est finalisé qu'à l'ouverture du mois d'après → le mois courant manquait. On ajoute un point **provisoire**
   (mark-to-market) : le panier tenu ce mois-ci (sélectionné au dernier signal, via `calculerCycle`) valorisé jour par jour
   jusqu'à la dernière clôture. Il se recalcule/finalise seul au prochain rapport. L'historique garde la convention documentée.
+- **Quotidien + point courant live** (évolution 2026-09-01, demande de Jean) : MOM.SYNTH passe de mensuel à
+  **quotidien**. L'exporteur sort une courbe journalière (panier de chaque mois valorisé jour par jour, **clôtures
+  mensuelles nettes ancrées** via correction multiplicative → ×42,9 préservé) + un bloc `basketCourant` (les ~10 titres
+  du mois en cours + date d'entrée + valeur de départ). Le **frontend valorise ce panier EN DIRECT** (fetch des titres,
+  frais à chaque refresh comme les actions) pour prolonger la courbe jusqu'à aujourd'hui — le dernier point bouge au ↻.
+  Remplace le point provisoire mensuel. NB : en quotidien la **pire baisse est plus profonde** (−41,6 % intra-mois) que
+  le mensuel (−28,5 %) — c'est la résolution fine qui révèle les creux intra-mois ; les clôtures mensuelles, elles, sont identiques.
 - Reste ouvert (nice-to-have) : repère visuel de la frontière backtest↔live sur le graphe.
 
 ## Objectif

@@ -39,77 +39,66 @@ const DEBUT = "2004-02";
 const mois = tous.filter((m: { next: string }) => m.next >= DEBUT);
 if (mois.length === 0) { console.error("Aucun mois mesurable — abandon."); process.exit(1); }
 
-// Bougies MENSUELLES avec amplitude réelle. Les clôtures restent autoritatives
-// (chaîne des rendements nets du moteur = ×42,9 etc.) ; le haut/bas de chaque mois
-// vient de la valorisation quotidienne du panier détenu (retenus), équipondéré,
-// rapporté au cours d'entrée. En liquidités (non investi) le mois est plat.
+// Courbe QUOTIDIENNE (base 100). Chaque jour, le panier détenu ce mois-là (retenus,
+// équipondéré depuis le cours d'entrée) est valorisé. Les CLÔTURES MENSUELLES restent
+// autoritatives (rendement net du moteur, frais + exécution à l'ouverture suivante =
+// ×42,9 etc.) : on ancre la fin de chaque mois sur `net` en étalant l'écart frais/exec
+// proportionnellement sur les jours (facteur f = net/brut). En liquidités : mois plat.
 const R = new Map<string, Serie>(duo.map((s) => [s.ticker, s]));
 const r4 = (x: number) => Number((x * 100).toFixed(4));
 
+// Calendrier de bourse = union des dates de l'univers duo (pour densifier les mois cash).
+const calSet = new Set<string>();
+for (const s of duo) for (const d of s.dates) calSet.add(d);
+const calendrier = [...calSet].sort();
+
 const points: { time: string; open: number; high: number; low: number; close: number }[] = [];
-let equite = 1; // base 1
+let equite = 1; // base 1, = dernière clôture quotidienne émise
 for (const m of mois as MoisResultat[]) {
-  const open = equite;
-  const close = equite * (1 + m.net);
-  let hi = Math.max(open, close), lo = Math.min(open, close);
+  const startE = equite;
+  const jours = calendrier.filter((d) => d > m.reb && d <= m.next);
   if (m.investi && m.retenus.length) {
     const paniers: { s: Serie; entree: number }[] = [];
-    const jours = new Set<string>();
     for (const t of m.retenus) {
       const s = R.get(t); if (!s) continue;
-      const ie = s.idx.get(m.reb); if (ie === undefined) continue;
+      const ie = s.idx.get(m.reb); if (ie === undefined || !(s.close[ie] > 0)) continue;
       paniers.push({ s, entree: s.close[ie] });
-      for (let i = ie + 1; i < s.dates.length && s.dates[i] <= m.next; i++) jours.add(s.dates[i]);
     }
-    for (const d of jours) {
+    const pathAt = (d: string) => { // indice brut du panier (1 à l'entrée)
       let somme = 0, n = 0;
-      for (const { s, entree } of paniers) {
-        const i = s.idx.get(d); if (i === undefined || !(entree > 0)) continue;
-        somme += s.close[i] / entree - 1; n++;
-      }
-      if (n) { const eqd = open * (1 + somme / n); if (eqd > hi) hi = eqd; if (eqd < lo) lo = eqd; }
+      for (const { s, entree } of paniers) { const i = s.idx.get(d); if (i === undefined) continue; somme += s.close[i] / entree; n++; }
+      return n ? somme / n : 1;
+    };
+    // Correction MULTIPLICATIVE (stable) : ratio c ≈ 1 qui ramène la fin du mois sur `net`
+    // (frais + exécution à l'ouverture suivante), étalé en rampe sur les jours du mois.
+    const c = (1 + m.net) / pathAt(m.next);
+    const nd = jours.length;
+    jours.forEach((d, k) => {
+      const open = equite;
+      const corr = 1 + (c - 1) * ((k + 1) / nd);
+      const eq = startE * pathAt(d) * corr;
+      points.push({ time: d, open: r4(open), high: r4(Math.max(open, eq)), low: r4(Math.min(open, eq)), close: r4(eq) });
+      equite = eq;
+    });
+  } else {
+    // Mois en liquidités : plat (net = 0), un point par jour de bourse pour la densité.
+    for (const d of jours) {
+      points.push({ time: d, open: r4(equite), high: r4(equite), low: r4(equite), close: r4(equite) });
     }
   }
-  points.push({ time: m.next, open: r4(open), high: r4(hi), low: r4(lo), close: r4(close) });
-  equite = close;
+  equite = startE * (1 + m.net); // clôture mensuelle autoritative (corrige l'arrondi quotidien)
 }
 
-// --- Point PROVISOIRE du mois en cours (mark-to-market) ----------------------
-// Le dernier point finalisé est daté `lastNext` : la vente s'exécute à l'ouverture
-// du mois suivant (convention backtest), donc le mois courant n'a pas encore de
-// rendement réalisé. Si des barres existent au-delà, on ajoute un point provisoire :
-// le panier tenu ce mois-ci (sélectionné au signal `lastNext`, via calculerCycle),
-// valorisé jour par jour jusqu'à la dernière clôture. Il se recalcule/finalise seul
-// au prochain rapport (l'exporteur régénère tout).
+// Panier COURANT (mois en cours) : le frontend le valorisera EN DIRECT chaque jour,
+// à partir des cours frais de ces titres, pour prolonger la courbe jusqu'à aujourd'hui.
 const lastNext = (mois[mois.length - 1] as MoisResultat).next;
-let latest = "";
-for (const s of duo) { const d = s.dates[s.dates.length - 1]; if (d > latest) latest = d; }
-let provisoire = false;
-if (latest > lastNext) {
-  const cyc = await calculerCycle({ signal: lastNext });
-  const open = equite;
-  let close = open, hi = open, lo = open;
-  if (cyc.marche.investi && cyc.detenus.length) {
-    const paniers: { s: Serie; entree: number }[] = [];
-    const jours = new Set<string>();
-    for (const t of cyc.detenus) {
-      const s = R.get(t); if (!s) continue;
-      const ie = s.idx.get(lastNext); if (ie === undefined) continue;
-      paniers.push({ s, entree: s.close[ie] });
-      for (let i = ie + 1; i < s.dates.length && s.dates[i] <= latest; i++) jours.add(s.dates[i]);
-    }
-    const valeur = (d: string) => {
-      let somme = 0, n = 0;
-      for (const { s, entree } of paniers) { const i = s.idx.get(d); if (i === undefined || !(entree > 0)) continue; somme += s.close[i] / entree - 1; n++; }
-      return n ? open * (1 + somme / n) : open;
-    };
-    for (const d of jours) { const e = valeur(d); if (e > hi) hi = e; if (e < lo) lo = e; }
-    close = valeur(latest);
-    hi = Math.max(hi, open, close); lo = Math.min(lo, open, close);
-  }
-  points.push({ time: latest, open: r4(open), high: r4(hi), low: r4(lo), close: r4(close) });
-  provisoire = true;
-}
+const cyc = await calculerCycle({ signal: lastNext });
+const basketCourant = {
+  investi: !!cyc.marche.investi,
+  tickers: cyc.marche.investi ? (cyc.detenus as string[]) : [],
+  entree: lastNext,           // date d'entrée du panier courant
+  valeurDebut: r4(equite),    // équité base 100 à l'entrée (dernier point figé)
+};
 
 // Sanity-check affiché (à comparer aux documents : duo ~×40-53, pire baisse < 40 %).
 let maxDD = 0, ddDate = "", sommet = 0;
@@ -121,11 +110,11 @@ writeFileSync(
   SORTIE,
   JSON.stringify(
     {
-      _note: `Courbe d'équité base 100 du duo de production (${etat.regles.jeu}), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais, interrupteur séance entière. Dernier point PROVISOIRE (mois en cours mark-to-market, se finalise au prochain rapport). LOCAL — non validé, aucune cartouche.`,
-      provisoireDernierPoint: provisoire,
+      _note: `Courbe d'équité QUOTIDIENNE base 100 du duo de production (${etat.regles.jeu}), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais (clôtures mensuelles autoritatives), interrupteur séance entière. Historique figé jusqu'à 'entree' ; le mois en cours est valorisé EN DIRECT par le frontend depuis 'basketCourant'. LOCAL — non validé, aucune cartouche.`,
       strategie: etat.regles.jeu,
       univers: "market-assaini · Industrials+Technology",
       base: 100,
+      basketCourant,
       points,
     },
     null,
@@ -133,5 +122,6 @@ writeFileSync(
   ) + "\n",
 );
 
-console.log(`OK — ${points.length} points OHLC · ${points[0].time} → ${points[points.length - 1].time}${provisoire ? " (dernier PROVISOIRE)" : ""}`);
+console.log(`OK — ${points.length} points quotidiens · ${points[0].time} → ${points[points.length - 1].time}`);
 console.log(`   univers duo : ${duo.length} titres · multiple ×${multiple.toFixed(1)} · pire baisse ${(maxDD*100).toFixed(1)}% @ ${ddDate} · investi ${invest}/${mois.length}`);
+console.log(`   panier courant : ${basketCourant.investi ? basketCourant.tickers.join(", ") : "CASH"} · entrée ${basketCourant.entree} @ ${basketCourant.valeurDebut}`);
