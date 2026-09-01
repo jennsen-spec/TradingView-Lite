@@ -6,26 +6,59 @@
 **Priorité = ordre des lignes** (haut = prochain). Déplacer un ticket = réordonner sa ligne.
 **Process** : voir [`docs/WORKFLOW.md`](docs/WORKFLOW.md) · détail des tickets affinés dans [`docs/backlog/`](docs/backlog/) · statuts : 📥 Backlog → 🔍 Affiné → 🏗️ En cours → 🧪 À valider → ✅ Fait
 
+**Les 3 sections** : **[1 · 🔍 Prêt (DoR)](#1--prêt-dor)** · **[2 · 📥 Backlog](#2--backlog)** · **[3 · 🗂️ Autre](#3--autre)** (livré / clos / abandonné).
+
 ---
 
-## 🔍 Prêt (DoR)  *— affinés, priorisés par l'ordre*
+# 1 · 🔍 Prêt (DoR)
+*Affinés, prêts à sprinter, priorisés par l'ordre.*
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| [**76**](docs/backlog/76-ordre-collections.md) | **Réordonner les collections** (menu + accès rapide) | 🧩 | 3 | S | | ✅ | Glisser-déposer dans le menu ; les pastilles favorites suivent (ordre dérivé, une seule source de vérité). Vigilance : la fusion cloud (#48) doit préserver l'ordre — audit QA en cours. Pas de drag des pastilles en v1. |
-| [**79**](docs/backlog/79-duo-mom-phase2-append.md) | **DUO.MOM phase 2** — auto-actualisé + public | 💼 | 5 | M | | 🧪 | L'Action rapport **régénère** la courbe chaque mois (`npm run duo:export`) → DUO.MOM **public auto-actualisé** (garde DEV retirée, données trackées). Étiquette « non validé » conservée, non défaut. |
-| [**80**](docs/backlog/80-fiche-detail-synthetiques.md) | **Fiche détail des synthétiques** (panneau collection) | 🧩 | 2 | S | | ✅ | Remplace les champs Yahoo vides (Volume, Cap.) par type + compo/stratégie + perf calculée (multiple, CAGR, pire baisse) + badge « non validé » pour MOM.SYNTH. |
+| — | *Rien en attente* | | | | | | Les tickets affinés récents (#76, #79, #80) ont tous été livrés → voir [§3 Livrés](#-livrés-ex-backlog--ex-dor). |
 
-> ✅ **L'épopée #47 est close (29/08/2026)** : « un seul produit » existe — TVLite + signal mensuel 100 % cloud +
-> rapport + collection automatiques, et Jean décide (5 000 $ engagés, premier signal réel le 31/08). Le chemin réel
-> a différé du plan (duo sectoriel, pas de stops, pas de tables `reco.*`) : consigné ticket par ticket, porte #52 comprise.
-> #51 est 🚫 caduc (besoin servi par les artefacts). Résultats du labo archivés dans
-> [`docs/archive/labo-resultats-2026-08-22.md`](docs/archive/labo-resultats-2026-08-22.md).
+---
 
-### 🎯 Épopée [**#47 — Un seul produit**](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)* — ✅ close le 29/08/2026
+# 2 · 📥 Backlog
+*Priorisé : NOW / THEN / LATER (l'ordre fait foi).*
+
+| # | Item | Cat | Pts | Taille | Note |
+|---|------|:---:|:---:|:---:|---|
+| **⚡ NOW** | | | | | |
+| 66 | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | Bot prévenant Jean dès qu'un nouveau signal est publié. À spécifier : bot, jeton (secret GitHub), message (signal + lien). |
+| 70 | **Responsive — vue Mobile / iPad** | 🧩 | 13 | XL | Adapter TVLite au tactile : layout (toolbar, volets, modales), interactions au doigt, ruptures téléphone/iPad. À affiner : v1 consultation seule, ou dessin tactile aussi ? |
+| **⏭️ THEN** | | | | | |
+| 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
+| 24 | **Espace membre** | 🚀 | ? | — | Zone connectée : préférences, contenus liés au compte. |
+| 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
+| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
+| **🗓️ LATER** | | | | | |
+| 81 | **MOM.SYNTH servi comme un symbole** (NAV sur Supabase) | 💼 | 5 | M | [ticket](docs/backlog/81-mom-synth-supabase.md). Stocker la NAV sur Supabase pour la servir comme n'importe quel symbole (plus de JSON de 481 Ko au bundle). Bémols : divergence dev/prod + table `bars` partagée avec GCR. Idée notée, non prioritaire (« on garde tel quel »). |
+| 78 | **Fusion cloud par entrée (« 48-bis »)** | ⚙️ | 5 | M | Suite de l'audit du 31/08 : la fusion ne sauve que les collections entièrement nouvelles — une **modification** d'une collection existante côté perdant est jetée (perte possible dès aujourd'hui). À faire : rang fusionnable par collection, arbitrage entrée par entrée, insertion à la bonne position, fiabiliser l'arbitre d'horloges client/serveur. |
+| 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
+| 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | Prix obtenus vs ouverture du backtest ; 1re échéance hiver 2026-27, à répéter. La stratégie ne tolère que ~0,9 %/entrée. |
+| 1 | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
+| 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | `createPriceLine` + persistance par symbole. |
+| 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | Compte à rebours jusqu'à la clôture de la bougie / séance. Source des horaires à affiner. |
+| 29 | **Magnet price** (aimant) | 🧩 | 3 | S | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
+| 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | Déclenchement/persistance/notif ; sans temps réel, au rechargement seulement. |
+| 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | API panes v5 (moveToPane) — spike. |
+
+---
+
+# 3 · 🗂️ Autre
+*Livré · clos · abandonné.*
+
+## ✅ Livrés (ex-backlog / ex-DoR)
+- **Synthétiques & stratégie** : [#76](docs/backlog/76-ordre-collections.md) Réordonner les collections · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (**EQ.SYNTH**, panier actuel base 100) · [#77](docs/backlog/77-duo-mom-synthetique.md) **MOM.SYNTH** instrument synthétique du duo (backtest → prod) · [#79](docs/backlog/79-duo-mom-phase2-append.md) MOM.SYNTH phase 2 (quotidien, public, auto-actualisé, point courant live) · [#80](docs/backlog/80-fiche-detail-synthetiques.md) Fiche détail des synthétiques.
+- **Autres ex-backlog** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
+- **🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
+
+## 🎯 Épopée [#47 — Un seul produit](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)* — ✅ close le 29/08/2026
 > TVLite scrape la bourse canadienne, trie techniquement, dépose chaque mois une **collection** + des **positions longues justifiées**, et **Jean décide**.
-> Principe : **le momentum trie, la technique raconte** — trois emplacements distincts (**trier** / **filtrer** / **interrupteur**).
-> Absorbe **#39**, **#40**, **#41**, **#42**. Porte de validation en **#52** : rien d'exécutif avant l'accord.
+> Principe : **le momentum trie, la technique raconte** — trois emplacements distincts (**trier** / **filtrer** / **interrupteur**). Absorbe **#39-42**. Porte de validation en **#52**.
+>
+> Le chemin réel a différé du plan (duo sectoriel, pas de stops, pas de tables `reco.*`) : consigné ticket par ticket. #51 est 🚫 caduc (besoin servi par les artefacts). Résultats du labo archivés dans [`docs/archive/labo-resultats-2026-08-22.md`](docs/archive/labo-resultats-2026-08-22.md).
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut |
 |---|------|:---:|:---:|:---:|:---:|---|
@@ -40,36 +73,6 @@
 | [**57**](docs/backlog/57-divergence.md) | **Dessin « Divergence »** — une flèche dans l'indicateur + son miroir accroché aux bougies ; couleur par pente | 🧩 | 8 | L | ⭐ | ✅ |
 | [**56**](docs/backlog/56-rs-mansfield.md) | **Force relative (RS Mansfield)** — panneau dédié, référence réglable, cours ajustés | 🧩 | 8 | L | ⭐ | ✅ |
 
-## 📥 Backlog  *— priorisé : NOW / THEN / LATER (l'ordre fait foi)*
-
-| # | Item | Cat | Pts | Taille | Note |
-|---|------|:---:|:---:|:---:|---|
-| **⚡ NOW** | | | | | |
-| 66 | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | Bot prévenant Jean dès qu'un nouveau signal est publié. À spécifier : bot, jeton (secret GitHub), message (signal + lien). |
-| 70 | **Responsive — vue Mobile / iPad** | 🧩 | 13 | XL | Adapter TVLite au tactile : layout (toolbar, volets, modales), interactions au doigt, ruptures téléphone/iPad. À affiner : v1 consultation seule, ou dessin tactile aussi ? |
-| **⏭️ THEN** | | | | | |
-| 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
-| 24 | **Espace membre** | 🚀 | ? | — | Zone connectée : préférences, contenus liés au compte. |
-| 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
-| 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
-| **🗓️ LATER** | | | | | |
-| 81 | **MOM.SYNTH servi comme un symbole** (NAV sur Supabase) | 💼 | 5 | M | [ticket](docs/backlog/81-mom-synth-supabase.md). Stocker la NAV sur Supabase pour la servir comme n'importe quel symbole (plus de JSON de 481 Ko au bundle). Bémols : divergence dev/prod + table `bars` partagée avec GCR. Idée notée, non prioritaire (« on garde tel quel »). |
-| 78 | **Fusion cloud par entrée (« 48-bis »)** | ⚙️ | 5 | M | Suite de l'audit du 31/08 (voir #76) : la fusion ne sauve que les collections entièrement nouvelles — une **modification** d'une collection existante côté perdant est jetée (perte possible dès aujourd'hui). À faire : rang fusionnable par collection, arbitrage entrée par entrée, insertion à la bonne position, fiabiliser l'arbitre d'horloges client/serveur. |
-| 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
-| 77 | **DUO.MOM** — instrument synthétique de la stratégie duo | 💼 | 5 | M | ✅ Fait · [ticket](docs/backlog/77-duo-mom-synthetique.md). Courbe d'équité base 100 mensuelle (backtest c-duo-plaf5-p1), **local only** (gitignoré + garde `import.meta.env.DEV`). Socle #76. Phase 2 = append mensuel (ticket dédié). |
-| 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | Prix obtenus vs ouverture du backtest ; 1re échéance hiver 2026-27, à répéter. La stratégie ne tolère que ~0,9 %/entrée. |
-| 1 | **Comparaison d'une 2ᵉ action** (base 100) | 🎨 | 5 | M | Alignement des dates entre 2 bourses ; base 100 / normalisation. |
-| 12 | **Tracer une ligne de prix** | 🧩 | 3 | S | `createPriceLine` + persistance par symbole. |
-| 31 | **Temps restant avant fermeture** | 🧩 | 3 | S | Compte à rebours jusqu'à la clôture de la bougie / séance. Source des horaires à affiner. |
-| 29 | **Magnet price** (aimant) | 🧩 | 3 | S | Crosshair + mesure #27 s'aimantent à l'O/H/L/C. Défaut reste libre. |
-| 13 | **Alerte selon SMA et/ou prix** | 🧩 | 5 | M | Déclenchement/persistance/notif ; sans temps réel, au rechargement seulement. |
-| 3 | **Déplacer les panneaux** (RSI/Volume) | 🧩 | 8 | L | API panes v5 (moveToPane) — spike. |
-
-**✅ Livrés (ex-backlog, rangés)** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (`<COMPTE>.DEJ.A/B` + TOTAL, panier actuel).
-**🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
-
----
-
 ## 🚫 Wont-do  *— abandonnés (0 commencé), gardés pour trace*
 
 | # | Item | Cat | Motif |
@@ -82,9 +85,7 @@
 | 72 | ~~Délai de recherche de titre~~ | ⚙️ | Abandonné (0 commencé). |
 | 73 | ~~Revue de l'interrupteur à séance entière~~ | 💼 | À rejuger informellement à la revue d'hiver si besoin. |
 
----
-
-## ✅ Fait
+## ✅ Fait (fonctionnalités livrées)
 - **Dessin Rectangle** : outil rectangle façon TradingView — tracé 2 clics, **8 poignées** (4 coins + 4 milieux d'arêtes) pour redimensionner, **bordure** (couleur/épaisseur/style), **arrière-plan** (couleur/opacité), **ligne médiane** pointillée (couleur/style), **texte** centré, **Prolonger** gauche/droite, onglets Style/Texte/Coordonnées/Visibilité. *(Fichiers : `lib/drawings.ts`, `components/DrawingLayer.tsx`, `DrawingToolbar.tsx`, `DrawingOptions.tsx`, `lib/templates.ts`.)*
 - **#46 Refonte visuelle** : logo/favicon (#10 bougies+loupe), **titre d'onglet live** (`SYM prix ▲/▼ %`), **volet redimensionnable** (240–520, mémorisé) + **colonnes adaptatives** (ticker prioritaire). Passe « chaleur » : radius adouci (8px), fond du volet allégé (`--bg`), **sélection bleu clair arrondie insérée**, pastille favori normale+sombre façon TradingView, entêtes de section légères, « Symbole » sans majuscules, séparateurs de tickers subtils, ombres douces, poids typo allégés. *(Fichiers : `styles.css`, `App.tsx`, `WatchlistPanel.tsx`, `index.html`, `public/favicon.svg`.)*
 - **#45 Watchlist v2 · Phase C** : **flags de couleur** (clic droit, persistants) + **colonnes optionnelles** Dernier/Volume (menu ⋯) ; `volume` ajouté à `/quotes`. *(Fichiers : `WatchlistPanel.tsx`, `lib/collections.ts`, `lib/api.ts`, Edge Function + backend.)*
@@ -113,10 +114,9 @@
 - **Réglages divers** : logo TradingView retiré (`layout.attributionLogo: false`) ; molette = **zoom horizontal** sur le graphe, **zoom vertical** uniquement sur la colonne des prix (le raccourci ⌘/Ctrl+molette a été retiré).
 - **SMA 9 (violet)** ajoutée aux moyennes mobiles (journalière, réglable via ⚙ comme les autres SMA).
 - **Persistance de la vue** : le chart n'est cadré qu'**une seule fois** (premier chargement) ; ensuite le zoom/pan de l'utilisateur est **toujours conservé** — changement de réglage d'indicateur, Annuler, changement de symbole ET d'intervalle (`hasFittedRef`, réinitialisé à la création du chart). Un panneau se recadre à la demande avec le bouton **A**.
+- **Rafraîchissement des cours (prod)** : le bouton ↻ force un fetch Yahoo (contourne le cache Edge 12 h) ; l'Edge Function réécrit le cache. *(Fichiers : `lib/api.ts`, `supabase/functions/tvlite-api/index.ts`.)*
 
----
-
-## Notes d'équipe
+## 📌 Notes d'équipe
 - **⭐ Priorités : à revoir** (session dédiée à venir). ⭐ actuellement épinglés au backlog : #1 Comparaison · #66 Telegram · #67 Revue du glissement · #22 Vercel.
 - **Épopée [#47](docs/backlog/47-epopee-un-seul-produit.md) close** (29/08) : produit unique en place — TVLite + signal / rapport / collection mensuels **100 % cloud**, Jean décide (5 000 $ engagés, 1er signal réel le 31/08). Détail ticket par ticket #48→#57.
 - **Dépendances restantes** :

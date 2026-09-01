@@ -1,6 +1,6 @@
 # #79 — DUO.MOM phase 2 : append mensuel (backtest → live, publié)
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
+**Statut** : ✅ Fait (validé par Jean le 2026-09-01) · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
 
 ## Réalisé (2026-09-01) — plus simple que le plan
 Au lieu d'un **append incrémental** dans `page.ts` + backfill par replay, on **re-génère toute la
