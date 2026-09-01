@@ -25,7 +25,6 @@
 | # | Item | Cat | Pts | Taille | Note |
 |---|------|:---:|:---:|:---:|---|
 | **⚡ NOW** | | | | | |
-| 66 | **Notification Telegram du rapport mensuel** | 🚀 | 3 | S | Bot prévenant Jean dès qu'un nouveau signal est publié. À spécifier : bot, jeton (secret GitHub), message (signal + lien). |
 | 70 | **Responsive — vue Mobile / iPad** | 🧩 | 13 | XL | Adapter TVLite au tactile : layout (toolbar, volets, modales), interactions au doigt, ruptures téléphone/iPad. À affiner : v1 consultation seule, ou dessin tactile aussi ? |
 | **⏭️ THEN** | | | | | |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
@@ -33,7 +32,6 @@
 | 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
 | 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
 | **🗓️ LATER** | | | | | |
-| 81 | **MOM.SYNTH servi comme un symbole** (NAV sur Supabase) | 💼 | 5 | M | [ticket](docs/backlog/81-mom-synth-supabase.md). Stocker la NAV sur Supabase pour la servir comme n'importe quel symbole (plus de JSON de 481 Ko au bundle). Bémols : divergence dev/prod + table `bars` partagée avec GCR. Idée notée, non prioritaire (« on garde tel quel »). |
 | 78 | **Fusion cloud par entrée (« 48-bis »)** | ⚙️ | 5 | M | Suite de l'audit du 31/08 : la fusion ne sauve que les collections entièrement nouvelles — une **modification** d'une collection existante côté perdant est jetée (perte possible dès aujourd'hui). À faire : rang fusionnable par collection, arbitrage entrée par entrée, insertion à la bonne position, fiabiliser l'arbitre d'horloges client/serveur. |
 | 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
 | 67 | **Revue périodique du glissement d'exécution** | 💼 | 5 | M | Prix obtenus vs ouverture du backtest ; 1re échéance hiver 2026-27, à répéter. La stratégie ne tolère que ~0,9 %/entrée. |
@@ -52,6 +50,7 @@
 ## ✅ Livrés (ex-backlog / ex-DoR)
 - **Synthétiques & stratégie** : [#76](docs/backlog/76-ordre-collections.md) Réordonner les collections · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (**EQ.SYNTH**, panier actuel base 100) · [#77](docs/backlog/77-duo-mom-synthetique.md) **MOM.SYNTH** instrument synthétique du duo (backtest → prod) · [#79](docs/backlog/79-duo-mom-phase2-append.md) MOM.SYNTH phase 2 (quotidien, public, auto-actualisé, point courant live) · [#80](docs/backlog/80-fiche-detail-synthetiques.md) Fiche détail des synthétiques.
 - **Autres ex-backlog** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
+- **Clos par décision** : [#81](docs/backlog/81-mom-synth-supabase.md) MOM.SYNTH sur Supabase — évalué, **écarté** (on garde l'approche actuelle client-side, portable dev/prod).
 - **🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
 
 ## 🎯 Épopée [#47 — Un seul produit](docs/backlog/47-epopee-un-seul-produit.md)  *(~60 pts)* — ✅ close le 29/08/2026
@@ -84,6 +83,7 @@
 | 71 | ~~Disnat — quantités réelles~~ (phase 5) | 💼 | Abandonné (0 commencé). |
 | 72 | ~~Délai de recherche de titre~~ | ⚙️ | Abandonné (0 commencé). |
 | 73 | ~~Revue de l'interrupteur à séance entière~~ | 💼 | À rejuger informellement à la revue d'hiver si besoin. |
+| 66 | ~~Notification Telegram du rapport mensuel~~ | 🚀 | Abandonné (décision 2026-09-01) — la voie Telegram est remplacée par l'agent intégré (#75). |
 
 ## ✅ Fait (fonctionnalités livrées)
 - **Dessin Rectangle** : outil rectangle façon TradingView — tracé 2 clics, **8 poignées** (4 coins + 4 milieux d'arêtes) pour redimensionner, **bordure** (couleur/épaisseur/style), **arrière-plan** (couleur/opacité), **ligne médiane** pointillée (couleur/style), **texte** centré, **Prolonger** gauche/droite, onglets Style/Texte/Coordonnées/Visibilité. *(Fichiers : `lib/drawings.ts`, `components/DrawingLayer.tsx`, `DrawingToolbar.tsx`, `DrawingOptions.tsx`, `lib/templates.ts`.)*
@@ -117,7 +117,7 @@
 - **Rafraîchissement des cours (prod)** : le bouton ↻ force un fetch Yahoo (contourne le cache Edge 12 h) ; l'Edge Function réécrit le cache. *(Fichiers : `lib/api.ts`, `supabase/functions/tvlite-api/index.ts`.)*
 
 ## 📌 Notes d'équipe
-- **⭐ Priorités : à revoir** (session dédiée à venir). ⭐ actuellement épinglés au backlog : #1 Comparaison · #66 Telegram · #67 Revue du glissement · #22 Vercel.
+- **⭐ Priorités : à revoir** (session dédiée à venir). ⭐ actuellement épinglés au backlog : #1 Comparaison · #67 Revue du glissement · #22 Vercel.
 - **Épopée [#47](docs/backlog/47-epopee-un-seul-produit.md) close** (29/08) : produit unique en place — TVLite + signal / rapport / collection mensuels **100 % cloud**, Jean décide (5 000 $ engagés, 1er signal réel le 31/08). Détail ticket par ticket #48→#57.
 - **Dépendances restantes** :
   - **#3** = **spike** API Lightweight Charts (`moveToPane`).

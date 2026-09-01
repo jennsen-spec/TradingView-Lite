@@ -1,6 +1,10 @@
 # #81 — MOM.SYNTH servi comme un vrai symbole (NAV sur Supabase)
 
-**Statut** : 📥 Backlog · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
+**Statut** : ✅ Clos (2026-09-01 — évalué, **décision : garder l'approche actuelle**) · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
+
+> **Décision** : idée évaluée et **écartée pour l'instant**. On garde MOM.SYNTH calculé côté client
+> (historique dans le bundle + point courant live), portable dev/prod. Les bémols ci-dessous (divergence
+> dev/prod, table `bars` partagée) ont tranché. Ce ticket reste comme trace si on veut le reprendre.
 
 ## Idée (Jean, 2026-09-01)
 Stocker la courbe NAV de MOM.SYNTH sur Supabase pour qu'elle soit servie **comme n'importe quel
