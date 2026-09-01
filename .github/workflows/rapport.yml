@@ -92,13 +92,21 @@ jobs:
             echo "::notice::Nouveau signal : $AVANT → $APRES"
           fi
 
+      # DUO.MOM (#79) — instrument synthétique du chart : on régénère la courbe d'équité
+      # base 100 (backtest du duo de production, même univers que le rapport). L'exporteur
+      # recalcule toute l'histoire → le nouveau mois complet apparaît comme un point de plus.
+      # Non bloquant : un pépin ne doit pas empêcher la publication du signal.
+      - name: Actualiser la courbe DUO.MOM
+        if: steps.gen.outputs.change == 'true'
+        run: npm run duo:export || echo "::warning::export DUO.MOM indisponible ce soir"
+
       - name: Publier
         if: steps.gen.outputs.change == 'true'
         run: |
           set -euo pipefail
           git config user.name "TVLite"
           git config user.email "de.brunel@gmail.com"
-          git add frontend/public/rapport.html portefeuille/dernier-signal.txt portefeuille/etat.json
+          git add frontend/public/rapport.html portefeuille/dernier-signal.txt portefeuille/etat.json frontend/src/data/duo-mom.json
           git commit -m "rapport : signal du ${{ steps.gen.outputs.apres }}" \
                      -m "Généré automatiquement. Le cycle est inscrit dans etat.json ; \`execute\` reste vide jusqu'à ce que Jean rapporte ses exécutions réelles."
           git push

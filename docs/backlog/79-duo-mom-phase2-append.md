@@ -1,6 +1,18 @@
 # #79 — DUO.MOM phase 2 : append mensuel (backtest → live, publié)
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
+**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M
+
+## Réalisé (2026-09-01) — plus simple que le plan
+Au lieu d'un **append incrémental** dans `page.ts` + backfill par replay, on **re-génère toute la
+courbe** à chaque rapport : l'exporteur [`labo/src/exporter-duo-mom.ts`](../../labo/src/exporter-duo-mom.ts)
+recalcule 2004→dernier mois via le moteur (convention backtest, net de frais, interrupteur séance),
+donc le nouveau mois complet apparaît tout seul et le **backfill est inhérent** (aucune logique dédiée).
+- **Public + auto** : `duo-mom.json` **suivi par git** (dé-gitignoré), garde `import.meta.env.DEV` **retirée**
+  → DUO.MOM visible en prod (vérifié dans le build). Reste **non défaut** (DOUDOU) et **étiqueté « NON validé »**.
+- **Action** `rapport.yml` : nouveau pas *Actualiser la courbe DUO.MOM* (`npm run duo:export`, non bloquant)
+  quand le signal change ; `duo-mom.json` ajouté au `git add` du commit mensuel.
+- **Nature des points** : OHLC mensuel, live réel du panier (retenus), convention backtest — conforme aux décisions.
+- Reste ouvert (nice-to-have) : repère visuel de la frontière backtest↔live sur le graphe.
 
 ## Objectif
 Faire **vivre** DUO.MOM : à chaque **rapport mensuel** (Action `rapport.yml`), calculer le

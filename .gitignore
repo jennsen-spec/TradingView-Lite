@@ -18,6 +18,3 @@ portefeuille/rapport-*.html
 # Données perso (avoirs / historique de transactions) — dépôt PUBLIC, ne jamais committer
 /Historique-*.xlsx
 frontend/src/data/comptes/
-
-# DUO.MOM (#77) — courbe backtest LOCALE, non validée, ne jamais publier
-frontend/src/data/duo-mom.json

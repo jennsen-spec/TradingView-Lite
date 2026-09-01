@@ -8,6 +8,7 @@
     "cycle": "node --disable-warning=ExperimentalWarning labo/src/cycle.ts",
     "rapport": "node --disable-warning=ExperimentalWarning labo/src/page.ts",
     "collection": "node --disable-warning=ExperimentalWarning labo/src/collection.ts",
-    "inventaire": "node --disable-warning=ExperimentalWarning labo/src/inventaire.ts"
+    "inventaire": "node --disable-warning=ExperimentalWarning labo/src/inventaire.ts",
+    "duo:export": "node --disable-warning=ExperimentalWarning labo/src/exporter-duo-mom.ts"
   }
 }

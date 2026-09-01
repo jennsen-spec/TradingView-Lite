@@ -4,10 +4,10 @@
 //    calculée en direct depuis les cours réels des 5 ETF. Volume = somme des volumes ETF.
 //    Poids NORMALISÉS (data/portefeuille.json) : le bundle public ne révèle que l'allocation.
 //
-// 2) DUO.MOM (#77) — courbe d'équité du backtest de la stratégie duo momentum, base 100,
-//    MENSUELLE, lue depuis data/duo-mom.json. **LOCAL only** : le fichier est gitignoré et
-//    la feature est gardée derrière `import.meta.env.DEV` → absente du build/déploiement public.
-//    Stratégie NON validée (biais du survivant, pas de stop) — étiquetée comme telle.
+// 2) DUO.MOM (#77/#79) — courbe d'équité du backtest de la stratégie duo momentum de
+//    production (c-duo-plaf5-p1-seance), base 100, MENSUELLE (OHLC), lue depuis
+//    data/duo-mom.json. Régénérée chaque mois par l'Action rapport (phase 2). Stratégie
+//    NON validée (biais du survivant, pas de stop) — étiquetée comme telle, pas par défaut.
 
 import type { Candle } from "./indicators";
 import type { SymbolHit } from "./api";
@@ -21,16 +21,16 @@ export const ETF_TICKERS = ["ZEQT.TO", "VMO.TO", "HXS.TO", "ZAG.TO", "ZGLD.TO"];
 export const SYNTH_SYMBOL = "DOUDOU";
 const SYNTH_NAME = "DOUDOU — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
 
-// DUO.MOM — série pré-calculée locale. Le glob renvoie {} si le fichier est absent
-// (build public / CI) → feature désactivée sans casser la compilation.
+// DUO.MOM — série pré-calculée (data/duo-mom.json), régénérée par l'Action rapport.
+// Le glob renvoie {} si le fichier est absent → feature désactivée sans casser la compile.
 const duoGlob = import.meta.glob<{ default: { points: { time: string; open: number; high: number; low: number; close: number }[] } }>(
   "../data/duo-mom.json",
   { eager: true },
 );
 const DUO_DATA = Object.values(duoGlob)[0]?.default ?? null;
 const DUO_SYMBOL = "DUO.MOM";
-const DUO_NAME = "DUO.MOM — duo secteur momentum (backtest c-duo-plaf5-p1-seance · NON validé · local)";
-const DUO_ENABLED = import.meta.env.DEV && !!DUO_DATA && (DUO_DATA.points?.length ?? 0) > 0;
+const DUO_NAME = "DUO.MOM — duo secteur momentum (backtest c-duo-plaf5-p1-seance · NON validé)";
+const DUO_ENABLED = !!DUO_DATA && (DUO_DATA.points?.length ?? 0) > 0;
 
 export function isSynthetic(sym: string): boolean {
   const s = sym.toUpperCase();
@@ -42,7 +42,7 @@ export function syntheticHits(query: string): SymbolHit[] {
     { symbol: SYNTH_SYMBOL, name: SYNTH_NAME, exchange: "Synthétique", country: "Canada", type: "Performance", category: "fonds" },
   ];
   if (DUO_ENABLED) {
-    all.push({ symbol: DUO_SYMBOL, name: DUO_NAME, exchange: "Synthétique · local", country: "Canada", type: "Backtest", category: "fonds" });
+    all.push({ symbol: DUO_SYMBOL, name: DUO_NAME, exchange: "Synthétique · backtest", country: "Canada", type: "Backtest", category: "fonds" });
   }
   const q = query.trim().toLowerCase();
   if (!q) return all;
