@@ -23,7 +23,7 @@ const SYNTH_NAME = "DOUDOU — portefeuille 60 actions / 10 oblig / 30 or (base 
 
 // DUO.MOM — série pré-calculée locale. Le glob renvoie {} si le fichier est absent
 // (build public / CI) → feature désactivée sans casser la compilation.
-const duoGlob = import.meta.glob<{ default: { points: { time: string; close: number }[] } }>(
+const duoGlob = import.meta.glob<{ default: { points: { time: string; open: number; high: number; low: number; close: number }[] } }>(
   "../data/duo-mom.json",
   { eager: true },
 );
@@ -95,14 +95,11 @@ function rebase100(candles: Candle[]): Candle[] {
   return candles.map((c) => mk(c.time as string, c.open * k, c.high * k, c.low * k, c.close * k, c.volume));
 }
 
-// DUO.MOM : bougies mensuelles à partir de la série de clôtures (open = clôture précédente).
+// DUO.MOM : bougies mensuelles OHLC (amplitude réelle = valorisation quotidienne du
+// panier détenu, calculée par l'exporteur). Volume 0.
 function duoMomCandles(): Candle[] {
   if (!DUO_DATA) return [];
-  const pts = DUO_DATA.points;
-  return pts.map((p, i) => {
-    const open = i > 0 ? pts[i - 1].close : p.close;
-    return mk(p.time, open, open, open, p.close, 0);
-  });
+  return DUO_DATA.points.map((p) => mk(p.time, p.open, p.high, p.low, p.close, 0));
 }
 
 // ---------- Agrégation d'intervalle (journalier/mensuel → hebdo/mensuel/…) ----------

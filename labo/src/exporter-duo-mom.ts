@@ -13,8 +13,8 @@ import { definirReferenceRS } from "./indicateurs.ts";
 import { chargerSecteurs, definirSecteurs, secteurDe } from "./secteurs.ts";
 import { chargerEtfSectoriels, definirPortes } from "./etfSectoriels.ts";
 import { chargerJeu } from "./regles.ts";
-import { lancer } from "./moteur.ts";
-import { courbe, rendementsStrategie } from "./courbes.ts";
+import { lancer, type MoisResultat } from "./moteur.ts";
+import type { Serie } from "./data.ts";
 import { lireEtat } from "./cycleCalc.ts";
 
 const SORTIE = "frontend/src/data/duo-mom.json";
@@ -39,13 +39,46 @@ const DEBUT = "2004-02";
 const mois = tous.filter((m: { next: string }) => m.next >= DEBUT);
 if (mois.length === 0) { console.error("Aucun mois mesurable — abandon."); process.exit(1); }
 
-const pts = courbe(rendementsStrategie(mois)); // {date, equite (base 1), sousLeau}
-const points = pts.map((p) => ({ time: p.date, close: Number((p.equite * 100).toFixed(4)) }));
+// Bougies MENSUELLES avec amplitude réelle. Les clôtures restent autoritatives
+// (chaîne des rendements nets du moteur = ×42,9 etc.) ; le haut/bas de chaque mois
+// vient de la valorisation quotidienne du panier détenu (retenus), équipondéré,
+// rapporté au cours d'entrée. En liquidités (non investi) le mois est plat.
+const R = new Map<string, Serie>(duo.map((s) => [s.ticker, s]));
+const r4 = (x: number) => Number((x * 100).toFixed(4));
+
+const points: { time: string; open: number; high: number; low: number; close: number }[] = [];
+let equite = 1; // base 1
+for (const m of mois as MoisResultat[]) {
+  const open = equite;
+  const close = equite * (1 + m.net);
+  let hi = Math.max(open, close), lo = Math.min(open, close);
+  if (m.investi && m.retenus.length) {
+    const paniers: { s: Serie; entree: number }[] = [];
+    const jours = new Set<string>();
+    for (const t of m.retenus) {
+      const s = R.get(t); if (!s) continue;
+      const ie = s.idx.get(m.reb); if (ie === undefined) continue;
+      paniers.push({ s, entree: s.close[ie] });
+      for (let i = ie + 1; i < s.dates.length && s.dates[i] <= m.next; i++) jours.add(s.dates[i]);
+    }
+    for (const d of jours) {
+      let somme = 0, n = 0;
+      for (const { s, entree } of paniers) {
+        const i = s.idx.get(d); if (i === undefined || !(entree > 0)) continue;
+        somme += s.close[i] / entree - 1; n++;
+      }
+      if (n) { const eqd = open * (1 + somme / n); if (eqd > hi) hi = eqd; if (eqd < lo) lo = eqd; }
+    }
+  }
+  points.push({ time: m.next, open: r4(open), high: r4(hi), low: r4(lo), close: r4(close) });
+  equite = close;
+}
 
 // Sanity-check affiché (à comparer aux documents : duo ~×40-53, pire baisse < 40 %).
-let maxDD = 0, ddDate = "";
-for (const p of pts) if (p.sousLeau < maxDD) { maxDD = p.sousLeau; ddDate = p.date; }
-const invest = mois.filter((m: { investi?: boolean }) => m.investi !== false).length;
+let maxDD = 0, ddDate = "", sommet = 0;
+for (const p of points) { const e = p.close / 100; if (e > sommet) sommet = e; const dd = e / sommet - 1; if (dd < maxDD) { maxDD = dd; ddDate = p.time; } }
+const multiple = equite;
+const invest = mois.filter((m: MoisResultat) => m.investi).length;
 
 writeFileSync(
   SORTIE,
@@ -62,5 +95,5 @@ writeFileSync(
   ) + "\n",
 );
 
-console.log(`OK — ${points.length} points · ${points[0].time} → ${points[points.length - 1].time}`);
-console.log(`   univers duo : ${duo.length} titres · multiple ×${pts[pts.length-1].equite.toFixed(1)} · pire baisse ${(maxDD*100).toFixed(1)}% @ ${ddDate} · investi ${invest}/${mois.length}`);
+console.log(`OK — ${points.length} points OHLC · ${points[0].time} → ${points[points.length - 1].time}`);
+console.log(`   univers duo : ${duo.length} titres · multiple ×${multiple.toFixed(1)} · pire baisse ${(maxDD*100).toFixed(1)}% @ ${ddDate} · investi ${invest}/${mois.length}`);
