@@ -158,7 +158,74 @@
           "momentum": 0.9706
         }
       ],
-      "execute": null
+      "execute": {
+        "date": "2026-09-01",
+        "note": "10 ordres a cours limite executes a l'ouverture (BNCD, compte CELI). Quantites et titres identiques a la prescription ; toutes les limites respectees.",
+        "ordres": [
+          {
+            "ticker": "KEEL.TO",
+            "quantite": 115,
+            "prix": 4.35,
+            "montant": 500.25
+          },
+          {
+            "ticker": "DBO.TO",
+            "quantite": 438,
+            "prix": 1.1,
+            "montant": 481.8
+          },
+          {
+            "ticker": "AMD.TO",
+            "quantite": 5,
+            "prix": 82.9,
+            "montant": 414.5
+          },
+          {
+            "ticker": "QTRH.TO",
+            "quantite": 195,
+            "prix": 2.54,
+            "montant": 495.3
+          },
+          {
+            "ticker": "BB.TO",
+            "quantite": 44,
+            "prix": 11.01,
+            "montant": 484.44
+          },
+          {
+            "ticker": "ARE.TO",
+            "quantite": 11,
+            "prix": 42.3,
+            "montant": 465.3
+          },
+          {
+            "ticker": "HPS-A.TO",
+            "quantite": 2,
+            "prix": 227.53,
+            "montant": 455.06
+          },
+          {
+            "ticker": "BBD-A.TO",
+            "quantite": 1,
+            "prix": 293.0,
+            "montant": 293.0
+          },
+          {
+            "ticker": "MTL.TO",
+            "quantite": 19,
+            "prix": 25.33,
+            "montant": 481.27
+          },
+          {
+            "ticker": "FTG.TO",
+            "quantite": 24,
+            "prix": 20.55,
+            "montant": 493.2
+          }
+        ],
+        "total": 4564.12,
+        "liquidites": 435.88
+      }
     }
   ],
   "derogations": []
