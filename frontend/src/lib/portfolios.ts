@@ -1,6 +1,6 @@
 // Instruments synthétiques du chart.
 //
-// 1) DOUDOU (#76) — la poche 5-ETF de Jean (60 actions / 10 oblig / 30 or), rebasée à 100,
+// 1) HI.BOU (#76, ex-DOUDOU) — la poche 5-ETF de Jean (60 actions / 10 oblig / 30 or), rebasée à 100,
 //    calculée en direct depuis les cours réels des 5 ETF. Volume = somme des volumes ETF.
 //    Poids NORMALISÉS (data/portefeuille.json) : le bundle public ne révèle que l'allocation.
 //
@@ -18,8 +18,8 @@ const WEIGHTS = (portefeuille as { weights: Record<string, number> }).weights;
 
 export const ETF_TICKERS = ["ZEQT.TO", "VMO.TO", "HXS.TO", "ZAG.TO", "ZGLD.TO"];
 
-export const SYNTH_SYMBOL = "DOUDOU";
-const SYNTH_NAME = "DOUDOU — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
+export const SYNTH_SYMBOL = "HI.BOU";
+const SYNTH_NAME = "HI.BOU — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
 
 // DUO.MOM — série pré-calculée (data/duo-mom.json), régénérée par l'Action rapport.
 // Le glob renvoie {} si le fichier est absent → feature désactivée sans casser la compile.
@@ -57,7 +57,7 @@ function mk(time: string, o: number, h: number, l: number, c: number, v: number)
   return { time, open: o, high: Math.max(o, h, c), low: Math.min(o, l, c), close: c, volume: v };
 }
 
-// DOUDOU : valeur OHLC + volume du panier jour par jour (démarre quand les 5 ETF ont tous des données).
+// HI.BOU : valeur OHLC + volume du panier jour par jour (démarre quand les 5 ETF ont tous des données).
 function basketCandles(weights: Record<string, number>, etf: EtfDaily): Candle[] {
   const tickers = Object.keys(weights).filter((t) => (etf[t]?.length ?? 0) > 0 && weights[t] > 0);
   if (tickers.length === 0) return [];
