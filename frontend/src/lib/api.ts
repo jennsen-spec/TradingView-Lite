@@ -46,8 +46,14 @@ function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?:
   return getJson<CandlesResponse>(`/api/candles/${encodeURIComponent(symbol)}?${q}`);
 }
 
-// Portefeuilles synthétiques (#76) : calculés côté client depuis les 5 ETF (journalier).
+// Portefeuilles synthétiques (#76/#77) : calculés côté client.
 async function fetchSyntheticCandles(symbol: string, interval: string, fresh: boolean): Promise<CandlesResponse> {
+  // DUO.MOM (#77) : série pré-calculée locale → aucun cours ETF à charger.
+  if (symbol.toUpperCase() === "DUO.MOM") {
+    const res = computeSynthetic(symbol, {}, interval);
+    if (!res) throw new Error(`Symbole synthétique inconnu : ${symbol}`);
+    return { symbol, interval, cached: false, currency: res.currency, name: res.name, candles: res.candles, fetchedAt: Date.now() };
+  }
   const etf: Record<string, Candle[]> = {};
   await Promise.all(
     ETF_TICKERS.map(async (t) => {
