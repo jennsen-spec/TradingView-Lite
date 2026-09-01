@@ -53,6 +53,7 @@
 | 25 | **Sync multi-appareils** | 🚀 | ? | — | Favoris, watchlists, dessins, layout liés au compte → retrouvés partout. |
 | 22 | **Déploiement sur Vercel** | 🚀 | ? | — | Build front + hébergement backend proxy ; domaine. Plan gratuit. Vérifier que l'adresse du rapport mensuel (`frontend/public/`) survit. |
 | **🗓️ LATER** | | | | | |
+| 81 | **MOM.SYNTH servi comme un symbole** (NAV sur Supabase) | 💼 | 5 | M | [ticket](docs/backlog/81-mom-synth-supabase.md). Stocker la NAV sur Supabase pour la servir comme n'importe quel symbole (plus de JSON de 481 Ko au bundle). Bémols : divergence dev/prod + table `bars` partagée avec GCR. Idée notée, non prioritaire (« on garde tel quel »). |
 | 78 | **Fusion cloud par entrée (« 48-bis »)** | ⚙️ | 5 | M | Suite de l'audit du 31/08 (voir #76) : la fusion ne sauve que les collections entièrement nouvelles — une **modification** d'une collection existante côté perdant est jetée (perte possible dès aujourd'hui). À faire : rang fusionnable par collection, arbitrage entrée par entrée, insertion à la bonne position, fiabiliser l'arbitre d'horloges client/serveur. |
 | 75 | **Agent Gemini Built-in** (migration Telegram) | ⚙️ | ? | — | À spécifier. Agent Gemini intégré remplaçant / prolongeant la notif Telegram (#66). |
 | 77 | **DUO.MOM** — instrument synthétique de la stratégie duo | 💼 | 5 | M | ✅ Fait · [ticket](docs/backlog/77-duo-mom-synthetique.md). Courbe d'équité base 100 mensuelle (backtest c-duo-plaf5-p1), **local only** (gitignoré + garde `import.meta.env.DEV`). Socle #76. Phase 2 = append mensuel (ticket dédié). |
