@@ -1,10 +1,10 @@
 // Instruments synthétiques du chart.
 //
-// 1) HI.BOU (#76, ex-DOUDOU) — la poche 5-ETF de Jean (60 actions / 10 oblig / 30 or), rebasée à 100,
+// 1) EQ.SYNTH (#76, ex-DOUDOU/HI.BOU) — la poche 5-ETF de Jean (60 actions / 10 oblig / 30 or), rebasée à 100,
 //    calculée en direct depuis les cours réels des 5 ETF. Volume = somme des volumes ETF.
 //    Poids NORMALISÉS (data/portefeuille.json) : le bundle public ne révèle que l'allocation.
 //
-// 2) DUO.MOM (#77/#79) — courbe d'équité du backtest de la stratégie duo momentum de
+// 2) MOM.SYNTH (#77/#79, ex-DUO.MOM) — courbe d'équité du backtest de la stratégie duo momentum de
 //    production (c-duo-plaf5-p1-seance), base 100, MENSUELLE (OHLC), lue depuis
 //    data/duo-mom.json. Régénérée chaque mois par l'Action rapport (phase 2). Stratégie
 //    NON validée (biais du survivant, pas de stop) — étiquetée comme telle, pas par défaut.
@@ -18,18 +18,18 @@ const WEIGHTS = (portefeuille as { weights: Record<string, number> }).weights;
 
 export const ETF_TICKERS = ["ZEQT.TO", "VMO.TO", "HXS.TO", "ZAG.TO", "ZGLD.TO"];
 
-export const SYNTH_SYMBOL = "HI.BOU";
-const SYNTH_NAME = "HI.BOU — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
+export const SYNTH_SYMBOL = "EQ.SYNTH";
+const SYNTH_NAME = "EQ.SYNTH — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
 
-// DUO.MOM — série pré-calculée (data/duo-mom.json), régénérée par l'Action rapport.
+// MOM.SYNTH — série pré-calculée (data/duo-mom.json), régénérée par l'Action rapport.
 // Le glob renvoie {} si le fichier est absent → feature désactivée sans casser la compile.
 const duoGlob = import.meta.glob<{ default: { points: { time: string; open: number; high: number; low: number; close: number }[] } }>(
   "../data/duo-mom.json",
   { eager: true },
 );
 const DUO_DATA = Object.values(duoGlob)[0]?.default ?? null;
-const DUO_SYMBOL = "DUO.MOM";
-const DUO_NAME = "DUO.MOM — duo secteur momentum (backtest c-duo-plaf5-p1-seance · NON validé)";
+const DUO_SYMBOL = "MOM.SYNTH";
+const DUO_NAME = "MOM.SYNTH — duo secteur momentum (backtest c-duo-plaf5-p1-seance · NON validé)";
 const DUO_ENABLED = !!DUO_DATA && (DUO_DATA.points?.length ?? 0) > 0;
 
 export function isSynthetic(sym: string): boolean {
@@ -57,7 +57,7 @@ function mk(time: string, o: number, h: number, l: number, c: number, v: number)
   return { time, open: o, high: Math.max(o, h, c), low: Math.min(o, l, c), close: c, volume: v };
 }
 
-// HI.BOU : valeur OHLC + volume du panier jour par jour (démarre quand les 5 ETF ont tous des données).
+// EQ.SYNTH : valeur OHLC + volume du panier jour par jour (démarre quand les 5 ETF ont tous des données).
 function basketCandles(weights: Record<string, number>, etf: EtfDaily): Candle[] {
   const tickers = Object.keys(weights).filter((t) => (etf[t]?.length ?? 0) > 0 && weights[t] > 0);
   if (tickers.length === 0) return [];
@@ -95,7 +95,7 @@ function rebase100(candles: Candle[]): Candle[] {
   return candles.map((c) => mk(c.time as string, c.open * k, c.high * k, c.low * k, c.close * k, c.volume));
 }
 
-// DUO.MOM : bougies mensuelles OHLC (amplitude réelle = valorisation quotidienne du
+// MOM.SYNTH : bougies mensuelles OHLC (amplitude réelle = valorisation quotidienne du
 // panier détenu, calculée par l'exporteur). Volume 0.
 function duoMomCandles(): Candle[] {
   if (!DUO_DATA) return [];

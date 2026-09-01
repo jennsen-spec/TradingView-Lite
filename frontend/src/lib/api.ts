@@ -48,8 +48,8 @@ function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?:
 
 // Portefeuilles synthétiques (#76/#77) : calculés côté client.
 async function fetchSyntheticCandles(symbol: string, interval: string, fresh: boolean): Promise<CandlesResponse> {
-  // DUO.MOM (#77) : série pré-calculée locale → aucun cours ETF à charger.
-  if (symbol.toUpperCase() === "DUO.MOM") {
+  // MOM.SYNTH (#77) : série pré-calculée → aucun cours ETF à charger.
+  if (symbol.toUpperCase() === "MOM.SYNTH") {
     const res = computeSynthetic(symbol, {}, interval);
     if (!res) throw new Error(`Symbole synthétique inconnu : ${symbol}`);
     return { symbol, interval, cached: false, currency: res.currency, name: res.name, candles: res.candles, fetchedAt: Date.now() };

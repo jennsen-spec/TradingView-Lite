@@ -1,4 +1,4 @@
-// Exporteur DUO.MOM (#77) — courbe d'équité mensuelle base 100 du duo de PRODUCTION.
+// Exporteur MOM.SYNTH (#77, ex-DUO.MOM) — courbe d'équité mensuelle base 100 du duo de PRODUCTION.
 //
 // Reproduit à l'identique l'univers du rapport (cycleCalc.ts) : pan-canadien assaini,
 // restreint aux secteurs Industrials + Technology, CDR selon etat.json, jeu de règles
