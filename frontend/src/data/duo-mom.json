@@ -1,5 +1,6 @@
 {
-  "_note": "Courbe d'équité base 100 du duo de production (c-duo-plaf5-p1-seance), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais, interrupteur séance entière. LOCAL — non validé, aucune cartouche.",
+  "_note": "Courbe d'équité base 100 du duo de production (c-duo-plaf5-p1-seance), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais, interrupteur séance entière. Dernier point PROVISOIRE (mois en cours mark-to-market, se finalise au prochain rapport). LOCAL — non validé, aucune cartouche.",
+  "provisoireDernierPoint": true,
   "strategie": "c-duo-plaf5-p1-seance",
   "univers": "market-assaini · Industrials+Technology",
   "base": 100,
@@ -1893,6 +1894,13 @@
       "high": 4885.1244,
       "low": 3792.7169,
       "close": 4287.1139
+    },
+    {
+      "time": "2026-08-31",
+      "open": 4287.1139,
+      "high": 4772.9991,
+      "low": 3905.7487,
+      "close": 3976.5511
     }
   ]
 }

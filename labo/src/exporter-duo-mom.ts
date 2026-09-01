@@ -15,7 +15,7 @@ import { chargerEtfSectoriels, definirPortes } from "./etfSectoriels.ts";
 import { chargerJeu } from "./regles.ts";
 import { lancer, type MoisResultat } from "./moteur.ts";
 import type { Serie } from "./data.ts";
-import { lireEtat } from "./cycleCalc.ts";
+import { lireEtat, calculerCycle } from "./cycleCalc.ts";
 
 const SORTIE = "frontend/src/data/duo-mom.json";
 const etat = lireEtat();
@@ -74,17 +74,55 @@ for (const m of mois as MoisResultat[]) {
   equite = close;
 }
 
+// --- Point PROVISOIRE du mois en cours (mark-to-market) ----------------------
+// Le dernier point finalisé est daté `lastNext` : la vente s'exécute à l'ouverture
+// du mois suivant (convention backtest), donc le mois courant n'a pas encore de
+// rendement réalisé. Si des barres existent au-delà, on ajoute un point provisoire :
+// le panier tenu ce mois-ci (sélectionné au signal `lastNext`, via calculerCycle),
+// valorisé jour par jour jusqu'à la dernière clôture. Il se recalcule/finalise seul
+// au prochain rapport (l'exporteur régénère tout).
+const lastNext = (mois[mois.length - 1] as MoisResultat).next;
+let latest = "";
+for (const s of duo) { const d = s.dates[s.dates.length - 1]; if (d > latest) latest = d; }
+let provisoire = false;
+if (latest > lastNext) {
+  const cyc = await calculerCycle({ signal: lastNext });
+  const open = equite;
+  let close = open, hi = open, lo = open;
+  if (cyc.marche.investi && cyc.detenus.length) {
+    const paniers: { s: Serie; entree: number }[] = [];
+    const jours = new Set<string>();
+    for (const t of cyc.detenus) {
+      const s = R.get(t); if (!s) continue;
+      const ie = s.idx.get(lastNext); if (ie === undefined) continue;
+      paniers.push({ s, entree: s.close[ie] });
+      for (let i = ie + 1; i < s.dates.length && s.dates[i] <= latest; i++) jours.add(s.dates[i]);
+    }
+    const valeur = (d: string) => {
+      let somme = 0, n = 0;
+      for (const { s, entree } of paniers) { const i = s.idx.get(d); if (i === undefined || !(entree > 0)) continue; somme += s.close[i] / entree - 1; n++; }
+      return n ? open * (1 + somme / n) : open;
+    };
+    for (const d of jours) { const e = valeur(d); if (e > hi) hi = e; if (e < lo) lo = e; }
+    close = valeur(latest);
+    hi = Math.max(hi, open, close); lo = Math.min(lo, open, close);
+  }
+  points.push({ time: latest, open: r4(open), high: r4(hi), low: r4(lo), close: r4(close) });
+  provisoire = true;
+}
+
 // Sanity-check affiché (à comparer aux documents : duo ~×40-53, pire baisse < 40 %).
 let maxDD = 0, ddDate = "", sommet = 0;
 for (const p of points) { const e = p.close / 100; if (e > sommet) sommet = e; const dd = e / sommet - 1; if (dd < maxDD) { maxDD = dd; ddDate = p.time; } }
-const multiple = equite;
+const multiple = points[points.length - 1].close / 100;
 const invest = mois.filter((m: MoisResultat) => m.investi).length;
 
 writeFileSync(
   SORTIE,
   JSON.stringify(
     {
-      _note: `Courbe d'équité base 100 du duo de production (${etat.regles.jeu}), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais, interrupteur séance entière. LOCAL — non validé, aucune cartouche.`,
+      _note: `Courbe d'équité base 100 du duo de production (${etat.regles.jeu}), univers pan-canadien assaini restreint à Industrials+Technology, dividendes inclus, net de frais, interrupteur séance entière. Dernier point PROVISOIRE (mois en cours mark-to-market, se finalise au prochain rapport). LOCAL — non validé, aucune cartouche.`,
+      provisoireDernierPoint: provisoire,
       strategie: etat.regles.jeu,
       univers: "market-assaini · Industrials+Technology",
       base: 100,
@@ -95,5 +133,5 @@ writeFileSync(
   ) + "\n",
 );
 
-console.log(`OK — ${points.length} points OHLC · ${points[0].time} → ${points[points.length - 1].time}`);
+console.log(`OK — ${points.length} points OHLC · ${points[0].time} → ${points[points.length - 1].time}${provisoire ? " (dernier PROVISOIRE)" : ""}`);
 console.log(`   univers duo : ${duo.length} titres · multiple ×${multiple.toFixed(1)} · pire baisse ${(maxDD*100).toFixed(1)}% @ ${ddDate} · investi ${invest}/${mois.length}`);

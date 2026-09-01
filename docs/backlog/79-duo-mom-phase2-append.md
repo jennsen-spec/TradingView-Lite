@@ -12,6 +12,10 @@ donc le nouveau mois complet apparaît tout seul et le **backfill est inhérent*
 - **Action** `rapport.yml` : nouveau pas *Actualiser la courbe DUO.MOM* (`npm run duo:export`, non bloquant)
   quand le signal change ; `duo-mom.json` ajouté au `git add` du commit mensuel.
 - **Nature des points** : OHLC mensuel, live réel du panier (retenus), convention backtest — conforme aux décisions.
+- **Point provisoire du mois en cours** (ajout 2026-09-01) : la convention « vente à l'ouverture suivante » fait que le
+  dernier mois n'est finalisé qu'à l'ouverture du mois d'après → le mois courant manquait. On ajoute un point **provisoire**
+  (mark-to-market) : le panier tenu ce mois-ci (sélectionné au dernier signal, via `calculerCycle`) valorisé jour par jour
+  jusqu'à la dernière clôture. Il se recalcule/finalise seul au prochain rapport. L'historique garde la convention documentée.
 - Reste ouvert (nice-to-have) : repère visuel de la frontière backtest↔live sur le graphe.
 
 ## Objectif
