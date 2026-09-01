@@ -18,8 +18,8 @@ const WEIGHTS = (portefeuille as { weights: Record<string, number> }).weights;
 
 export const ETF_TICKERS = ["ZEQT.TO", "VMO.TO", "HXS.TO", "ZAG.TO", "ZGLD.TO"];
 
-export const SYNTH_SYMBOL = "DEJ.601030";
-const SYNTH_NAME = "Portefeuille DEJ — 60 actions / 10 oblig / 30 or (base 100)";
+export const SYNTH_SYMBOL = "DOUDOU";
+const SYNTH_NAME = "DOUDOU — portefeuille 60 actions / 10 oblig / 30 or (base 100)";
 
 export function isSynthetic(sym: string): boolean {
   return sym.toUpperCase() === SYNTH_SYMBOL;

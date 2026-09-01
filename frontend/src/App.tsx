@@ -20,7 +20,7 @@ function fmtDate(ms: number): string {
 }
 
 export default function App() {
-  const [symbol, setSymbol] = useState("DEJ.601030");
+  const [symbol, setSymbol] = useState("DOUDOU");
   const [interval, setInterval] = useState("1d");
   const [candles, setCandles] = useState<Candle[]>([]);
   const [dailyCandles, setDailyCandles] = useState<Candle[]>([]);
