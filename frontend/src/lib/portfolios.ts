@@ -49,6 +49,69 @@ export function syntheticHits(query: string): SymbolHit[] {
   return all.filter((h) => (h.symbol + " " + h.name + " portefeuille duo momentum").toLowerCase().includes(q));
 }
 
+// ---------- Fiche détail (remplace les stats Yahoo, vides pour un synthétique) ----------
+
+export interface SyntheticDetail {
+  name: string;
+  typeLine: string;        // « Portefeuille synthétique · base 100 · CAD »
+  descLabel: string;       // « Composition » | « Stratégie »
+  descValue: string;
+  badge: string | null;    // avertissement (MOM.SYNTH : non validé)
+}
+
+export function syntheticDetail(sym: string): SyntheticDetail | null {
+  const s = sym.toUpperCase();
+  if (s === SYNTH_SYMBOL) {
+    return {
+      name: SYNTH_NAME,
+      typeLine: "Portefeuille synthétique · base 100 · CAD",
+      descLabel: "Composition",
+      descValue: "60 % actions · 10 % oblig · 30 % or (5 ETF)",
+      badge: null,
+    };
+  }
+  if (DUO_ENABLED && s === DUO_SYMBOL) {
+    return {
+      name: DUO_NAME,
+      typeLine: "Backtest de stratégie · base 100 · mensuel · CAD",
+      descLabel: "Stratégie",
+      descValue: "Duo secteur momentum (Indus. + Tech) · 10 lignes · plafond 5/secteur · interrupteur séance MM150",
+      badge: "NON validé — biais du survivant, pas de stop",
+    };
+  }
+  return null;
+}
+
+export interface SyntheticMetrics {
+  multiple: number;         // valeur actuelle / base 100
+  totalReturnPct: number;
+  cagrPct: number;
+  maxDrawdownPct: number;   // ≤ 0
+  from: string;
+  to: string;
+}
+
+// Métriques calculées depuis la série (base 100). Rien n'est dupliqué : ce sont les
+// mêmes bougies que le graphe. CAGR annualisé sur l'écart de dates première→dernière.
+export function syntheticMetrics(candles: Candle[]): SyntheticMetrics | null {
+  if (candles.length < 2) return null;
+  const first = candles[0], last = candles[candles.length - 1];
+  const multiple = last.close / 100;
+  const t0 = new Date((first.time as string) + "T00:00:00Z").getTime();
+  const t1 = new Date((last.time as string) + "T00:00:00Z").getTime();
+  const years = Math.max((t1 - t0) / (365.25 * 86400000), 1e-6);
+  let peak = -Infinity, maxDD = 0;
+  for (const c of candles) { if (c.close > peak) peak = c.close; const dd = c.close / peak - 1; if (dd < maxDD) maxDD = dd; }
+  return {
+    multiple,
+    totalReturnPct: (multiple - 1) * 100,
+    cagrPct: (Math.pow(multiple, 1 / years) - 1) * 100,
+    maxDrawdownPct: maxDD * 100,
+    from: first.time as string,
+    to: last.time as string,
+  };
+}
+
 // ---------- Moteur ----------
 
 type EtfDaily = Record<string, Candle[]>;

@@ -14,6 +14,7 @@
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | [**76**](docs/backlog/76-ordre-collections.md) | **Réordonner les collections** (menu + accès rapide) | 🧩 | 3 | S | | ✅ | Glisser-déposer dans le menu ; les pastilles favorites suivent (ordre dérivé, une seule source de vérité). Vigilance : la fusion cloud (#48) doit préserver l'ordre — audit QA en cours. Pas de drag des pastilles en v1. |
 | [**79**](docs/backlog/79-duo-mom-phase2-append.md) | **DUO.MOM phase 2** — auto-actualisé + public | 💼 | 5 | M | | 🧪 | L'Action rapport **régénère** la courbe chaque mois (`npm run duo:export`) → DUO.MOM **public auto-actualisé** (garde DEV retirée, données trackées). Étiquette « non validé » conservée, non défaut. |
+| [**80**](docs/backlog/80-fiche-detail-synthetiques.md) | **Fiche détail des synthétiques** (panneau collection) | 🧩 | 2 | S | | ✅ | Remplace les champs Yahoo vides (Volume, Cap.) par type + compo/stratégie + perf calculée (multiple, CAGR, pire baisse) + badge « non validé » pour MOM.SYNTH. |
 
 > ✅ **L'épopée #47 est close (29/08/2026)** : « un seul produit » existe — TVLite + signal mensuel 100 % cloud +
 > rapport + collection automatiques, et Jean décide (5 000 $ engagés, premier signal réel le 31/08). Le chemin réel

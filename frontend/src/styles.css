@@ -2248,6 +2248,31 @@ body {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
+/* Fiche synthétique (EQ.SYNTH / MOM.SYNTH) — remplace les stats Yahoo vides. */
+.wl-syn-desc {
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+.wl-syn-desc b {
+  display: block;
+  color: var(--text-strong);
+  font-weight: 500;
+  margin-top: 3px;
+  line-height: 1.35;
+}
+.wl-syn-badge {
+  margin-top: 10px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
 /* --- Flags & colonnes (Phase C) --- */
 /* Etiquette : ruban colle au bord gauche de la ligne (facon TradingView), pose en
    surimpression pour ne pas decaler le logo ni le ticker. */
