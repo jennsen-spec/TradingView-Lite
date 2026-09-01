@@ -29,7 +29,7 @@ const duoGlob = import.meta.glob<{ default: { points: { time: string; close: num
 );
 const DUO_DATA = Object.values(duoGlob)[0]?.default ?? null;
 const DUO_SYMBOL = "DUO.MOM";
-const DUO_NAME = "DUO.MOM — duo momentum (backtest c-duo-plaf5-p1 · NON validé · local)";
+const DUO_NAME = "DUO.MOM — duo secteur momentum (backtest c-duo-plaf5-p1-seance · NON validé · local)";
 const DUO_ENABLED = import.meta.env.DEV && !!DUO_DATA && (DUO_DATA.points?.length ?? 0) > 0;
 
 export function isSynthetic(sym: string): boolean {

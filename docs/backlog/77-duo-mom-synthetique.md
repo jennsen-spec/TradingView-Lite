@@ -27,7 +27,10 @@ mensuels** (futur). **Local seulement** pour l'instant.
 - **Pas de courbe pré-calculée exploitable** (archives = métriques ; `cowork_mom.json` = momentum de référence, pas le duo). Jean a autorisé (**option 1**) de faire tourner le labo pour matérialiser la vraie courbe duo.
 - **`--valider` KO** : la journalisation de cartouche (`research.validation_log` Supabase) est **hors-ligne** (schéma research supprimé). → courbe produite **sans consommer/journaliser de cartouche** via l'exporteur direct [`labo/src/exporter-duo-mom.ts`](../../labo/src/exporter-duo-mom.ts) (lecture cache research, prix ajustés). **Aucune cartouche consommée.**
 - **Garde « local » = les deux** : `import.meta.env.DEV` **et** `duo-mom.json` gitignoré → jamais dans le dépôt public ni le build CI. Chargement via `import.meta.glob` (vide si fichier absent → feature off sans casser la compile).
-- **Fenêtre** : la courbe couvre **2005-01 → 2026-06** (univers research complet, la cartouche ne masque rien puisqu'on ne passe pas par `--valider`).
+- **Fenêtre** : la courbe couvre **2004-02 → 2026-07** (270 mois, = la fenêtre des documents #52 ; avant 2004 l'univers pan-canadien est trop mince).
+
+### ⚠️ Correction 2026-09-01 (bug de fidélité repéré par Jean)
+La 1ʳᵉ version exportée était **fausse** (×65,9, pire baisse **−55 %**) : mauvais jeu de règles (`c-duo-plaf5-p1` au lieu du `-seance` de production) **et** mauvais univers (`research`, 106 titres, **biais du survivant** → gonflé). Reconstruite fidèlement : l'exporteur reproduit désormais **l'univers exact de production** (`cycleCalc`) — `chargerMarket` → `actionsCanadiennes` → `assainir` → secteurs **Industrials+Technology** → CDR selon `etat.json` — avec le jeu **`c-duo-plaf5-p1-seance`**, net de frais, interrupteur séance entière. Résultat : **×42,9 · pire baisse −28,5 % @ 2022-12 · 270 mois**, cohérent avec les documents #52 (interrupteur ×56,5/−27,4 % · +plafond ×41,2/−23,8 %). **Univers = market assaini** (radiés inclus), plus research.
 
 ## Plan technique
 1. **Identifier + parser** la courbe pré-calculée → produire `frontend/src/data/duo-mom.json` : `[{ time: "YYYY-MM-…", close }]` (mensuel, base 100). → vérif : série cohérente (nb de points, monotonie des dates).
