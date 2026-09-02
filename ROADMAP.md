@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 92 | **Notification iOS à la publication du rapport** | 🧩 | 5 | M | | 🔍 Affiné | [ticket](docs/backlog/92-notification-push-rapport.md). Web Push : la notif arrive app fermée, déclenchée par l'étape `Publier` du cycle mensuel. Service worker **`push` seul, sans `fetch`** → pas de piège de cache. Consulter le rapport éteint bannière + pastille d'icône + pastille interne. |
+| 92 | **Notification iOS à la publication du rapport** | 🧩 | 5 | M | | 🧪 À valider | [ticket](docs/backlog/92-notification-push-rapport.md). Web Push : la notif arrive app fermée, déclenchée par l'étape `Publier` du cycle mensuel. Service worker **`push` seul, sans `fetch`** → pas de piège de cache. Consulter le rapport éteint bannière + pastille d'icône + pastille interne. |
 
 ---
 

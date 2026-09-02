@@ -1,6 +1,6 @@
 # #92 — Notification iOS à la publication du rapport
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : suite de [#90](90-pastille-nouveau-rapport.md)
+**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : suite de [#90](90-pastille-nouveau-rapport.md)
 
 ## Objectif
 Quand le rapport mensuel est publié, **la notification arrive seule sur l'iPhone** — app fermée,
@@ -45,6 +45,24 @@ Taper la notification ouvre l'app **sur l'onglet Rapport** → les trois s'étei
 3. `supabase/functions/tvlite-api/index.ts` : routes `/push/subscribe` (enregistrer un abonnement) et `/push/send` (protégée par secret, envoie à tous les abonnements) + table des abonnements → vérif : un abonnement se crée, un envoi manuel arrive sur l'iPhone.
 4. `App.tsx` : entrée « Activer les notifications » dans le ⋯, demande de permission, abonnement, envoi au serveur ; à l'ouverture du rapport → `clearAppBadge()` + fermeture des notifications restantes.
 5. `.github/workflows/rapport.yml` : après `Publier`, appeler `/push/send` avec la date du signal → vérif : le prochain cycle mensuel déclenche bien une notification.
+
+## Réalisation (02/09/2026)
+- `frontend/public/sw.js` : worker `push` + `notificationclick` **sans aucun `fetch`** — il n'intercepte rien, ne met rien en cache.
+- `frontend/src/lib/push.ts` : enregistrement, permission, abonnement/désabonnement, et `eteindreNotifications()` (pastille d'icône + bannières restantes).
+- `App.tsx` : entrée « 🔔 Activer les notifications » dans le ⋯ (avec les états *active* / *inactive* / *refusée*) ; extinction branchée sur `rapportVu()` ; message du worker → ouverture sur l'onglet Rapport.
+- `supabase/functions/tvlite-push/` (**fonction séparée**, déployée v1) : `/subscribe`, `/unsubscribe`, `/send`. Table `public.tvlite_push_subs`, **RLS active sans policy** — seule la fonction (service_role) y accède, la clé publishable ne peut pas lire les abonnements.
+- `.github/workflows/rapport.yml` : étape « Notifier les appareils » après `Publier`, conditionnée au changement de signal ; un échec d'envoi n'invalide pas une publication réussie.
+
+### Décision de sprint : fonction Edge séparée
+Les routes push devaient à l'origine rejoindre `tvlite-api`. Déployer cette fonction imposait de
+retranscrire ses 495 lignes — celles qui servent **les graphiques, les cours et les préférences** —
+avec un risque d'erreur pour un bénéfice nul. Une fonction dédiée annule ce risque : une panne des
+notifications ne peut plus emporter l'app. Vérifié après déploiement : `/quotes` et `/prefs` intacts.
+
+## Reste à faire (Jean)
+Trois secrets à poser sur le projet Supabase (Edge Functions → Secrets) :
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_SEND_SECRET`.
+Le secret GitHub `PUSH_SEND_SECRET` est déjà posé (généré sans jamais être affiché).
 
 ## Notes / risques
 - **Rien ne se vérifie en émulation** : Web Push iOS ne fonctionne que sur l'appareil réel, app installée. Prévoir un envoi de test manuel plutôt que d'attendre la fin du mois.
