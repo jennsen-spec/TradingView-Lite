@@ -2629,6 +2629,28 @@ body {
 .app.mobile .wl-close {
   display: none;
 }
+/* En-tête façon TV mobile : ⋯ à gauche, + à droite ; pas de sélecteur ⌄
+   (les chips ci-dessous montrent toutes les collections). */
+.app.mobile .wl-head-actions {
+  display: contents; /* ses boutons deviennent des enfants directs de l'en-tête → ordonnables */
+}
+.app.mobile .wl-dots-wrap {
+  order: -1;
+}
+.app.mobile .wl-title-wrap {
+  display: none;
+}
+.app.mobile .wl-head-actions > .wl-icon-btn:not(.wl-close) {
+  margin-left: auto; /* pousse le + à droite maintenant que le titre a disparu */
+}
+.app.mobile .wl-dots-wrap .wl-menu-right {
+  left: 0;
+  right: auto; /* ancré à gauche, le menu doit s'ouvrir vers la droite */
+}
+.app.mobile .wl-icon-btn {
+  width: 34px;
+  height: 34px;
+}
 
 /* Barre d'onglets du bas. */
 .bottom-tabs {

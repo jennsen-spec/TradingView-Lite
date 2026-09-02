@@ -497,7 +497,9 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
       )}
 
       <div className="wl-quick">
-        {favorites.map((c) => (
+        {/* Mobile : TOUTES les collections défilent en chips (le sélecteur ⌄ est masqué) ;
+            desktop : pastilles des favoris seulement, comme avant. */}
+        {(isMobile ? collections : favorites).map((c) => (
           <button
             key={c.id}
             className={`wl-quick-dot${c.id === cur.id ? " active" : ""}`}
