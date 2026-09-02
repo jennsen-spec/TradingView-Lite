@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 89 | **Onglet « Rapport » mobile** *(enfant #70)* | 🧩 | 2 | XS | | 🔍 Affiné | [ticket](docs/backlog/89-onglet-rapport-mobile.md). 3ᵉ onglet bas affichant le dernier rapport mensuel (iframe lazy) ; bouton Rapport retiré de la toolbar mobile, desktop inchangé. |
+| 89 | **Onglet « Rapport » mobile** *(enfant #70)* | 🧩 | 2 | XS | | 🧪 À valider | [ticket](docs/backlog/89-onglet-rapport-mobile.md). 3ᵉ onglet bas affichant le dernier rapport mensuel (iframe lazy) ; bouton Rapport retiré de la toolbar mobile, desktop inchangé — livré le 02/09, **UAT iPhone**. |
 
 ---
 

@@ -34,7 +34,9 @@ export default function App() {
   // Coquille mobile (#84) : sous la rupture, un volet à la fois + onglets en bas.
   // Le graphique et la watchlist restent montés (masqués en CSS) pour garder leur état.
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState<"watchlist" | "chart">("chart");
+  const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "rapport">("chart");
+  // Onglet Rapport (#89) : l'iframe n'est montée qu'à la première ouverture, puis conservée.
+  const [rapportMounted, setRapportMounted] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() =>
@@ -202,6 +204,11 @@ export default function App() {
         <main className="chart-area">
           <Chart candles={candles} dailyCandles={dailyCandles} currency={currency} symbol={symbol} name={name} interval={interval} theme={theme} />
         </main>
+        {isMobile && rapportMounted && (
+          <div className="rapport-area">
+            <iframe src={`${import.meta.env.BASE_URL}rapport.html`} title="Rapport mensuel" />
+          </div>
+        )}
         {(isMobile || watchlistOpen) && (
           <WatchlistPanel
             onClose={() => (isMobile ? setMobileTab("chart") : setWatchlistOpen(false))}
@@ -234,6 +241,20 @@ export default function App() {
               <line x1="3" y1="21" x2="21" y2="21" />
             </svg>
             <span>Graphique</span>
+          </button>
+          <button
+            className={`bt-tab${mobileTab === "rapport" ? " active" : ""}`}
+            onClick={() => {
+              setMobileTab("rapport");
+              setRapportMounted(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="8" y1="13" x2="14" y2="13" /><line x1="8" y1="17" x2="12" y2="17" />
+            </svg>
+            <span>Rapport</span>
           </button>
         </nav>
       )}

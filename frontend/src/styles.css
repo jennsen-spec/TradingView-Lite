@@ -2552,16 +2552,34 @@ body {
 .app.mobile .wl-btn {
   display: none; /* la bascule watchlist passe par les onglets du bas */
 }
+.app.mobile .rapport-btn {
+  display: none; /* le rapport a son onglet dédié en bas (#89) */
+}
 .app.mobile .chart-area {
   overflow: hidden; /* la légende (absolute + nowrap) déborderait du viewport → scroll horizontal */
 }
-/* Volet actif : chart ↔ watchlist (les deux restent montés pour garder leur état). */
-.app.mobile.mtab-watchlist .toolbar,
-.app.mobile.mtab-watchlist .chart-area {
+/* Volet actif : chart ↔ watchlist ↔ rapport (tous restent montés pour garder leur état). */
+.app.mobile:not(.mtab-chart) .toolbar,
+.app.mobile:not(.mtab-chart) .chart-area {
   display: none;
 }
-.app.mobile.mtab-chart .wl-panel {
+.app.mobile:not(.mtab-watchlist) .wl-panel {
   display: none;
+}
+.app.mobile:not(.mtab-rapport) .rapport-area {
+  display: none;
+}
+/* Volet du rapport mensuel : iframe plein écran (la page est autonome). */
+.rapport-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.rapport-area iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 /* Watchlist plein écran (plus un volet latéral). */
 .app.mobile .wl-panel {
