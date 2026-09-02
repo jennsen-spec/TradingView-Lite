@@ -225,6 +225,9 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
     return { ...c, items: [...c.items.slice(0, di), ...c.items.slice(end)] };
   });
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  // Mobile (#85) : le tap sur une ligne ne charge pas le graphique directement —
+  // il révèle deux boutons : « Graphique » et « Backtest » (à venir).
+  const [selRowId, setSelRowId] = useState<string | null>(null);
 
   // --- Drag & drop pour réordonner symboles et sections ---
   const dragIdRef = useRef<string | null>(null);
@@ -326,7 +329,7 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
         >
           <button
             className="wl-row-main"
-            onClick={() => onSelectSymbol(sym)}
+            onClick={() => (isMobile ? setSelRowId((s) => (s === item.id ? null : item.id)) : onSelectSymbol(sym))}
             onContextMenu={(e) => { e.preventDefault(); setFlagMenu({ id: item.id, x: e.clientX, y: e.clientY }); setNameMenu(false); setDotsMenu(false); setSecMenu(null); }}
             title={`Afficher ${sym} · clic droit = marqueur`}
           >
@@ -366,6 +369,12 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
               <IconPoubelle />
             </button>
           </div>
+          {isMobile && selRowId === item.id && (
+            <div className="wl-row-cta">
+              <button className="wl-cta" onClick={() => { setSelRowId(null); onSelectSymbol(sym); }}>Graphique</button>
+              <button className="wl-cta" disabled title="Module backtest à venir">Backtest</button>
+            </div>
+          )}
         </div>
       );
     }

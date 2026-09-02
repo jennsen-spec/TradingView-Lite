@@ -10,6 +10,8 @@ accidentelles au tap. Desktop inchangé.
 ## Critères d'acceptation
 - [x] En mobile, **toutes les collections** s'affichent en chips à noms complets, défilables horizontalement, tap → change de collection. *(retour UAT : plus de sélecteur ⌄ ni de notion de favoris en mobile — les 4 collections défilent)*
 - [x] En-tête façon TV mobile : **⋯ à gauche, + à droite**, pas de titre (la chip active fait office). *(retour UAT)*
+- [x] **Le bloc d'info (fiche détail) n'apparaît pas en mobile** — c'est un affichage desktop. *(retour UAT)*
+- [x] **Tap sur une ligne → deux boutons** : « Graphique » (ouvre l'onglet Graphique avec le titre) et « Backtest » (inactif — activé quand le module existera, cf. #83). Re-tap sur la ligne ou choix → les boutons se replient. *(retour UAT : plus de bascule directe au tap)*
 - [x] Lignes tactiles : hauteur de tap ≥ 44 px (48 px mesurés), ticker/variation lisibles (police élargie).
 - [x] Les icônes étiquette/poubelle (révélées au survol sur desktop) **n'apparaissent pas au tap** en mobile — pas de suppression accidentelle ; l'édition reste un geste desktop en v1 (conforme épopée : consultation d'abord).
 - [x] Le bouton ✕ du volet est masqué en mobile (les onglets du bas gèrent la navigation).
@@ -18,7 +20,7 @@ accidentelles au tap. Desktop inchangé.
 - [ ] UAT Jean sur iPhone.
 
 ## Réalisation (02/09/2026)
-- `WatchlistPanel.tsx` : `useIsMobile()` — la rangée `.wl-quick` liste **toutes les collections** en mobile (noms complets) ; en desktop, pastilles des favoris à initiale comme avant.
+- `WatchlistPanel.tsx` : `useIsMobile()` — la rangée `.wl-quick` liste **toutes les collections** en mobile (noms complets) ; en desktop, pastilles des favoris à initiale comme avant. En mobile, le tap d'une ligne sélectionne (`selRowId`) et révèle `.wl-row-cta` (Graphique / Backtest désactivé) au lieu de charger le graphique.
 - `styles.css` (bloc mobile #85) : chips en pilules défilables (scrollbar masquée, `flex: 0 0 auto` sinon la rangée se fait écraser), `min-height` 48/40 px lignes/sections, `.wl-row-actions` et `.wl-close` masqués ; en-tête réordonné en `display: contents` (⋯ en `order:-1`, + poussé à droite, `.wl-title-wrap` masqué, menu ⋯ ancré à gauche).
 
 ## Décisions
