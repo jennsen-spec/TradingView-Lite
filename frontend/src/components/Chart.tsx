@@ -298,8 +298,13 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const [smaOrder, setSmaOrder] = useState<string[]>(cfg0.smaOrder);
   const [activeVolume, setActiveVolume] = useState(cfg0.activeVolume);
   const [activeRsi, setActiveRsi] = useState(cfg0.activeRsi);
-  const [activeAtr, setActiveAtr] = useState(cfg0.activeAtr);
-  const [activeRs, setActiveRs] = useState(cfg0.activeRs);
+  const [atrCfg, setActiveAtr] = useState(cfg0.activeAtr);
+  const [rsCfg, setActiveRs] = useState(cfg0.activeRs);
+  // Mobile : on ne garde que Volume et RSI — ATR et RS mangent la hauteur de l'écran.
+  // Le réglage ENREGISTRÉ n'est pas touché (c'est `atrCfg`/`rsCfg` qui sont persistés) :
+  // le desktop retrouve ses panneaux intacts.
+  const activeAtr = atrCfg && !isMobile;
+  const activeRs = rsCfg && !isMobile;
   // RS (#56) : série de la référence et dividendes, chargés à part du symbole affiché.
   const [rsRefData, setRsRefData] = useState<{ ref: string; byDate: Map<string, number> } | null>(null);
   const [rsDivs, setRsDivs] = useState<{ sym: string; divs: DividendRow[] } | null>(null);
@@ -325,8 +330,8 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
 
   // Persistance de toute la config d'indicateurs (structure + réglages + favoris).
   useEffect(() => {
-    saveIndicators({ smaOrder, activeVolume, activeRsi, activeAtr, activeRs, favorites, settings });
-  }, [smaOrder, activeVolume, activeRsi, activeAtr, activeRs, favorites, settings]);
+    saveIndicators({ smaOrder, activeVolume, activeRsi, activeAtr: atrCfg, activeRs: rsCfg, favorites, settings });
+  }, [smaOrder, activeVolume, activeRsi, atrCfg, rsCfg, favorites, settings]);
 
   const toggleIndicator = (id: string) => setHidden((h) => ({ ...h, [id]: !h[id] }));
   const removeIndicator = (id: string) => {

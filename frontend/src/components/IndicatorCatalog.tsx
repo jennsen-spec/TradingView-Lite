@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { IND_TYPES } from "../lib/indicatorSettings";
+import { useIsMobile } from "../lib/useIsMobile";
 import type { IndType } from "../lib/indicatorSettings";
 
 interface Props {
@@ -14,6 +15,7 @@ export default function IndicatorCatalog({ favorites, onAdd, onToggleFavorite }:
   const [favOpen, setFavOpen] = useState(false); // dropdown favoris
   const [q, setQ] = useState("");
   const [favOnly, setFavOnly] = useState(false);
+  const isMobile = useIsMobile();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,10 +35,13 @@ export default function IndicatorCatalog({ favorites, onAdd, onToggleFavorite }:
     };
   }, []);
 
-  const rows = IND_TYPES.filter((t) => t.label.toLowerCase().includes(q.trim().toLowerCase())).filter(
+  // Mobile : ATR et RS n'ont pas de panneau (voir Chart) — les proposer serait une
+  // action sans effet visible.
+  const dispo = isMobile ? IND_TYPES.filter((t) => t.type !== "atr" && t.type !== "rs") : IND_TYPES;
+  const rows = dispo.filter((t) => t.label.toLowerCase().includes(q.trim().toLowerCase())).filter(
     (t) => (favOnly ? favorites.includes(t.type) : true)
   );
-  const favRows = IND_TYPES.filter((t) => favorites.includes(t.type));
+  const favRows = dispo.filter((t) => favorites.includes(t.type));
 
   return (
     <div className="icat" ref={ref}>
