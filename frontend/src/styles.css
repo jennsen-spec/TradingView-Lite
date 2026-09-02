@@ -2725,6 +2725,32 @@ body {
   from { transform: translateY(12%); opacity: 0.6; }
   to { transform: translateY(0); opacity: 1; }
 }
+/* Panneau « Dessins » : un seul défilement. En flex-column contraint en hauteur,
+   la liste des ensembles (qui a son propre overflow) se faisait écraser en une
+   ligne tronquée → on empile en flux normal et c'est le panneau qui défile. */
+.app.mobile .sets-modal {
+  display: block;
+  max-height: 72vh;
+}
+.app.mobile .sets-liste {
+  max-height: none;
+  overflow: visible;
+}
+.app.mobile .sets-ligne {
+  min-height: 44px;
+}
+.app.mobile .sets-dessins .sets-title {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.app.mobile .sets-save {
+  margin: 10px 0;
+}
+.app.mobile .sets-save input,
+.app.mobile .sets-btn {
+  min-height: 40px;
+}
 /* Le voile des ensembles doit couvrir tout l'écran (il est en absolute côté desktop). */
 .app.mobile .draw-modal-backdrop {
   position: fixed;
@@ -2814,6 +2840,7 @@ body {
 }
 /* Repli de la pile des légendes (bouton « ^ »). */
 .lg-toggle {
+  pointer-events: auto; /* le parent .pane-scale-controls est pointer-events:none */
   display: inline-flex;
   align-items: center;
   justify-content: center;

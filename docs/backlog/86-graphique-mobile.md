@@ -27,6 +27,8 @@ tracé ni déplacement de dessin au doigt.
 - **Panneau « Dessins » disloqué** : `.sets-modal` se centre par `transform: translateX(-50%)` — non neutralisé par la règle mobile, d'où un décalage systématique de −50 % de la largeur (reproduit en émulation : `left` calculé 0 mais rect à −187). → `transform: none` en mobile.
 - **Panneau indicateurs impossible à fermer au tap extérieur** : iOS n'émet pas toujours `mousedown` sur un tap hors élément interactif. → écoute `touchstart` en plus, dans `IndicatorCatalog`, `IntervalSelector` et le menu ⋯.
 - **« Indicateurs » devient une icône** en mobile (le libellé reste sur desktop).
+- **Panneau « Dessins » illisible** (section Ensembles écrasée en une ligne tronquée) : `.is-modal` est un flex-column contraint en hauteur, la liste des ensembles (`max-height` + `overflow` propres) se faisait comprimer. → en mobile, empilement en flux normal, un seul défilement, séparateur avant « Ensembles », hauteur portée à 72 vh.
+- **Le bouton ⌄/⌃ ne réagissait pas au doigt** : les légendes vivent dans `.pane-scale-controls`, en `pointer-events: none` ; `.ind-row` réactive les événements mais mon bouton ne le faisait pas. → `pointer-events: auto`. *(Piège de vérification : un `.click()` programmatique réussit même sur un élément non atteignable — il faut tester la collision via `elementFromPoint`.)*
 
 ## Reporté en #87 (mécanique d'overlay)
 - **Appui long sur le ticker + glissement** pour passer d'un symbole à l'autre (overlay de la watchlist), et **le même geste sur l'intervalle** : c'est exactement la mécanique d'overlay de scroll cadrée en #87.
