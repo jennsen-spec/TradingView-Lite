@@ -1,6 +1,6 @@
 # #85 — Watchlist mobile (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#89](89-onglet-rapport-mobile.md) ✅
+**Statut** : ✅ Fait (UAT Jean 02/09/2026 — « c'est parfait ») · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#89](89-onglet-rapport-mobile.md) ✅
 
 ## Objectif
 Rendre l'onglet Watchlist agréable au doigt, façon app TradingView : collections favorites
@@ -19,7 +19,8 @@ accidentelles au tap. Desktop inchangé.
 - [x] Le bouton ✕ du volet est masqué en mobile (les onglets du bas gèrent la navigation).
 - [x] Sections repliables au tap, comme aujourd'hui.
 - [x] Desktop : aucun changement (pastilles rondes 30 px à initiale, survol, resize, colonnes, ✕ présent).
-- [ ] UAT Jean sur iPhone.
+- [x] UAT Jean sur iPhone — « c'est parfait » (02/09).
+- [x] *(retour UAT final)* Les cases « Dernier prix » / « Volume » du menu ⋯ sont **retirées en mobile** : elles s'appuient sur la largeur du volet desktop (état `width`, resté à ~300), pas sur l'écran → inopérantes. À réintroduire proprement si besoin (seuils sur la largeur réelle du volet).
 
 ## Réalisation (02/09/2026)
 - `WatchlistPanel.tsx` : `useIsMobile()` — la rangée `.wl-quick` liste **toutes les collections** en mobile (noms complets) ; en desktop, pastilles des favoris à initiale comme avant. En mobile, le tap d'une ligne sélectionne (`selRowId`) et révèle `.wl-row-cta` (Graphique / Backtest désactivé) au lieu de charger le graphique.

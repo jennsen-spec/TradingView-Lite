@@ -488,10 +488,16 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
                 >
                   Supprimer la liste
                 </button>
-                <div className="wl-menu-sep" />
-                <div className="wl-menu-label">Colonnes</div>
-                <label className="wl-menu-check"><input type="checkbox" checked={cols.last} onChange={(e) => setColumns({ ...cols, last: e.target.checked })} /> Dernier prix</label>
-                <label className="wl-menu-check"><input type="checkbox" checked={cols.volume} onChange={(e) => setColumns({ ...cols, volume: e.target.checked })} /> Volume</label>
+                {/* Mobile : les colonnes optionnelles dépendent de la largeur du volet desktop
+                    (état `width`), pas de l'écran → cases inopérantes, retirées pour l'instant. */}
+                {!isMobile && (
+                  <>
+                    <div className="wl-menu-sep" />
+                    <div className="wl-menu-label">Colonnes</div>
+                    <label className="wl-menu-check"><input type="checkbox" checked={cols.last} onChange={(e) => setColumns({ ...cols, last: e.target.checked })} /> Dernier prix</label>
+                    <label className="wl-menu-check"><input type="checkbox" checked={cols.volume} onChange={(e) => setColumns({ ...cols, volume: e.target.checked })} /> Volume</label>
+                  </>
+                )}
               </div>
             )}
           </div>
