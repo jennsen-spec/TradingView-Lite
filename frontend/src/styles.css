@@ -2595,6 +2595,7 @@ body {
 /* Chips de collections favorites : noms complets, défilables au doigt. */
 .app.mobile .wl-quick {
   overflow-x: auto;
+  flex: 0 0 auto; /* l'overflow rend la rangée compressible → sans ceci le volet l'écrase */
   flex-wrap: nowrap;
   padding: 6px 12px 10px;
   scrollbar-width: none;
