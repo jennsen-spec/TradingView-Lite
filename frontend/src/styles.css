@@ -2936,6 +2936,23 @@ body {
   button, a {
     touch-action: manipulation; /* supprime le délai/zoom du double-tap iOS */
   }
+  /* Le document ne doit jamais défiler ni rebondir : arrivé au bout d'une liste,
+     iOS enchaînait sur le document (rubber-band) et décalait l'en-tête ET la barre
+     d'onglets. L'onglet Graphique y échappait — le graphique capte le tactile —
+     d'où l'incohérence entre les deux onglets. */
+  html, body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+/* Un défilement interne reste chez lui (pas de chaînage vers le document). */
+.wl-body,
+.icat-modal,
+.icat-menu,
+.iv-menu,
+.sets-modal,
+.cb-menu {
+  overscroll-behavior: contain;
 }
 
 /* --- Pastille « nouveau rapport » (#90) --- */

@@ -61,3 +61,18 @@ Tracé et édition de dessins au doigt · onglets Explorer/Communauté · temps 
 - `DrawingLayer.tsx` (~1 700 lignes) est piloté souris — le garder hors du chemin tactile est la raison du « lecture seule ».
 - Accès depuis l'iPhone : wifi local (`http://<IP-du-Mac>:5173`, Vite avec `--host`) pour développer et tester ; l'usage nomade réveillera #22 (déploiement Vercel).
 - Piège PWA : un service worker mal configuré sert de vieilles versions — à traiter dans #88.
+
+---
+
+## Correctif post-clôture — 02/09/2026
+
+**Le document rebondissait dans l'onglet Watchlist** (constaté par Jean) : arrivé au bout de la
+liste, iOS enchaînait le défilement sur le document (*rubber-band*), ce qui décalait l'en-tête
+et la barre d'onglets. L'onglet Graphique y échappait — le graphique capte le tactile — d'où
+l'incohérence entre les deux onglets.
+
+Correctif : en mobile, `html, body { overflow: hidden; overscroll-behavior: none }` (la coquille
+occupe exactement la hauteur de l'écran, le document n'a jamais à défiler) et
+`overscroll-behavior: contain` sur les conteneurs à défilement interne (liste de la watchlist,
+panneaux glissants). Vérifié : le document ne bouge plus, la liste défile normalement
+(1320 px de contenu dans 628 px), desktop inchangé.
