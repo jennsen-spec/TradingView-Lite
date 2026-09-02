@@ -2710,6 +2710,7 @@ body {
   bottom: calc(50px + env(safe-area-inset-bottom)); /* laisse les onglets accessibles */
   width: auto;
   min-width: 0;
+  transform: none; /* .sets-modal se centre en translateX(-50%) : à neutraliser ici */
   max-height: 58vh;
   overflow-y: auto;
   border-radius: 16px 16px 0 0;
@@ -2749,6 +2750,21 @@ body {
 }
 .app.mobile .refresh-cluster {
   margin-left: auto;
+}
+/* « Indicateurs » : libellé sur desktop, icône seule en mobile. */
+.icat-svg {
+  display: none;
+}
+.app.mobile .icat-svg {
+  display: block;
+}
+.app.mobile .icat-ico,
+.app.mobile .icat-label {
+  display: none;
+}
+.app.mobile .icat-main {
+  padding: 0 12px;
+  min-height: 34px;
 }
 .iv-more {
   width: 100%;

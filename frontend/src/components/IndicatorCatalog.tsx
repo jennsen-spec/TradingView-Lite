@@ -17,14 +17,20 @@ export default function IndicatorCatalog({ favorites, onAdd, onToggleFavorite }:
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
+    const onDoc = (e: Event) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
         setFavOpen(false);
       }
     };
+    // `touchstart` en plus de `mousedown` : sur iOS le tap hors d'un élément
+    // interactif ne produit pas toujours de mousedown → le panneau ne fermait pas.
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("touchstart", onDoc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("touchstart", onDoc);
+    };
   }, []);
 
   const rows = IND_TYPES.filter((t) => t.label.toLowerCase().includes(q.trim().toLowerCase())).filter(
@@ -43,7 +49,13 @@ export default function IndicatorCatalog({ favorites, onAdd, onToggleFavorite }:
             setFavOpen(false);
           }}
         >
-          <span className="icat-ico">+</span> Indicateurs
+          <span className="icat-ico">+</span>
+          {/* Mobile : le libellé cède la place à une icône (barre du bas, #86). */}
+          <svg className="icat-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+            <path d="M2 9c2.5 0 2.5-5 5-5s2.5 5 5 5" />
+            <path d="M12 15c2.5 0 2.5-5 5-5s2.5 5 5 5" />
+          </svg>
+          <span className="icat-label">Indicateurs</span>
         </button>
         <button
           className="icat-chevron"

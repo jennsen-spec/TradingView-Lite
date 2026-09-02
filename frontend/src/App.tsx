@@ -52,14 +52,35 @@ export default function App() {
     syncToCloud("tvlike:theme");
   }, [theme]);
 
+  // Le pincement doit zoomer le GRAPHIQUE, pas la page : Safari iOS zoome la page
+  // au pincement, ce qui décale tous les panneaux `position: fixed` (viewport de
+  // mise en page ≠ vue zoomée). On neutralise donc le zoom de page en mobile.
+  useEffect(() => {
+    if (!isMobile) return;
+    const stop = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", stop);
+    document.addEventListener("gesturechange", stop);
+    document.addEventListener("gestureend", stop);
+    return () => {
+      document.removeEventListener("gesturestart", stop);
+      document.removeEventListener("gesturechange", stop);
+      document.removeEventListener("gestureend", stop);
+    };
+  }, [isMobile]);
+
   // Ferme le menu « ⋯ » au tap en dehors.
   useEffect(() => {
     if (!moreMenu) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest(".cb-more-wrap")) setMoreMenu(false);
+    const onDoc = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (!t?.closest?.(".cb-more-wrap")) setMoreMenu(false);
     };
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("touchstart", onDoc); // iOS : tap hors élément interactif
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("touchstart", onDoc);
+    };
   }, [moreMenu]);
 
   // Titre d'onglet façon TradingView : symbole + prix + variation du jour.

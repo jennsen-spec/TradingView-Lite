@@ -51,11 +51,15 @@ export default function IntervalSelector({ value, onChange }: Props) {
 
   // Fermer le menu au clic en dehors.
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
+    const onClick = (e: Event) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener("touchstart", onClick); // iOS : tap hors élément interactif
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("touchstart", onClick);
+    };
   }, []);
 
   const toggleFav = (key: string) =>

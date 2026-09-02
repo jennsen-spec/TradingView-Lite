@@ -1577,7 +1577,7 @@ export default function DrawingLayer({
         <>
           <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={() => setSetsOpen(false)} />
           <div className="is-modal sets-modal" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="sets-title">Dessins — {symbol}</div>
+            <div className="sets-title">{isMobile ? "Dessins" : "Ensembles de dessins"} — {symbol}</div>
             {isMobile && (
               <div className="sets-dessins">
                 {dessinsDeJean().length === 0 ? (

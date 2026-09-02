@@ -22,6 +22,15 @@ tracé ni déplacement de dessin au doigt.
 - [x] Desktop : aucun changement (toolbar en haut, outils de dessin, refresh/thème visibles, 9 lignes de légende, pas de ⋯ ni de bouton de repli).
 - [ ] UAT Jean sur iPhone.
 
+## Retours UAT du 02/09 — corrigés
+- **Le pincement zoomait la PAGE, pas le graphique** (cause racine du « ça part en bordel » sur les ensembles) : sous zoom de page, Safari iOS place les éléments `position: fixed` dans le viewport de mise en page, donc tous les panneaux se décalent et se coupent. → zoom de page neutralisé en mobile (`gesturestart/change/end`), le pincement revient au graphique.
+- **Panneau « Dessins » disloqué** : `.sets-modal` se centre par `transform: translateX(-50%)` — non neutralisé par la règle mobile, d'où un décalage systématique de −50 % de la largeur (reproduit en émulation : `left` calculé 0 mais rect à −187). → `transform: none` en mobile.
+- **Panneau indicateurs impossible à fermer au tap extérieur** : iOS n'émet pas toujours `mousedown` sur un tap hors élément interactif. → écoute `touchstart` en plus, dans `IndicatorCatalog`, `IntervalSelector` et le menu ⋯.
+- **« Indicateurs » devient une icône** en mobile (le libellé reste sur desktop).
+
+## Reporté en #87 (mécanique d'overlay)
+- **Appui long sur le ticker + glissement** pour passer d'un symbole à l'autre (overlay de la watchlist), et **le même geste sur l'intervalle** : c'est exactement la mécanique d'overlay de scroll cadrée en #87.
+
 ## Écart assumé
 - **Pas de « masquer » par dessin** dans la liste : il n'existe aucun drapeau de visibilité individuel (la `visibility` actuelle est un filtre par intervalle évalué en ~10 points du rendu). L'ajouter aurait demandé de toucher tout le moteur de rendu de `DrawingLayer` — hors périmètre d'une v1 de consultation. La liste fait donc **voir + supprimer**, et les ensembles couvrent le reste.
 
