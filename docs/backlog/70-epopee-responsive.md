@@ -1,6 +1,6 @@
 # #70 — Épopée : Responsive — vue Mobile / iPad
 
-**Statut** : 🔍 Affinée (02/09/2026) · **Points** : ~13-16 · **Catégorie** : 🧩 Fonctionnalité · **Taille** : XL
+**Statut** : ✅ Close (02/09/2026) · **Points** : 20 livrés · **Catégorie** : 🧩 Fonctionnalité · **Taille** : XL
 
 ## Objectif
 Rendre TVLite utilisable au doigt sur iPhone et iPad, en s'inspirant de l'app mobile TradingView
@@ -22,7 +22,32 @@ bottom sheets. **Consultation d'abord** — pas d'édition de dessins au doigt.
 3. **#85 Watchlist mobile** ✅ (02/09) — toutes les collections en chips, en-tête ⋯/+, tap → overlay Graphique/Backtest, sans fiche détail ni édition accidentelle.
 4. **#86 Graphique mobile v1 (consultation)** ✅ (02/09) — barre du bas, panneaux glissants, repli des légendes, dessins en lecture seule.
 5. **#87 Molettes symbole & intervalle** ✅ (02/09) — glissement vertical → molette circulaire façon sélecteur iOS.
-6. **#88 PWA (bonus)** — manifest + service worker : icône écran d'accueil, plein écran.
+6. **#88 PWA (bonus)** ✅ (02/09) — manifeste + balises iOS : icône d'accueil, plein écran.
+
+---
+
+## Clôture de l'épopée — 02/09/2026
+
+**TVLite s'utilise au doigt.** Installée sur l'écran d'accueil de l'iPhone, elle s'ouvre en plein
+écran sur trois onglets — Watchlist, Graphique, Rapport — avec les collections en chips, une barre
+d'actions en bas, des panneaux qui glissent et des molettes circulaires pour changer de titre ou
+d'intervalle sans quitter le graphique. **Le desktop n'a pas bougé d'un pixel.**
+
+Les six enfants, tous validés sur l'iPhone de Jean le 02/09 :
+[#84](84-coquille-mobile.md) Coquille (3) · [#89](89-onglet-rapport-mobile.md) Onglet Rapport (2) ·
+[#85](85-watchlist-mobile.md) Watchlist (3) · [#86](86-graphique-mobile.md) Graphique v1 (5) ·
+[#87](87-molettes-mobile.md) Molettes (5) · [#88](88-pwa.md) PWA (2).
+
+Ce que le chemin a appris, et qui vaut au-delà de l'épopée :
+- **La rupture par largeur d'écran a suffi** — aucun code spécifique à l'iPad : paysage = desktop, portrait = téléphone, comme décidé au départ.
+- **Réordonner plutôt que réécrire** : la barre du bas est la toolbar desktop déplacée par un `order` CSS, ce qui a laissé intacts les portails d'indicateurs et de dessins.
+- **Ne jamais écrire un réglage masqué** : masquer ATR/RS ou forcer un état en mobile aurait effacé la configuration desktop de Jean. Les valeurs affichées sont dérivées, les valeurs enregistrées ne bougent pas.
+- **Le zoom de page iOS casse tout `position: fixed`** — c'était la cause du panneau disloqué, pas le panneau.
+- **Un `.click()` programmatique ne prouve rien** : il réussit sur un élément qu'aucun doigt ne peut atteindre (bouton de repli des légendes, `pointer-events`). Vérifier par collision.
+- **Pas de service worker sans besoin de hors-ligne** : le piège du cache s'élimine en ne l'introduisant pas.
+
+**Décision assumée** : les dessins restent en lecture seule au doigt (voir, lister, supprimer,
+charger un ensemble) — tracer et déplacer restent des gestes desktop.
 
 ## Questions ouvertes
 - Mécanique exacte des overlays de scroll (symbole / intervalle) et contenu extensible du menu « ⋯ » → **#87**, à affiner après #86.

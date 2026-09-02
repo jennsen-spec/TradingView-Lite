@@ -1,6 +1,6 @@
 # #88 — PWA : icône d'accueil & plein écran (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 2 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : dernier enfant de [#70](70-epopee-responsive.md)
+**Statut** : ✅ Fait (UAT Jean 02/09/2026) · **Points** : 2 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : dernier enfant de [#70](70-epopee-responsive.md)
 
 ## Objectif
 Faire de TVLite une app installable sur l'iPhone : une icône sur l'écran d'accueil qui ouvre
@@ -8,13 +8,13 @@ l'app **en plein écran, sans la barre d'adresse de Safari** (elle mange ~110 px
 soit un panneau d'indicateur entier).
 
 ## Critères d'acceptation
-- [ ] « Ajouter à l'écran d'accueil » propose **TVLite** avec son icône (pas une capture de page).
-- [ ] Lancée depuis l'icône, l'app s'ouvre **sans barre d'adresse ni barre d'onglets** Safari.
-- [ ] Le thème (clair/sombre) et la zone sûre (encoche, barre home) restent corrects en plein écran.
-- [ ] La navigation interne (onglets, rapport) reste dans l'app — aucun lien n'éjecte vers Safari.
+- [x] « Ajouter à l'écran d'accueil » propose **TVLite** avec son icône.
+- [x] Lancée depuis l'icône, l'app s'ouvre **sans barre d'adresse ni barre d'onglets** Safari.
+- [x] Le thème (clair/sombre) et la zone sûre (encoche, barre home) restent corrects en plein écran.
+- [x] La navigation interne (onglets, rapport) reste dans l'app.
 - [x] Rechargement : **aucune version périmée servie** — garanti par construction, il n'y a pas de service worker.
 - [x] Desktop : aucun changement (balises inertes hors installation).
-- [ ] UAT Jean sur iPhone.
+- [x] UAT Jean sur iPhone — validé le 02/09 (« ça marche super bien »).
 
 ## Réalisation (02/09/2026)
 - `public/manifest.webmanifest` : `TVLite`, `display: standalone`, `start_url`/`scope` **relatifs** (`./`) — vérifié dans `dist/` : le lien sort bien en `/TradingView-Lite/manifest.webmanifest`.
