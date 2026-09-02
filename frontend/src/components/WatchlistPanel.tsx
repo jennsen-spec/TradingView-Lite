@@ -458,6 +458,13 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
             <button className="wl-icon-btn" title="Options" aria-label="Options" onClick={() => { setDotsMenu((o) => !o); setNameMenu(false); }}>⋯</button>
             {dotsMenu && (
               <div className="wl-menu wl-menu-right">
+                {/* Mobile : le sélecteur ⌄ (et son « Créer ») est masqué → l'option vit ici. */}
+                {isMobile && (
+                  <>
+                    <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setAddingList(true); }}>＋ Créer une nouvelle liste</button>
+                    <div className="wl-menu-sep" />
+                  </>
+                )}
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setEditingName(true); }}>Renommer</button>
                 <button className="wl-menu-item" onClick={() => { setDotsMenu(false); setAddingSection(true); }}>Ajouter une section</button>
                 <button

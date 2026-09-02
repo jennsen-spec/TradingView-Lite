@@ -2655,20 +2655,23 @@ body {
 .app.mobile .wl-detail {
   display: none;
 }
-/* Tap sur une ligne → deux boutons : Graphique / Backtest (à venir). */
-.app.mobile .wl-row {
-  flex-wrap: wrap;
-}
+/* Tap sur une ligne → deux boutons en surimpression sur la ligne même,
+   comme les icônes d'action au survol (dégradé qui efface les chiffres). */
 .wl-row-cta {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  bottom: 1px;
   display: flex;
-  gap: 8px;
-  width: 100%;
-  padding: 2px 10px 12px 44px; /* aligné sous le ticker (logo décalé) */
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 34px;
+  background: linear-gradient(to right, transparent, var(--bg) 28px);
 }
 .wl-cta {
-  min-height: 38px;
-  padding: 0 18px;
-  border-radius: 19px;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 17px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text-strong);
