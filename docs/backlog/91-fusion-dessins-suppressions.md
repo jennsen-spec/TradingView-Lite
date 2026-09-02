@@ -1,6 +1,6 @@
 # #91 — Les suppressions de dessins ne se propagent pas entre appareils
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : à cadrer avec [#78](#) (même moteur de fusion)
+**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : à cadrer avec [#78](#) (même moteur de fusion)
 
 ## Symptôme
 Constaté par Jean le 02/09 sur iPhone : **les dessins s'empilent** — d'anciennes bandes réapparaissent
@@ -23,17 +23,26 @@ l'ancienne copie la remet, puis la repousse au cloud — la suppression est annu
 La branche symétrique (`localIsNewer`) passe bien `seen`, elle : le défaut est asymétrique.
 
 ## Critères d'acceptation
-- [ ] Un dessin supprimé sur l'appareil A disparaît sur l'appareil B après synchronisation, et ne revient pas.
-- [ ] Un dessin créé sur A pendant que B était hors ligne arrive bien sur B (pas de régression de la fusion).
-- [ ] Idem pour les collections et les ensembles (mêmes clés fusionnables).
-- [ ] Cas vérifié à deux appareils réels (Mac + iPhone), suppression dans les deux sens.
+- [x] Un dessin supprimé sur l'appareil A disparaît sur l'appareil B après synchronisation, et ne revient pas.
+- [x] Un dessin créé sur A pendant que B était hors ligne arrive bien sur B (pas de régression de la fusion).
+- [x] Idem pour les collections et les ensembles (même code de fusion, mêmes clés `isMergeable`)
+- [ ] Cas vérifié à deux appareils réels (Mac + iPhone), suppression dans les deux sens — **UAT Jean**.
 
-## Piste
-Le `seen` local ne suffit pas à distinguer les deux cas dans la branche « distant plus récent » :
-il faudrait soit un **marqueur de suppression** (tombstone) porté par la valeur distante, soit
-comparer aux ids que **cet appareil** a déjà poussés. À arbitrer avec #78, qui attaque le même
-moteur pour les collections — les deux ont intérêt à être traités ensemble plutôt qu'en deux
-retouches successives du même code.
+## Correctif (02/09/2026)
+`seen` est désormais passé **des deux côtés** de la fusion : `mergeById(row.value, local, seen[row.id] ?? [])`.
+Un id déjà connu de la synchro et absent de l'autre côté est une **vraie suppression** ; un id
+inconnu est une **création locale pas encore poussée**. Le défaut était l'asymétrie, pas la logique
+de fusion — aucun marqueur de suppression n'a été nécessaire.
+
+Quatre scénarios vérifiés hors React :
+| scénario | résultat |
+|---|---|
+| suppression faite ailleurs | propagée (ne ressuscite plus) |
+| création locale hors ligne | préservée |
+| création faite ailleurs | reçue (pas de régression) |
+| vidage complet ailleurs | propagé |
+
+*(Avec l'ancien code, le 1ᵉʳ cas ressuscitait l'entrée supprimée — reproduit avant/après.)*
 
 ## Notes / risques
 - Toucher à ce moteur, c'est toucher aux données réelles de Jean : prévoir une sauvegarde des clés

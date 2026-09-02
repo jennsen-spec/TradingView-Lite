@@ -106,10 +106,16 @@ export async function hydrateFromCloud(timeoutMs = 2500): Promise<void> {
       // pour les clés fusionnables, on repart du distant et on y remet le local inconnu de lui.
       // Le local est plus récent → il gagne, mais on récupère quand même les entrées
       // créées ailleurs (c'est le cas du pipeline mensuel qui écrit pendant qu'un onglet est ouvert).
+      //
+      // #91 — `seen` est passé des DEUX côtés. « Absent de l'autre côté » recouvre deux cas
+      // opposés : créé ici et pas encore poussé (à garder) ou supprimé là-bas (à ne pas
+      // ressusciter). C'est `seen` — les ids déjà connus de la synchro — qui les distingue.
+      // Sans lui, l'appareil qui détenait l'ancienne copie annulait toute suppression faite
+      // ailleurs, puis la repoussait au cloud : les dessins s'empilaient.
       const next = isMergeable(row.id)
         ? (localIsNewer
             ? mergeById(local, row.value, seen[row.id] ?? [])
-            : mergeById(row.value, local, []))
+            : mergeById(row.value, local, seen[row.id] ?? []))
         : (localIsNewer ? local : row.value);
 
       if (next !== local) localStorage.setItem(row.id, next);

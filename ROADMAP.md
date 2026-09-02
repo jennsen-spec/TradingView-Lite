@@ -16,7 +16,7 @@
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
 | 90 | **Pastille « nouveau rapport »** | 🧩 | 3 | S | | 🔍 Affiné | [ticket](docs/backlog/90-pastille-nouveau-rapport.md). Pastille sur l'onglet Rapport à chaque publication mensuelle, éteinte à la première consultation. Notification iOS **reportée à l'espace membre** (#24). |
-| 91 | **Suppressions de dessins qui ne se propagent pas** | ⚙️ | 3 | S | | 🔍 Affiné | [ticket](docs/backlog/91-fusion-dessins-suppressions.md). Un dessin supprimé sur un appareil est ressuscité par les autres (fusion `seen: []`) → les dessins s'empilent. Cousin de #78. |
+| 91 | **Suppressions de dessins qui ne se propagent pas** | ⚙️ | 3 | S | | 🧪 À valider | [ticket](docs/backlog/91-fusion-dessins-suppressions.md). Un dessin supprimé sur un appareil est ressuscité par les autres (fusion `seen: []`) → les dessins s'empilent. Cousin de #78. |
 
 ---
 
