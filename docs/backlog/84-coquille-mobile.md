@@ -1,6 +1,6 @@
 # #84 — Coquille mobile (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : tête de l'épopée [#70](70-epopee-responsive.md)
+**Statut** : ✅ Fait (UAT Jean 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : tête de l'épopée [#70](70-epopee-responsive.md)
 
 ## Objectif
 Poser la structure mobile de TVLite : sous la rupture de largeur, un seul volet à la fois
@@ -13,7 +13,7 @@ Poser la structure mobile de TVLite : sous la rupture de largeur, un seul volet 
 - [x] iPad : portrait → vue mobile, paysage → vue desktop ; la rotation bascule proprement sans rechargement. *(810×1080 ↔ 1080×810)*
 - [x] Viewport mobile correct : meta viewport (`viewport-fit=cover`), pas de zoom parasite au tap (`touch-action: manipulation`), pas de scroll horizontal (légende du graphe clippée).
 - [x] Zones de tap des onglets ≥ 44 px (50 px + safe-area).
-- [ ] **UAT Jean** : vérifié sur iPhone réel via le wifi local — `npm run dev -- --host` dans `frontend/`, puis `http://192.168.0.31:5173` sur l'iPhone (même wifi).
+- [x] **UAT Jean** : vérifié sur iPhone réel via le wifi local — « ça marche » (02/09). À la validation, Jean a demandé un onglet « Rapport » → nouveau ticket [#89](89-onglet-rapport-mobile.md).
 
 ## Décisions
 - Rupture par **largeur d'écran** (valeur exacte à caler autour de 900 px) via `matchMedia` — c'est elle qui donne le comportement iPad paysage/portrait.

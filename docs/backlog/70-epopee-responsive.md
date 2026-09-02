@@ -17,11 +17,12 @@ bottom sheets. **Consultation d'abord** — pas d'édition de dessins au doigt.
 - Zoom/pan tactile du graphique : natif lightweight-charts (pinch, drag des échelles prix/dates).
 
 ## Ordre de travail (enfants)
-1. **#84 Coquille mobile** — rupture d'écran, onglets bas, bascule Watchlist → Graphique. *Sprintable sans le design.*
-2. **#85 Watchlist mobile** — collections parcourables en haut, sous-catégories, liste tactile.
-3. **#86 Graphique mobile v1 (consultation)** — barre du bas, bottom sheets (indicateurs, dessins en gestion lecture seule), empilement « ^ ».
-4. **#87 Interactions fines** — overlays de scroll symbole/intervalle, menu « ⋯ », icônes défilantes.
-5. **#88 PWA (bonus)** — manifest + service worker : icône écran d'accueil, plein écran.
+1. **#84 Coquille mobile** ✅ (02/09) — rupture d'écran, onglets bas, bascule Watchlist → Graphique.
+2. **#89 Onglet « Rapport »** — 3ᵉ onglet bas : dernier rapport mensuel ; bouton Rapport retiré de la toolbar mobile.
+3. **#85 Watchlist mobile** — collections parcourables en haut, sous-catégories, liste tactile.
+4. **#86 Graphique mobile v1 (consultation)** — barre du bas, bottom sheets (indicateurs, dessins en gestion lecture seule), empilement « ^ ».
+5. **#87 Interactions fines** — overlays de scroll symbole/intervalle, menu « ⋯ », icônes défilantes.
+6. **#88 PWA (bonus)** — manifest + service worker : icône écran d'accueil, plein écran.
 
 ## Questions ouvertes
 - **Fruit de Claude Design à intégrer** (session en cours) → ajustera surtout #86 et #87.
