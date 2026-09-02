@@ -21,7 +21,7 @@ bottom sheets. **Consultation d'abord** — pas d'édition de dessins au doigt.
 2. **#89 Onglet « Rapport »** ✅ (02/09) — 3ᵉ onglet bas : dernier rapport mensuel ; bouton Rapport retiré de la toolbar mobile.
 3. **#85 Watchlist mobile** ✅ (02/09) — toutes les collections en chips, en-tête ⋯/+, tap → overlay Graphique/Backtest, sans fiche détail ni édition accidentelle.
 4. **#86 Graphique mobile v1 (consultation)** ✅ (02/09) — barre du bas, panneaux glissants, repli des légendes, dessins en lecture seule.
-5. **#87 Interactions fines** — overlays de scroll symbole/intervalle, menu « ⋯ », icônes défilantes.
+5. **#87 Molettes symbole & intervalle** — glissement vertical → molette façon sélecteur iOS (spec relevée sur vidéo TradingView le 02/09).
 6. **#88 PWA (bonus)** — manifest + service worker : icône écran d'accueil, plein écran.
 
 ## Questions ouvertes

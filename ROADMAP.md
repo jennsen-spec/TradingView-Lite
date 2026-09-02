@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| — | *Rien en attente* | | | | | | Prochain : affiner #87 (interactions fines). |
+| 87 | **Molettes symbole & intervalle** *(enfant #70)* | 🧩 | 5 | M | | 🔍 Affiné | [ticket](docs/backlog/87-molettes-mobile.md). Glissement vertical sur le ticker/l'intervalle → molette façon sélecteur iOS, carte centrée sur le graphique, chargement au relâchement ; mini-molettes au repos dans la barre. Spec relevée sur vidéo TradingView. |
 
 ---
 
@@ -26,7 +26,6 @@
 |---|------|:---:|:---:|:---:|---|
 | **⚡ NOW** | | | | | |
 | 70 | **Épopée Responsive — vue Mobile / iPad** | 🧩 | ~13-16 | XL | [épopée](docs/backlog/70-epopee-responsive.md) — 🔍 affinée le 02/09. Web responsive (PWA en bonus #88), iPad = rupture par largeur (paysage=desktop, portrait=téléphone), dessins **sans édition tactile** (affichage + liste + suppression + ensembles). Enfants : #84 ✅ → #89 ✅ → #85 ✅ → #86 ✅ → #87 → #88. On avance **sans Claude Design** (décision du 02/09) : référence = les captures TradingView mobile. |
-| 87 | **Interactions fines mobile** *(enfant #70)* | 🧩 | ? | — | Overlays de scroll symbole/intervalle, icônes défilantes de la barre du bas, contenu extensible du ⋯. À affiner après #86. |
 | 88 | **PWA — bonus fin d'épopée** *(enfant #70)* | 🧩 | 2 | XS | Manifest + service worker : icône écran d'accueil, plein écran. Attention au piège du cache. |
 | **⏭️ THEN** | | | | | |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
