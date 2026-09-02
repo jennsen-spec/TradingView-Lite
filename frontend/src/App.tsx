@@ -8,6 +8,7 @@ import { syncToCloud } from "./lib/cloudPrefs";
 import { useIsMobile } from "./lib/useIsMobile";
 import WheelPicker, { type WheelEntry } from "./components/WheelPicker";
 import { loadCollections, loadCurrentCollectionId } from "./lib/collections";
+import { activerPush, desactiverPush, enregistrerWorker, eteindreNotifications, etatPush, type EtatPush } from "./lib/push";
 import type { Candle } from "./lib/indicators";
 
 // Historique journalier long pour la SOURCE des SMA (au-delà de l'affichage) → SMA pleines
@@ -45,6 +46,8 @@ export default function App() {
   // dernier consulté sur CET appareil. Éteinte dès la première ouverture.
   const [rapportNeuf, setRapportNeuf] = useState(false);
   const signalRef = useRef<string | null>(null);
+  // Notifications de publication (#92).
+  const [push, setPush] = useState<EtatPush>("indisponible");
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() =>
@@ -79,13 +82,30 @@ export default function App() {
     return () => { annule = true; };
   }, []);
 
-  // Le rapport a été ouvert → on éteint la pastille (local à l'appareil, pas de cloud).
+  // Le rapport a été ouvert → on éteint la pastille (local à l'appareil, pas de cloud),
+  // ainsi que la pastille d'icône et les bannières restantes (#92).
   const rapportVu = () => {
     setRapportNeuf(false);
     if (signalRef.current) {
       try { localStorage.setItem("tvlike:rapport-vu", signalRef.current); } catch { /* quota */ }
     }
+    void eteindreNotifications();
   };
+
+  // Worker de notification + état de l'abonnement ; et ouverture directe sur le
+  // Rapport quand Jean tape la notification (message envoyé par le worker).
+  useEffect(() => {
+    void enregistrerWorker().then(() => etatPush()).then(setPush);
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.type !== "ouvrir-rapport") return;
+      setMobileTab("rapport");
+      setRapportMounted(true);
+      rapportVu();
+    };
+    navigator.serviceWorker?.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Le pincement doit zoomer le GRAPHIQUE, pas la page : Safari iOS zoome la page
   // au pincement, ce qui décale tous les panneaux `position: fixed` (viewport de
@@ -307,6 +327,22 @@ export default function App() {
                   >
                     {theme === "dark" ? "☀" : "☽"} {theme === "dark" ? "Thème clair" : "Thème sombre"}
                   </button>
+                  {push !== "indisponible" && (
+                    <button
+                      className="cb-menu-item"
+                      disabled={push === "refusee"}
+                      onClick={() => {
+                        setMoreMenu(false);
+                        void (push === "active" ? desactiverPush() : activerPush()).then(setPush);
+                      }}
+                    >
+                      🔔 {push === "active"
+                        ? "Désactiver les notifications"
+                        : push === "refusee"
+                          ? "Notifications refusées (réglages iOS)"
+                          : "Activer les notifications"}
+                    </button>
+                  )}
                   <div className="cb-menu-info">Données du {fetchedAt ? fmtDate(fetchedAt) : "—"}</div>
                 </div>
               )}

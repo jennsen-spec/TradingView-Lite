@@ -106,10 +106,28 @@ jobs:
           set -euo pipefail
           git config user.name "TVLite"
           git config user.email "de.brunel@gmail.com"
-          git add frontend/public/rapport.html portefeuille/dernier-signal.txt portefeuille/etat.json frontend/src/data/duo-mom.json
+          git add frontend/public/rapport.html frontend/public/rapport-meta.json portefeuille/dernier-signal.txt portefeuille/etat.json frontend/src/data/duo-mom.json
           git commit -m "rapport : signal du ${{ steps.gen.outputs.apres }}" \
                      -m "Généré automatiquement. Le cycle est inscrit dans etat.json ; \`execute\` reste vide jusqu'à ce que Jean rapporte ses exécutions réelles."
           git push
+
+      # Notification aux appareils abonnés (#92). Après le commit : une notification
+      # ratée ne doit pas faire échouer une publication réussie, d'où le `|| warning`.
+      - name: Notifier les appareils
+        if: steps.gen.outputs.change == 'true'
+        env:
+          PUSH_SEND_SECRET: ${{ secrets.PUSH_SEND_SECRET }}
+        run: |
+          if [ -z "${PUSH_SEND_SECRET:-}" ]; then
+            echo "::warning::PUSH_SEND_SECRET absent — aucune notification envoyée."
+            exit 0
+          fi
+          curl -fsS -X POST \
+            "https://cucshrxmtwwizzzqthcj.supabase.co/functions/v1/tvlite-push/send" \
+            -H "Content-Type: application/json" \
+            -H "x-push-secret: ${PUSH_SEND_SECRET}" \
+            -d "{\"titre\":\"TVLite — nouveau rapport\",\"corps\":\"Signal du ${{ steps.gen.outputs.apres }}\",\"signal\":\"${{ steps.gen.outputs.apres }}\"}" \
+            || echo "::warning::envoi des notifications en échec — le rapport reste publié."
 
       # Les libellés de la collection « Duo Sec Momentum » suivent le signal publié.
       # Après le commit : si la poussée des libellés échoue, le rapport publié reste
