@@ -5,6 +5,7 @@ import IntervalSelector from "./components/IntervalSelector";
 import WatchlistPanel from "./components/WatchlistPanel";
 import { fetchCandles, searchSymbols } from "./lib/api";
 import { syncToCloud } from "./lib/cloudPrefs";
+import { useIsMobile } from "./lib/useIsMobile";
 import type { Candle } from "./lib/indicators";
 
 // Historique journalier long pour la SOURCE des SMA (au-delà de l'affichage) → SMA pleines
@@ -30,6 +31,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [watchlistOpen, setWatchlistOpen] = useState(false);
+  // Coquille mobile (#84) : sous la rupture, un volet à la fois + onglets en bas.
+  // Le graphique et la watchlist restent montés (masqués en CSS) pour garder leur état.
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<"watchlist" | "chart">("chart");
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() =>
@@ -122,7 +127,7 @@ export default function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app${isMobile ? ` mobile mtab-${mobileTab}` : ""}`}>
       <header className="toolbar">
         <button className="symbol-trigger" onClick={() => setSearchOpen(true)}>
           <span className="st-ticker">{symbol}</span>
@@ -197,14 +202,41 @@ export default function App() {
         <main className="chart-area">
           <Chart candles={candles} dailyCandles={dailyCandles} currency={currency} symbol={symbol} name={name} interval={interval} theme={theme} />
         </main>
-        {watchlistOpen && (
+        {(isMobile || watchlistOpen) && (
           <WatchlistPanel
-            onClose={() => setWatchlistOpen(false)}
-            onSelectSymbol={(s) => setSymbol(s)}
+            onClose={() => (isMobile ? setMobileTab("chart") : setWatchlistOpen(false))}
+            onSelectSymbol={(s) => {
+              setSymbol(s);
+              if (isMobile) setMobileTab("chart");
+            }}
             currentSymbol={symbol}
           />
         )}
       </div>
+      {isMobile && (
+        <nav className="bottom-tabs">
+          <button
+            className={`bt-tab${mobileTab === "watchlist" ? " active" : ""}`}
+            onClick={() => setMobileTab("watchlist")}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="13" y2="16" />
+            </svg>
+            <span>Watchlist</span>
+          </button>
+          <button
+            className={`bt-tab${mobileTab === "chart" ? " active" : ""}`}
+            onClick={() => setMobileTab("chart")}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 17l5-6 4 3 6-8 3 4" />
+              <line x1="3" y1="21" x2="21" y2="21" />
+            </svg>
+            <span>Graphique</span>
+          </button>
+        </nav>
+      )}
       {searchOpen && (
         <SymbolSearch
           onSelect={(s) => {

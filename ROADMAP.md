@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 84 | **Coquille mobile** *(enfant #70)* | 🧩 | 3 | S | | 🔍 Affiné | [ticket](docs/backlog/84-coquille-mobile.md). Rupture ~900 px, onglets bas, bascule Watchlist→Graphique ; desktop inchangé. Sprintable sans attendre Claude Design. |
+| 84 | **Coquille mobile** *(enfant #70)* | 🧩 | 3 | S | | 🧪 À valider | [ticket](docs/backlog/84-coquille-mobile.md). Rupture 900 px, onglets bas, bascule Watchlist→Graphique, rotation iPad, desktop inchangé — livré le 02/09. **UAT : iPhone réel** (`npm run dev -- --host` puis `http://IP-du-Mac:5173`). |
 
 ---
 

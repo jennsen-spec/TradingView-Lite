@@ -2538,3 +2538,69 @@ body {
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* ============================================================
+   Coquille mobile (#84, épopée #70) — sous ~900 px, un volet à
+   la fois + barre d'onglets en bas. La classe .mobile est posée
+   par App via useIsMobile() (même seuil que le CSS ci-dessous).
+   ============================================================ */
+.app.mobile .toolbar {
+  overflow-x: auto; /* la barre desktop déborde sur petit écran : on la laisse défiler */
+  gap: 10px;
+  padding: 8px 10px;
+}
+.app.mobile .wl-btn {
+  display: none; /* la bascule watchlist passe par les onglets du bas */
+}
+.app.mobile .chart-area {
+  overflow: hidden; /* la légende (absolute + nowrap) déborderait du viewport → scroll horizontal */
+}
+/* Volet actif : chart ↔ watchlist (les deux restent montés pour garder leur état). */
+.app.mobile.mtab-watchlist .toolbar,
+.app.mobile.mtab-watchlist .chart-area {
+  display: none;
+}
+.app.mobile.mtab-chart .wl-panel {
+  display: none;
+}
+/* Watchlist plein écran (plus un volet latéral). */
+.app.mobile .wl-panel {
+  flex: 1 1 auto;
+  width: auto;
+  border-left: none;
+}
+.app.mobile .wl-resize {
+  display: none; /* poignée de redimensionnement inutile au doigt */
+}
+
+/* Barre d'onglets du bas. */
+.bottom-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom); /* barre home iPhone */
+}
+.bt-tab {
+  flex: 1 1 0;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.bt-tab.active {
+  color: var(--accent);
+}
+
+@media (max-width: 899px) {
+  button, a {
+    touch-action: manipulation; /* supprime le délai/zoom du double-tap iOS */
+  }
+}

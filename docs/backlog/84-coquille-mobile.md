@@ -1,19 +1,19 @@
 # #84 — Coquille mobile (épopée #70)
 
-**Statut** : 🔍 Affiné · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : tête de l'épopée [#70](70-epopee-responsive.md)
+**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : tête de l'épopée [#70](70-epopee-responsive.md)
 
 ## Objectif
 Poser la structure mobile de TVLite : sous la rupture de largeur, un seul volet à la fois
 (Watchlist ou Graphique) avec une barre d'onglets en bas ; au-dessus, le desktop actuel inchangé.
 
 ## Critères d'acceptation
-- [ ] Sous ~900 px de largeur, l'app affiche la vue mobile : le volet actif plein écran + barre d'onglets en bas (Watchlist · Graphique).
-- [ ] Au-dessus de la rupture, le layout desktop est identique à aujourd'hui (aucune régression visuelle ni fonctionnelle).
-- [ ] Tap sur une action de la watchlist → bascule sur l'onglet Graphique avec le symbole chargé.
-- [ ] iPad : portrait → vue mobile, paysage → vue desktop ; la rotation bascule proprement sans rechargement.
-- [ ] Viewport mobile correct : meta viewport, pas de zoom parasite au tap, pas de scroll horizontal.
-- [ ] Zones de tap des onglets ≥ 44 px.
-- [ ] Vérifié sur iPhone réel via le wifi local (Vite `--host`).
+- [x] Sous ~900 px de largeur, l'app affiche la vue mobile : le volet actif plein écran + barre d'onglets en bas (Watchlist · Graphique). *(vérifié en émulation 375×812)*
+- [x] Au-dessus de la rupture, le layout desktop est identique à aujourd'hui (aucune régression visuelle ni fonctionnelle). *(toolbar, volet watchlist 310 px, aucun onglet bas)*
+- [x] Tap sur une action de la watchlist → bascule sur l'onglet Graphique avec le symbole chargé. *(MOM.SYNTH testé)*
+- [x] iPad : portrait → vue mobile, paysage → vue desktop ; la rotation bascule proprement sans rechargement. *(810×1080 ↔ 1080×810)*
+- [x] Viewport mobile correct : meta viewport (`viewport-fit=cover`), pas de zoom parasite au tap (`touch-action: manipulation`), pas de scroll horizontal (légende du graphe clippée).
+- [x] Zones de tap des onglets ≥ 44 px (50 px + safe-area).
+- [ ] **UAT Jean** : vérifié sur iPhone réel via le wifi local — `npm run dev -- --host` dans `frontend/`, puis `http://192.168.0.31:5173` sur l'iPhone (même wifi).
 
 ## Décisions
 - Rupture par **largeur d'écran** (valeur exacte à caler autour de 900 px) via `matchMedia` — c'est elle qui donne le comportement iPad paysage/portrait.
@@ -33,3 +33,10 @@ Poser la structure mobile de TVLite : sous la rupture de largeur, un seul volet 
 ## Notes / risques
 - Ne rien dupliquer : la coquille **enveloppe** les composants existants, elle ne les réécrit pas.
 - Attention aux pop-ups desktop (recherche, réglages) qui débordent sous 900 px — acceptable en v1, corrigé par #85/#86.
+
+## Réalisation (sprint du 02/09/2026)
+- `frontend/src/lib/useIsMobile.ts` (nouveau) — rupture à **900 px** via `matchMedia`, réactive à la rotation.
+- `frontend/src/App.tsx` — classes `mobile mtab-{watchlist|chart}`, barre `.bottom-tabs` (2 onglets SVG), watchlist toujours montée en mobile (état conservé), tap symbole → onglet Graphique.
+- `frontend/src/styles.css` — bloc « Coquille mobile » en fin de fichier : volet actif par CSS (les deux restent montés), watchlist plein écran, toolbar défilante, `.chart-area{overflow:hidden}` (la légende nowrap créait un scroll horizontal), safe-area iPhone, `touch-action: manipulation`.
+- `frontend/index.html` — `viewport-fit=cover`.
+- Choix de sprint : **pas de slot « Portfolio/Backtest »** dans la barre (simplicité d'abord — on l'ajoutera quand l'onglet existera). Le bouton watchlist de la toolbar est masqué en mobile (doublon des onglets).
