@@ -7,6 +7,18 @@
     <!-- iOS : PNG opaque a bords carres (iOS arrondit lui-meme et remplit
          toute transparence en noir). -->
     <link rel="apple-touch-icon" sizes="512x512" href="%BASE_URL%apple-touch-icon.png" />
+    <!-- PWA (#88) : icone d'accueil + plein ecran. Manifeste seul, pas de service
+         worker (le hors-ligne n'a pas d'usage ici et le cache d'un SW sert des
+         versions perimees). iOS < 16.4 exige encore les balises apple-*. -->
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="TVLite" />
+    <!-- default-translucent : la barre d'etat prend le fond de la page, donc suit
+         le theme clair/sombre au lieu d'etre figee sur une couleur. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Suit le theme choisi dans l'app (App.tsx la met a jour). -->
+    <meta name="theme-color" content="#ffffff" />
     <title>TV-Like</title>
     <script>
       /* Applique le thème avant le premier paint → pas de flash. Clair par défaut (sombre si choisi). */

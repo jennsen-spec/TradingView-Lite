@@ -1,6 +1,6 @@
 # #87 — Molettes symbole & intervalle (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#86](86-graphique-mobile.md) ✅
+**Statut** : ✅ Fait (UAT Jean 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#86](86-graphique-mobile.md) ✅
 
 ## Objectif
 Changer de symbole (et d'intervalle) **sans quitter le graphique** : un glissement vertical sur
@@ -22,7 +22,7 @@ sur l'entrée voulue. Comportement relevé sur la vidéo TradingView du 02/09.
 - [x] Même molette sur l'**intervalle** (1J → 1S), alimentée par les favoris ; le chevron ouvre toujours le panneau complet.
 - [x] `user-select`, `-webkit-touch-callout` et `touch-action: pan-x` posés sur la molette (la barre continue de défiler horizontalement) — **parasites iOS à confirmer sur l'appareil**.
 - [x] Desktop : aucun changement (bouton ticker classique, rangée d'intervalles inline, aucune molette).
-- [ ] UAT Jean sur iPhone.
+- [x] UAT Jean sur iPhone — validé le 02/09 (« super »).
 
 ## Retours UAT du 02/09 — livrés
 - **Défilement sans fin** : la molette **boucle** (le dernier est suivi du premier, plus aucune butée), et les symboles ne s'arrêtent plus à la collection courante — celle-ci vient en tête, **les autres collections suivent** (dédoublonnées). Vérifié : au repos `COST | EQ.SYNTH | MOM.SYNTH`, COST venant de la dernière collection. Idem pour l'intervalle (`1A` précède `5m`).

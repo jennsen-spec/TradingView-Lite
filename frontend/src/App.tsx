@@ -52,6 +52,11 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("tvlike:theme", theme);
     syncToCloud("tvlike:theme");
+    // PWA (#88) : la barre d'état de l'app installée prend cette couleur — sans ça
+    // elle resterait blanche par-dessus un fond sombre.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#0e1117" : "#ffffff");
   }, [theme]);
 
   // Le pincement doit zoomer le GRAPHIQUE, pas la page : Safari iOS zoome la page
