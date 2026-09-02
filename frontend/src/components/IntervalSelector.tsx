@@ -39,10 +39,7 @@ interface Props {
 export default function IntervalSelector({ value, onChange }: Props) {
   const [favs, setFavs] = useState<string[]>(loadFavs);
   const [open, setOpen] = useState(false);
-  // Mobile (#86) : le panneau glissant n'ouvre que sur les favoris ; « voir plus »
-  // déplie le catalogue complet.
   const isMobile = useIsMobile();
-  const [showAll, setShowAll] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,56 +71,41 @@ export default function IntervalSelector({ value, onChange }: Props) {
   return (
     <div className="interval-selector" ref={ref}>
       <div className="iv-bar">
-        {/* Mobile : molette sur les favoris (#87) au lieu de la rangée complète —
-            le chevron ouvre toujours le panneau (favoris + voir plus). */}
+        {/* Mobile : la molette EST le sélecteur (#87) — elle porte tout le catalogue,
+            en boucle, et remplace la rangée de favoris comme le menu déroulant. */}
         {isMobile ? (
           <WheelPicker
-            entries={favItems.map((it) => ({ key: it.key, label: it.short }))}
+            entries={CATALOG.map((it) => ({ key: it.key, label: it.short }))}
             value={value}
             onSelect={onChange}
-            onTap={() => { setOpen((o) => !o); setShowAll(false); }}
-            label="Intervalle — glisser pour changer, taper pour la liste"
+            label="Intervalle — glisser pour changer"
           />
         ) : (
-          favItems.map((it) => (
+          <>
+            {favItems.map((it) => (
+              <button
+                key={it.key}
+                className={value === it.key ? "active" : ""}
+                onClick={() => onChange(it.key)}
+                title={it.label}
+              >
+                {it.short}
+              </button>
+            ))}
             <button
-              key={it.key}
-              className={value === it.key ? "active" : ""}
-              onClick={() => onChange(it.key)}
-              title={it.label}
+              className={`iv-chevron${open ? " open" : ""}`}
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Tous les intervalles"
             >
-              {it.short}
+              ⌄
             </button>
-          ))
+          </>
         )}
-        <button
-          className={`iv-chevron${open ? " open" : ""}`}
-          onClick={() => { setOpen((o) => !o); setShowAll(false); }}
-          aria-label="Tous les intervalles"
-        >
-          ⌄
-        </button>
       </div>
 
       {open && (
         <div className="iv-menu">
-          {isMobile && !showAll && (
-            <div className="iv-group">
-              <div className="iv-group-title">FAVORIS</div>
-              {favItems.map((it) => (
-                <div key={it.key} className={`iv-row${value === it.key ? " active" : ""}`}>
-                  <button
-                    className="iv-row-label"
-                    onClick={() => { onChange(it.key); setOpen(false); }}
-                  >
-                    {it.label}
-                  </button>
-                </div>
-              ))}
-              <button className="iv-more" onClick={() => setShowAll(true)}>Voir plus…</button>
-            </div>
-          )}
-          {(!isMobile || showAll) && grouped.map(([group, items]) => (
+          {grouped.map(([group, items]) => (
             <div key={group} className="iv-group">
               <div className="iv-group-title">{group.toUpperCase()}</div>
               {items.map((it) => (

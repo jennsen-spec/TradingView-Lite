@@ -70,14 +70,19 @@ export default function App() {
     };
   }, [isMobile]);
 
-  // Symboles de la collection affichée dans la watchlist → entrées de la molette (#87).
+  // Entrées de la molette (#87) : la collection affichée d'abord, puis les autres à la
+  // suite — la molette boucle, on ne bute donc jamais sur une fin de liste.
   // Relu à chaque geste : la collection courante a pu changer entre-temps.
-  const symbolesCollection = (): WheelEntry[] => {
+  const symbolesMolette = (): WheelEntry[] => {
     const cols = loadCollections();
     const memo = loadCurrentCollectionId();
-    const cur = cols.find((c) => c.id === memo) ?? cols[0];
-    const syms = (cur?.items ?? []).filter((i) => i.type === "symbol" && i.sym).map((i) => i.sym!);
-    // Le symbole affiché peut ne pas être dans la collection (recherche libre) : on l'ajoute
+    const i = cols.findIndex((c) => c.id === memo);
+    const ordre = i > 0 ? [...cols.slice(i), ...cols.slice(0, i)] : cols;
+    const syms: string[] = [];
+    for (const c of ordre)
+      for (const it of c.items)
+        if (it.type === "symbol" && it.sym && !syms.includes(it.sym)) syms.push(it.sym);
+    // Le symbole affiché peut ne venir d'aucune collection (recherche libre) : on l'ajoute
     // en tête, sinon la molette démarrerait sur une entrée sans rapport.
     if (!syms.includes(symbol)) syms.unshift(symbol);
     return syms.map((s) => ({ key: s, label: s }));
@@ -181,12 +186,12 @@ export default function App() {
       <header className="toolbar">
         {isMobile ? (
           <WheelPicker
-            entries={symbolesCollection()}
+            entries={symbolesMolette()}
             value={symbol}
             onSelect={setSymbol}
             onTap={() => setSearchOpen(true)}
             label="Symbole — glisser pour changer, taper pour rechercher"
-            refresh={symbolesCollection}
+            refresh={symbolesMolette}
           />
         ) : (
           <button className="symbol-trigger" onClick={() => setSearchOpen(true)}>

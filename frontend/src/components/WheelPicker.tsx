@@ -11,15 +11,15 @@ interface Props {
   entries: WheelEntry[];
   value: string;
   onSelect: (key: string) => void; // au RELÂCHEMENT seulement (sinon une requête par cran)
-  onTap: () => void; // tap sans déplacement = comportement d'origine (recherche, menu…)
+  onTap?: () => void; // tap sans déplacement = comportement d'origine (recherche…) ; sinon rien
   label: string; // libellé accessible
   /** Recharge la liste au début du geste (la collection courante peut avoir changé). */
   refresh?: () => WheelEntry[];
 }
 
-const ITEM_H = 38; // hauteur d'un cran, en pixels de glissement
+const ITEM_H = 34; // pas d'un cran, en pixels de glissement
 const SEUIL = 8; // au-delà, c'est un glissement et non un tap
-const RAYON = 4; // entrées visibles de chaque côté du centre
+const RAYON = 4; // entrées visibles de chaque côté du centre (réduit si la liste est courte)
 
 // Molette façon sélecteur iOS (#87) : au repos, un aperçu « précédent / courant /
 // suivant » dans la barre ; pendant le glissement vertical, une carte flottante
@@ -37,7 +37,10 @@ export default function WheelPicker({ entries, value, onSelect, onTap, label, re
   const list = drag ? live : entries;
   const curIdx = Math.max(0, list.findIndex((e) => e.key === value));
   const idx = drag ? drag.idx : curIdx;
-  const at = (i: number) => (i >= 0 && i < list.length ? list[i] : null);
+  // Molette sans butée : l'index boucle, le dernier est suivi du premier.
+  const at = (i: number) => (list.length ? list[((i % list.length) + list.length) % list.length] : null);
+  // Pas plus de voisins que d'entrées distinctes, sinon la carte répéterait les mêmes.
+  const rayon = Math.min(RAYON, Math.max(0, Math.floor((list.length - 1) / 2)));
 
   const onPointerDown = (e: React.PointerEvent) => {
     const l = refresh ? refresh() : entries;
@@ -58,8 +61,8 @@ export default function WheelPicker({ entries, value, onSelect, onTap, label, re
       movedRef.current = true;
       try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
     }
-    // Glisser vers le haut fait monter la liste → on avance dans les entrées.
-    const next = Math.min(liveRef.current.length - 1, Math.max(0, d.startIdx - Math.round(dy / ITEM_H)));
+    // Glisser vers le haut fait monter la liste → on avance dans les entrées (sans butée).
+    const next = d.startIdx - Math.round(dy / ITEM_H);
     if (next !== d.idx) {
       dragRef.current = { ...d, idx: next };
       setDrag(dragRef.current);
@@ -71,10 +74,11 @@ export default function WheelPicker({ entries, value, onSelect, onTap, label, re
   const finir = () => {
     const d = dragRef.current;
     if (!d) return;
-    const choisi = liveRef.current[d.idx];
+    const n = liveRef.current.length;
+    const choisi = n ? liveRef.current[((d.idx % n) + n) % n] : null;
     const bouge = movedRef.current;
     annuler();
-    if (!bouge) onTap();
+    if (!bouge) onTap?.();
     else if (choisi && choisi.key !== value) onSelect(choisi.key);
   };
 
@@ -96,15 +100,15 @@ export default function WheelPicker({ entries, value, onSelect, onTap, label, re
       {drag && movedRef.current &&
         createPortal(
           <div className="wheel-card">
-            {Array.from({ length: RAYON * 2 + 1 }, (_, k) => {
-              const i = idx - RAYON + k;
+            {Array.from({ length: rayon * 2 + 1 }, (_, k) => {
+              const i = idx - rayon + k;
               const e = at(i);
               if (!e) return <div className="wheel-item" key={`v${k}`} />;
               const d = Math.abs(i - idx);
               return (
                 <div
                   className={`wheel-item${d === 0 ? " sel" : ""}`}
-                  key={e.key}
+                  key={`${e.key}-${k}`}
                   style={{ opacity: Math.max(0.18, 1 - d * 0.22), fontSize: `${Math.max(13, 26 - d * 3.5)}px` }}
                 >
                   {e.icon}

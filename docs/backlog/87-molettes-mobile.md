@@ -24,6 +24,11 @@ sur l'entrée voulue. Comportement relevé sur la vidéo TradingView du 02/09.
 - [x] Desktop : aucun changement (bouton ticker classique, rangée d'intervalles inline, aucune molette).
 - [ ] UAT Jean sur iPhone.
 
+## Retours UAT du 02/09 — livrés
+- **Défilement sans fin** : la molette **boucle** (le dernier est suivi du premier, plus aucune butée), et les symboles ne s'arrêtent plus à la collection courante — celle-ci vient en tête, **les autres collections suivent** (dédoublonnées). Vérifié : au repos `COST | EQ.SYNTH | MOM.SYNTH`, COST venant de la dernière collection. Idem pour l'intervalle (`1A` précède `5m`).
+- **Menu déroulant d'intervalle supprimé en mobile** : la molette **est** le sélecteur et porte donc **tout le catalogue** (11 entrées), sinon les intervalles non favoris devenaient inaccessibles. Le chevron, le panneau glissant et le « Voir plus… » du #86 disparaissent — code et CSS orphelins retirés. Desktop inchangé (favoris inline + chevron + menu à étoiles).
+- **Pas de la molette** ramené de 38 à 34 px, et le nombre de voisins affichés s'adapte aux listes courtes (plus de répétition de la même entrée).
+
 ## Réalisation (02/09/2026)
 - `WheelPicker.tsx` (nouveau) : composant générique — mini-molette au repos + carte flottante en portail pendant le geste ; dégradé taille/opacité selon la distance au centre ; sélection **au relâchement** uniquement.
 - `App.tsx` : molette du ticker alimentée par la collection courante (relue à chaque geste) ; un symbole hors collection est ajouté en tête pour que la molette démarre au bon endroit.

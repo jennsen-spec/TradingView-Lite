@@ -2698,7 +2698,6 @@ body {
 /* --- Graphique mobile (#86) --- */
 /* Tous les menus de la barre deviennent des PANNEAUX GLISSANTS depuis le bas,
    par-dessus la barre et les onglets. `fixed` échappe à l'overflow de la barre. */
-.app.mobile .iv-menu,
 .app.mobile .icat-menu,
 .app.mobile .icat-modal,
 .app.mobile .cb-menu,
@@ -2757,7 +2756,6 @@ body {
   z-index: 59;
 }
 /* Cibles de tap confortables dans les panneaux. */
-.app.mobile .iv-menu .iv-item,
 .app.mobile .icat-menu .icat-fav-row,
 .app.mobile .icat-modal .icat-row {
   min-height: 44px;
@@ -2791,19 +2789,6 @@ body {
 .app.mobile .icat-main {
   padding: 0 12px;
   min-height: 34px;
-}
-.iv-more {
-  width: 100%;
-  min-height: 44px;
-  margin-top: 4px;
-  background: none;
-  border: none;
-  border-top: 1px solid var(--border);
-  color: var(--accent);
-  font-size: 14px;
-  text-align: left;
-  padding: 0 10px;
-  cursor: pointer;
 }
 .cb-more-wrap {
   position: relative;
