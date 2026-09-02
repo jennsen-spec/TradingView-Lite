@@ -1,6 +1,6 @@
 # #90 — Pastille « nouveau rapport »
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité
+**Statut** : ✅ Fait (UAT Jean 02/09/2026) · **Points** : 3 · **Catégorie** : 🧩 Fonctionnalité
 
 ## Objectif
 Signaler dans l'app qu'un **nouveau rapport mensuel est publié** : une pastille sur l'onglet

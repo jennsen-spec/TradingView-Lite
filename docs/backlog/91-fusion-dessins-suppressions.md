@@ -1,6 +1,6 @@
 # #91 — Les suppressions de dessins ne se propagent pas entre appareils
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : à cadrer avec [#78](#) (même moteur de fusion)
+**Statut** : ✅ Fait (UAT Jean 02/09/2026 — vérifié Mac ↔ iPhone) · **Points** : 3 · **Catégorie** : ⚙️ Technique · **Priorité** : à cadrer avec [#78](#) (même moteur de fusion)
 
 ## Symptôme
 Constaté par Jean le 02/09 sur iPhone : **les dessins s'empilent** — d'anciennes bandes réapparaissent
@@ -26,7 +26,7 @@ La branche symétrique (`localIsNewer`) passe bien `seen`, elle : le défaut est
 - [x] Un dessin supprimé sur l'appareil A disparaît sur l'appareil B après synchronisation, et ne revient pas.
 - [x] Un dessin créé sur A pendant que B était hors ligne arrive bien sur B (pas de régression de la fusion).
 - [x] Idem pour les collections et les ensembles (même code de fusion, mêmes clés `isMergeable`)
-- [ ] Cas vérifié à deux appareils réels (Mac + iPhone), suppression dans les deux sens — **UAT Jean**.
+- [x] Cas vérifié à deux appareils réels (Mac + iPhone) — UAT Jean le 02/09 : « ça marche ».
 
 ## Correctif (02/09/2026)
 `seen` est désormais passé **des deux côtés** de la fusion : `mergeById(row.value, local, seen[row.id] ?? [])`.
