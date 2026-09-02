@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| — | *Rien en attente* | | | | | | Les tickets affinés récents (#76, #79, #80) ont tous été livrés → voir [§3 Livrés](#-livrés-ex-backlog--ex-dor). |
+| 84 | **Coquille mobile** *(enfant #70)* | 🧩 | 3 | S | | 🔍 Affiné | [ticket](docs/backlog/84-coquille-mobile.md). Rupture ~900 px, onglets bas, bascule Watchlist→Graphique ; desktop inchangé. Sprintable sans attendre Claude Design. |
 
 ---
 
@@ -25,7 +25,11 @@
 | # | Item | Cat | Pts | Taille | Note |
 |---|------|:---:|:---:|:---:|---|
 | **⚡ NOW** | | | | | |
-| 70 | **Responsive — vue Mobile / iPad** | 🧩 | 13 | XL | Adapter TVLite au tactile : layout (toolbar, volets, modales), interactions au doigt, ruptures téléphone/iPad. À affiner : v1 consultation seule, ou dessin tactile aussi ? |
+| 70 | **Épopée Responsive — vue Mobile / iPad** | 🧩 | ~13-16 | XL | [épopée](docs/backlog/70-epopee-responsive.md) — 🔍 affinée le 02/09. Web responsive (PWA en bonus #88), iPad = rupture par largeur (paysage=desktop, portrait=téléphone), dessins **sans édition tactile** (affichage + liste + suppression + ensembles). Enfants : #84 (DoR) → #85 → #86 → #87 → #88. Détails #86/#87 à ajuster avec Claude Design. |
+| 85 | **Watchlist mobile** *(enfant #70)* | 🧩 | 3 | S | Collections parcourables en haut, sous-catégories, liste tactile, tap → graphique. |
+| 86 | **Graphique mobile v1 — consultation** *(enfant #70)* | 🧩 | 5 | M | Barre du bas (tap ticker → recherche · intervalle = favoris + « voir plus »), bottom sheets indicateurs, empilement « ^ », dessins lecture seule gérés par liste. À ajuster avec Claude Design. |
+| 87 | **Interactions fines mobile** *(enfant #70)* | 🧩 | ? | — | Overlays de scroll symbole/intervalle, menu « ⋯ », icônes défilantes. Attend Claude Design. |
+| 88 | **PWA — bonus fin d'épopée** *(enfant #70)* | 🧩 | 2 | XS | Manifest + service worker : icône écran d'accueil, plein écran. Attention au piège du cache. |
 | **⏭️ THEN** | | | | | |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
 | 24 | **Espace membre** | 🚀 | ? | — | Zone connectée : préférences, contenus liés au compte. |
