@@ -2591,6 +2591,44 @@ body {
   display: none; /* poignée de redimensionnement inutile au doigt */
 }
 
+/* --- Watchlist mobile (#85) --- */
+/* Chips de collections favorites : noms complets, défilables au doigt. */
+.app.mobile .wl-quick {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding: 6px 12px 10px;
+  scrollbar-width: none;
+}
+.app.mobile .wl-quick::-webkit-scrollbar {
+  display: none;
+}
+.app.mobile .wl-quick-dot {
+  width: auto;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  font-size: 13px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+/* Lignes et sections : hauteur de tap confortable, texte élargi. */
+.app.mobile .wl-row-main {
+  min-height: 48px;
+  font-size: 15px;
+}
+.app.mobile .wl-cat-head {
+  min-height: 40px;
+  font-size: 12px;
+}
+/* Pas d'édition accidentelle au doigt : les icônes de survol restent desktop (v1). */
+.app.mobile .wl-row-actions {
+  display: none;
+}
+/* Le ✕ fait doublon avec les onglets du bas. */
+.app.mobile .wl-close {
+  display: none;
+}
+
 /* Barre d'onglets du bas. */
 .bottom-tabs {
   flex: 0 0 auto;

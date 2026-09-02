@@ -5,6 +5,7 @@ import {
 } from "../lib/collections";
 import { fetchQuotes, type Quote } from "../lib/api";
 import { syncToCloud } from "../lib/cloudPrefs";
+import { useIsMobile } from "../lib/useIsMobile";
 import SymbolSearch from "./SymbolSearch";
 import SymbolLogo from "./SymbolLogo";
 import WatchlistDetail from "./WatchlistDetail";
@@ -64,6 +65,8 @@ interface Props {
 }
 
 export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol }: Props) {
+  // Mobile (#85) : chips de collections à nom complet (au lieu de l'initiale).
+  const isMobile = useIsMobile();
   const [collections, setCollections] = useState<Collection[]>(() => loadCollections());
   const [currentId, setCurrentId] = useState<string>(() => collections[0].id);
   const [nameMenu, setNameMenu] = useState(false);
@@ -501,7 +504,7 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
             title={c.name}
             onClick={() => setCurrentId(c.id)}
           >
-            {c.name.charAt(0).toUpperCase()}
+            {isMobile ? c.name : c.name.charAt(0).toUpperCase()}
           </button>
         ))}
       </div>

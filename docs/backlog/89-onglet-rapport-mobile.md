@@ -1,6 +1,6 @@
 # #89 — Onglet « Rapport » mobile (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 2 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#84](84-coquille-mobile.md) ✅
+**Statut** : ✅ Fait (UAT Jean 02/09/2026) · **Points** : 2 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#84](84-coquille-mobile.md) ✅
 
 ## Objectif
 Troisième onglet « Rapport » dans la barre mobile, qui affiche le **dernier rapport mensuel**
@@ -12,7 +12,7 @@ d'outils en mobile (il faisait doublon et ouvrait un nouvel onglet navigateur).
 - [x] L'onglet Rapport affiche le dernier rapport mensuel dans le volet, scrollable au doigt. *(« Rapport duo août 2026 » chargé plein écran 375×761, très lisible — la page était déjà responsive)*
 - [x] Le bouton « Rapport » de la toolbar n'apparaît plus en mobile ; **desktop inchangé** (bouton conservé, ouverture dans un nouvel onglet comme aujourd'hui). *(vérifié aux deux largeurs)*
 - [x] Basculer vers Rapport puis revenir ne fait pas perdre l'état du graphique (zoom, symbole) — l'iframe reste montée aussi, le rapport ne se recharge pas.
-- [ ] **UAT Jean** sur iPhone.
+- [x] **UAT Jean** sur iPhone — « ça marche » (02/09).
 
 ## Réalisation (02/09/2026)
 - `App.tsx` : `mobileTab` étendu à `"rapport"`, 3ᵉ onglet, iframe lazy (`rapportMounted`) vers `BASE_URL + rapport.html`.
