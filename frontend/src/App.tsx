@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Chart from "./components/Chart";
 import SymbolSearch from "./components/SymbolSearch";
 import IntervalSelector from "./components/IntervalSelector";
@@ -41,6 +41,10 @@ export default function App() {
   const [rapportMounted, setRapportMounted] = useState(false);
   // Menu « ⋯ » de la barre du bas (#86) : refresh, thème, horodatage.
   const [moreMenu, setMoreMenu] = useState(false);
+  // Pastille « nouveau rapport » (#90) : allumée quand le signal publié diffère du
+  // dernier consulté sur CET appareil. Éteinte dès la première ouverture.
+  const [rapportNeuf, setRapportNeuf] = useState(false);
+  const signalRef = useRef<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() =>
@@ -58,6 +62,30 @@ export default function App() {
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#0e1117" : "#ffffff");
   }, [theme]);
+
+  // Signal du rapport publié vs dernier consulté. Toute défaillance (hors ligne,
+  // métadonnée absente sur un déploiement antérieur) laisse la pastille éteinte :
+  // mieux vaut rater une publication qu'alerter à tort.
+  useEffect(() => {
+    let annule = false;
+    fetch(`${import.meta.env.BASE_URL}rapport-meta.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m: { signal?: string } | null) => {
+        if (annule || !m?.signal) return;
+        signalRef.current = m.signal;
+        setRapportNeuf(localStorage.getItem("tvlike:rapport-vu") !== m.signal);
+      })
+      .catch(() => { /* pas de pastille */ });
+    return () => { annule = true; };
+  }, []);
+
+  // Le rapport a été ouvert → on éteint la pastille (local à l'appareil, pas de cloud).
+  const rapportVu = () => {
+    setRapportNeuf(false);
+    if (signalRef.current) {
+      try { localStorage.setItem("tvlike:rapport-vu", signalRef.current); } catch { /* quota */ }
+    }
+  };
 
   // Le pincement doit zoomer le GRAPHIQUE, pas la page : Safari iOS zoome la page
   // au pincement, ce qui décale tous les panneaux `position: fixed` (viewport de
@@ -221,7 +249,8 @@ export default function App() {
           {/* Rapport mensuel du duo : page autonome générée par `npm run rapport`
               dans frontend/public/, donc servie par le même déploiement. */}
           <a
-            className="rapport-btn"
+            className={`rapport-btn${rapportNeuf ? " neuf" : ""}`}
+            onClick={rapportVu}
             href={`${import.meta.env.BASE_URL}rapport.html`}
             target="_blank"
             rel="noopener"
@@ -341,10 +370,11 @@ export default function App() {
             <span>Graphique</span>
           </button>
           <button
-            className={`bt-tab${mobileTab === "rapport" ? " active" : ""}`}
+            className={`bt-tab${mobileTab === "rapport" ? " active" : ""}${rapportNeuf ? " neuf" : ""}`}
             onClick={() => {
               setMobileTab("rapport");
               setRapportMounted(true);
+              rapportVu();
             }}
           >
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

@@ -390,6 +390,13 @@ writeFileSync(sortie, html);
 // que lorsque le signal CHANGE. Sans lui elle committerait tous les jours,
 // la date de génération suffisant à faire varier le fichier.
 writeFileSync(RACINE + "portefeuille/dernier-signal.txt", c.signal + "\n");
+// Métadonnée servie à côté du rapport (#90) : TVLite la lit pour allumer la pastille
+// « nouveau rapport ». On expose la DATE DE SIGNAL, pas la date de génération : le site
+// est redéployé à chaque commit, la pastille clignoterait sinon à chaque déploiement.
+writeFileSync(
+  RACINE + "frontend/public/rapport-meta.json",
+  JSON.stringify({ signal: c.signal }) + "\n"
+);
 
 // --enregistrer : inscrire le cycle dans l'état. Réservé à la publication (l'Action) ;
 // un `npm run rapport` lancé à la main ne touche à rien.

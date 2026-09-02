@@ -2937,3 +2937,26 @@ body {
     touch-action: manipulation; /* supprime le délai/zoom du double-tap iOS */
   }
 }
+
+/* --- Pastille « nouveau rapport » (#90) --- */
+/* Point coloré en coin haut-droit du bouton/onglet Rapport, éteint à la 1re ouverture. */
+.rapport-btn,
+.bt-tab {
+  position: relative;
+}
+.rapport-btn.neuf::after,
+.bt-tab.neuf::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef5350;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.bt-tab.neuf::after {
+  top: 6px;
+  right: calc(50% - 22px); /* accolée à l'icône, pas au bord de l'onglet */
+}
