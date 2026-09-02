@@ -1,6 +1,6 @@
 # #86 — Graphique mobile v1 (consultation) (épopée #70)
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#85](85-watchlist-mobile.md) ✅
+**Statut** : ✅ Fait (UAT Jean 02/09/2026 — « ok c'est bien ») · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#85](85-watchlist-mobile.md) ✅
 
 ## Objectif
 Rendre l'onglet Graphique utilisable au doigt façon TradingView mobile : la toolbar du haut
@@ -17,10 +17,10 @@ tracé ni déplacement de dessin au doigt.
 - [x] Tap **dessins** → panneau glissant « Dessins — &lt;symbole&gt; » : liste des dessins avec **suppression** (verrouillés protégés) + les ensembles (#63) enregistrer / restaurer / renommer / supprimer. Aucun tracé au doigt (rangée d'outils masquée).
 - [x] Le menu **⋯** contient le **rafraîchissement ↻**, la bascule de **thème ☀/☽** et l'**horodatage** des données (ligne d'information).
 - [x] **Bouton « ⌄/⌃ »** sous les légendes : replie/déplie la pile des lignes SMA (replié par défaut en mobile).
-- [ ] Zoom/pan tactiles : pincer, glisser le graphe, tirer l'échelle des prix et celle des dates — **à vérifier sur iPhone** (natif lightweight-charts, non testable en émulation).
+- [x] Zoom/pan tactiles : pincer, glisser le graphe, tirer les échelles — le pincement partait sur la page, corrigé (voir retours UAT).
 - [x] Un panneau glissant se ferme par tap en dehors ; il **ne masque pas les onglets du bas** (`bottom: 50px + safe-area`).
 - [x] Desktop : aucun changement (toolbar en haut, outils de dessin, refresh/thème visibles, 9 lignes de légende, pas de ⋯ ni de bouton de repli).
-- [ ] UAT Jean sur iPhone.
+- [x] UAT Jean sur iPhone — validé le 02/09 après trois tours de corrections.
 
 ## Retours UAT du 02/09 — corrigés
 - **Le pincement zoomait la PAGE, pas le graphique** (cause racine du « ça part en bordel » sur les ensembles) : sous zoom de page, Safari iOS place les éléments `position: fixed` dans le viewport de mise en page, donc tous les panneaux se décalent et se coupent. → zoom de page neutralisé en mobile (`gesturestart/change/end`), le pincement revient au graphique.

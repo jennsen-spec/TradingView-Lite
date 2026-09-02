@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 86 | **Graphique mobile v1 — consultation** *(enfant #70)* | 🧩 | 5 | M | | 🧪 À valider | [ticket](docs/backlog/86-graphique-mobile.md). Toolbar basculée en barre du bas (ticker → recherche · intervalle favoris + voir plus · indicateurs · dessins · ⋯), panneaux glissants, repli ⌄ des légendes, dessins en lecture seule (liste + suppression + ensembles) — livré le 02/09. **UAT iPhone** (dont zoom/pan tactiles). |
+| — | *Rien en attente* | | | | | | Prochain : affiner #87 (interactions fines). |
 
 ---
 
@@ -25,7 +25,7 @@
 | # | Item | Cat | Pts | Taille | Note |
 |---|------|:---:|:---:|:---:|---|
 | **⚡ NOW** | | | | | |
-| 70 | **Épopée Responsive — vue Mobile / iPad** | 🧩 | ~13-16 | XL | [épopée](docs/backlog/70-epopee-responsive.md) — 🔍 affinée le 02/09. Web responsive (PWA en bonus #88), iPad = rupture par largeur (paysage=desktop, portrait=téléphone), dessins **sans édition tactile** (affichage + liste + suppression + ensembles). Enfants : #84 ✅ → #89 ✅ → #85 ✅ → #86 (DoR) → #87 → #88. On avance **sans Claude Design** (décision du 02/09) : référence = les captures TradingView mobile. |
+| 70 | **Épopée Responsive — vue Mobile / iPad** | 🧩 | ~13-16 | XL | [épopée](docs/backlog/70-epopee-responsive.md) — 🔍 affinée le 02/09. Web responsive (PWA en bonus #88), iPad = rupture par largeur (paysage=desktop, portrait=téléphone), dessins **sans édition tactile** (affichage + liste + suppression + ensembles). Enfants : #84 ✅ → #89 ✅ → #85 ✅ → #86 ✅ → #87 → #88. On avance **sans Claude Design** (décision du 02/09) : référence = les captures TradingView mobile. |
 | 87 | **Interactions fines mobile** *(enfant #70)* | 🧩 | ? | — | Overlays de scroll symbole/intervalle, icônes défilantes de la barre du bas, contenu extensible du ⋯. À affiner après #86. |
 | 88 | **PWA — bonus fin d'épopée** *(enfant #70)* | 🧩 | 2 | XS | Manifest + service worker : icône écran d'accueil, plein écran. Attention au piège du cache. |
 | **⏭️ THEN** | | | | | |
@@ -53,7 +53,7 @@
 
 ## ✅ Livrés (ex-backlog / ex-DoR)
 - **Synthétiques & stratégie** : [#76](docs/backlog/76-ordre-collections.md) Réordonner les collections · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (**EQ.SYNTH**, panier actuel base 100) · [#77](docs/backlog/77-duo-mom-synthetique.md) **MOM.SYNTH** instrument synthétique du duo (backtest → prod) · [#79](docs/backlog/79-duo-mom-phase2-append.md) MOM.SYNTH phase 2 (quotidien, public, auto-actualisé, point courant live) · [#80](docs/backlog/80-fiche-detail-synthetiques.md) Fiche détail des synthétiques.
-- **Épopée #70 (responsive)** : [#84](docs/backlog/84-coquille-mobile.md) Coquille mobile (rupture 900 px, onglets bas) · [#89](docs/backlog/89-onglet-rapport-mobile.md) Onglet « Rapport » mobile · [#85](docs/backlog/85-watchlist-mobile.md) Watchlist mobile (chips, overlay Graphique/Backtest) — UAT iPhone 02/09.
+- **Épopée #70 (responsive)** : [#84](docs/backlog/84-coquille-mobile.md) Coquille mobile (rupture 900 px, onglets bas) · [#89](docs/backlog/89-onglet-rapport-mobile.md) Onglet « Rapport » mobile · [#85](docs/backlog/85-watchlist-mobile.md) Watchlist mobile (chips, overlay Graphique/Backtest) · [#86](docs/backlog/86-graphique-mobile.md) Graphique mobile v1 (barre du bas, panneaux glissants, dessins lecture seule) — UAT iPhone 02/09.
 - **Autres ex-backlog** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
 - **Clos par décision** : [#81](docs/backlog/81-mom-synth-supabase.md) MOM.SYNTH sur Supabase — évalué, **écarté** (on garde l'approche actuelle client-side, portable dev/prod).
 - **🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
