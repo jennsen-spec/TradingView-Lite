@@ -15,6 +15,7 @@ tracé ni déplacement de dessin au doigt.
 - [ ] Tap sur l'**intervalle** → panneau glissant listant les **favoris** (`tvlike:interval-favorites`) + une entrée « voir plus » qui déplie le catalogue complet groupé (Minutes / Heures / Jours).
 - [ ] Tap **indicateurs** → panneau glissant : catalogue + réglages (`IndicatorCatalog` / `IndicatorSettings`).
 - [ ] Tap **dessins** → panneau glissant listant les dessins et les ensembles (#63) : afficher / masquer, **supprimer**, enregistrer / charger un ensemble. Aucun tracé ni édition au doigt.
+- [ ] Le menu **⋯** contient le **rafraîchissement ↻**, la bascule de **thème ☀/☽** et l'**horodatage** des données (ligne d'information, non cliquable).
 - [ ] **Bouton « ^ »** sous les légendes : replie/déplie la pile des lignes SMA (défaut replié en mobile pour dégager le graphe).
 - [ ] Zoom/pan tactiles : pincer, glisser le graphe, tirer l'échelle des prix et celle des dates (natif lightweight-charts) — vérifiés sur iPhone.
 - [ ] Un panneau glissant se ferme par tap en dehors ou glissement vers le bas ; il ne masque jamais les onglets du bas.
@@ -25,10 +26,11 @@ tracé ni déplacement de dessin au doigt.
 - Les panneaux glissants **réutilisent les composants existants** (`IndicatorCatalog`, `IndicatorSettings`, `SymbolSearch`) dans une coquille « bottom sheet » ; on ne réécrit pas leur contenu.
 - Les portails de toolbar (`#ind-toolbar-slot`, `#draw-toolbar-slot`) sont remplacés en mobile par des cibles dans la barre du bas — pas de duplication de la logique de `Chart`/`DrawingLayer`.
 - La barre du bas est **fixe** (pas de défilement horizontal en v1) : le défilement des icônes et les overlays de scroll symbole/intervalle sont explicitement **#87**.
+- **Reste de la toolbar dans le menu ⋯** : refresh ↻, thème ☀/☽, horodatage (confirmé par Jean le 02/09). Le bouton Rapport n'y va pas — il a son onglet (#89).
+- **On avance sans Claude Design** (02/09) : le design suit les captures TradingView mobile de référence ; si un apport design arrive plus tard, il retouchera l'habillage, pas la structure.
 
 ## Questions ouvertes
-- **Où vont refresh ↻, thème ☀/☽ et l'horodatage des données ?** Proposition : dans le menu « ⋯ » de la barre du bas (l'horodatage en simple ligne d'information). *À confirmer.*
-- **Fruit de Claude Design** : peut retoucher l'ordre et l'iconographie de la barre du bas, et l'allure des panneaux.
+- (aucune — prêt à sprinter)
 
 ## Plan technique
 1. Coquille `BottomSheet` (overlay + panneau, fermeture tap-dehors / glissement) → vérif : ouvre/ferme, n'empiète pas sur `.bottom-tabs`.

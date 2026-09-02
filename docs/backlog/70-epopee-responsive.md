@@ -25,8 +25,9 @@ bottom sheets. **Consultation d'abord** — pas d'édition de dessins au doigt.
 6. **#88 PWA (bonus)** — manifest + service worker : icône écran d'accueil, plein écran.
 
 ## Questions ouvertes
-- **Fruit de Claude Design à intégrer** (session en cours) → ajustera surtout #86 et #87.
-- Mécanique exacte des overlays de scroll (symbole / intervalle) et contenu du menu « ⋯ ».
+- Mécanique exacte des overlays de scroll (symbole / intervalle) et contenu extensible du menu « ⋯ » → **#87**, à affiner après #86.
+
+*(Résolu le 02/09 : on avance **sans Claude Design** — la référence est le jeu de captures TradingView mobile ; un apport design ultérieur retoucherait l'habillage, pas la structure.)*
 
 ## Hors périmètre
 Tracé et édition de dessins au doigt · onglets Explorer/Communauté · temps réel.
