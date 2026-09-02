@@ -4,6 +4,7 @@ import type { IChartApi, ISeriesApi } from "lightweight-charts";
 import type { Candle, Time } from "../lib/indicators";
 import { rgba, visibleForInterval, LINE_STYLES } from "../lib/indicatorSettings";
 import { fmtTimeByInterval, dureeEntre } from "../lib/timeFormat";
+import { useIsMobile } from "../lib/useIsMobile";
 import {
   type Drawing, type DPoint, type DrawingStyle, type LongPosConfig,
   newTrend, newDivergence, divergenceAnchor, defaultDivergence, newVline, newChannel, newBrush, newFib, newRect, newLongPos, longPosStats, genDrawingId, loadDrawings, saveDrawings, distToSegment, defaultVisibility,
@@ -52,6 +53,12 @@ function fmtDuration(sec: number): string {
 }
 
 interface PaneBox { top: number; height: number; }
+
+// Libellés des dessins pour la liste mobile (#86).
+const TYPE_LABELS: Record<string, string> = {
+  trend: "Trait", vline: "Ligne verticale", channel: "Canal", brush: "Stabilo",
+  fib: "Fibonacci", longpos: "Position longue", rect: "Rectangle", divergence: "Divergence",
+};
 
 interface Props {
   symbol: string;
@@ -143,6 +150,9 @@ export default function DrawingLayer({
   };
 
   // ── Ensembles de dessins (#63) : sauvegarder / restaurer l'état par symbole ──
+  // En mobile (#86), le même panneau liste aussi les dessins pour les supprimer :
+  // c'est la seule façon de les gérer, le canvas restant en lecture seule.
+  const isMobile = useIsMobile();
   const [setsOpen, setSetsOpen] = useState(false);
   const [sets, setSets] = useState<DrawSet[]>([]);
   const [setName, setSetName] = useState("");
@@ -187,6 +197,12 @@ export default function DrawingLayer({
     if (liste.some((x) => x.nom === nom)) { window.alert(`« ${nom} » existe déjà.`); return; }
     const cible = liste.find((x) => x.id === ens.id);
     if (cible) { cible.nom = nom; saveDrawSets(symbol, liste); setSets([...liste]); }
+  };
+  // Suppression d'un dessin depuis la liste (mobile) — un dessin verrouillé résiste.
+  const supprimerDessin = (id: string) => {
+    pushUndo();
+    setDrawings((prev) => prev.filter((d) => !(d.id === id && !d.locked)));
+    setSelectedIds([]);
   };
   const supprimerEnsemble = (ens: DrawSet) => {
     if (!window.confirm(`Supprimer l'ensemble « ${ens.nom} » (${ens.dessins.length} dessin${ens.dessins.length > 1 ? "s" : ""}) ?`)) return;
@@ -1561,7 +1577,32 @@ export default function DrawingLayer({
         <>
           <div className="draw-modal-backdrop" onMouseDown={(e) => e.stopPropagation()} onClick={() => setSetsOpen(false)} />
           <div className="is-modal sets-modal" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="sets-title">Ensembles de dessins — {symbol}</div>
+            <div className="sets-title">Dessins — {symbol}</div>
+            {isMobile && (
+              <div className="sets-dessins">
+                {dessinsDeJean().length === 0 ? (
+                  <div className="sets-vide">Aucun dessin sur ce symbole.</div>
+                ) : (
+                  dessinsDeJean().map((d) => (
+                    <div className="sets-ligne" key={d.id}>
+                      <div className="sets-infos">
+                        <span className="sets-nom">{d.title?.trim() || TYPE_LABELS[d.type] || d.type}</span>
+                        {d.locked && <span className="sets-meta">verrouillé</span>}
+                      </div>
+                      <button
+                        className="sets-btn sets-sec"
+                        title={d.locked ? "Dessin verrouillé" : "Supprimer ce dessin"}
+                        disabled={d.locked}
+                        onClick={() => supprimerDessin(d.id)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))
+                )}
+                <div className="sets-title">Ensembles</div>
+              </div>
+            )}
             <div className="sets-save">
               <input
                 type="text"

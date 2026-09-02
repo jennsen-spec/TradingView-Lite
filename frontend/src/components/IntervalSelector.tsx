@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { syncToCloud } from "../lib/cloudPrefs";
+import { useIsMobile } from "../lib/useIsMobile";
 
 // Catalogue d'intervalles. Intraday (min/heures) = historique court côté Yahoo.
 const CATALOG = [
@@ -37,6 +38,10 @@ interface Props {
 export default function IntervalSelector({ value, onChange }: Props) {
   const [favs, setFavs] = useState<string[]>(loadFavs);
   const [open, setOpen] = useState(false);
+  // Mobile (#86) : le panneau glissant n'ouvre que sur les favoris ; « voir plus »
+  // déplie le catalogue complet.
+  const isMobile = useIsMobile();
+  const [showAll, setShowAll] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +81,7 @@ export default function IntervalSelector({ value, onChange }: Props) {
         ))}
         <button
           className={`iv-chevron${open ? " open" : ""}`}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => { setOpen((o) => !o); setShowAll(false); }}
           aria-label="Tous les intervalles"
         >
           ⌄
@@ -85,7 +90,23 @@ export default function IntervalSelector({ value, onChange }: Props) {
 
       {open && (
         <div className="iv-menu">
-          {grouped.map(([group, items]) => (
+          {isMobile && !showAll && (
+            <div className="iv-group">
+              <div className="iv-group-title">FAVORIS</div>
+              {favItems.map((it) => (
+                <div key={it.key} className={`iv-row${value === it.key ? " active" : ""}`}>
+                  <button
+                    className="iv-row-label"
+                    onClick={() => { onChange(it.key); setOpen(false); }}
+                  >
+                    {it.label}
+                  </button>
+                </div>
+              ))}
+              <button className="iv-more" onClick={() => setShowAll(true)}>Voir plus…</button>
+            </div>
+          )}
+          {(!isMobile || showAll) && grouped.map(([group, items]) => (
             <div key={group} className="iv-group">
               <div className="iv-group-title">{group.toUpperCase()}</div>
               {items.map((it) => (

@@ -16,6 +16,7 @@ import {
 import type { Candle, LinePoint, Time } from "../lib/indicators";
 import { sma, rsi, atr, smaOfPoints, adjustedCloses, mansfieldRS } from "../lib/indicators";
 import { syncToCloud } from "../lib/cloudPrefs";
+import { useIsMobile } from "../lib/useIsMobile";
 import type { Dividend as DividendRow } from "../lib/indicators";
 import { fetchDividends, fetchCandles as fetchCandlesApi } from "../lib/api";
 import IndicatorSettings from "./IndicatorSettings";
@@ -276,6 +277,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     4: null, // RS quand l'ATR est allumé
   });
   // Données alignées par bougie pour la légende dynamique + index par temps.
+  // Mobile (#86) : la pile des légendes est repliée par défaut (bouton « ^ ») pour dégager le graphe.
+  const isMobile = useIsMobile();
+  const [legendOpen, setLegendOpen] = useState(false);
   const legendRowsRef = useRef<LegendRow[]>([]);
   const timeIdxRef = useRef<Map<number, number>>(new Map());
   const [legend, setLegend] = useState<LegendRow | null>(null);
@@ -1429,8 +1433,19 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
                 {legend.pct.toFixed(2)}%)
               </span>
             </div>
-            {smaOrder.map((id) =>
-              indRow(id, settings[id]?.color ?? "#a371f7", <span key={id}>SMA {settings[id]?.length ?? 50} {f2(legend.sma[id])}</span>)
+            {(!isMobile || legendOpen) &&
+              smaOrder.map((id) =>
+                indRow(id, settings[id]?.color ?? "#a371f7", <span key={id}>SMA {settings[id]?.length ?? 50} {f2(legend.sma[id])}</span>)
+              )}
+            {isMobile && smaOrder.length > 0 && (
+              <button
+                className="lg-toggle"
+                onClick={() => setLegendOpen((o) => !o)}
+                title={legendOpen ? "Replier les indicateurs" : `Afficher les ${smaOrder.length} indicateurs`}
+                aria-label={legendOpen ? "Replier les indicateurs" : "Afficher les indicateurs"}
+              >
+                {legendOpen ? "⌃" : "⌄"}
+              </button>
             )}
           </div>
         )}

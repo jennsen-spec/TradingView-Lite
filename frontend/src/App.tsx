@@ -37,6 +37,8 @@ export default function App() {
   const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "rapport">("chart");
   // Onglet Rapport (#89) : l'iframe n'est montée qu'à la première ouverture, puis conservée.
   const [rapportMounted, setRapportMounted] = useState(false);
+  // Menu « ⋯ » de la barre du bas (#86) : refresh, thème, horodatage.
+  const [moreMenu, setMoreMenu] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">(() =>
@@ -49,6 +51,16 @@ export default function App() {
     localStorage.setItem("tvlike:theme", theme);
     syncToCloud("tvlike:theme");
   }, [theme]);
+
+  // Ferme le menu « ⋯ » au tap en dehors.
+  useEffect(() => {
+    if (!moreMenu) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".cb-more-wrap")) setMoreMenu(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [moreMenu]);
 
   // Titre d'onglet façon TradingView : symbole + prix + variation du jour.
   useEffect(() => {
@@ -185,6 +197,35 @@ export default function App() {
           >
             {theme === "dark" ? "☀" : "☽"}
           </button>
+          {isMobile && (
+            <div className="cb-more-wrap">
+              <button
+                className="theme-btn cb-more"
+                onClick={() => setMoreMenu((o) => !o)}
+                aria-label="Plus d'options"
+              >
+                ⋯
+              </button>
+              {moreMenu && (
+                <div className="cb-menu">
+                  <button
+                    className="cb-menu-item"
+                    disabled={refreshing}
+                    onClick={() => { setMoreMenu(false); refresh(); }}
+                  >
+                    <span className="refresh-ico">↻</span> Recharger les données
+                  </button>
+                  <button
+                    className="cb-menu-item"
+                    onClick={() => { setMoreMenu(false); setTheme((t) => (t === "dark" ? "light" : "dark")); }}
+                  >
+                    {theme === "dark" ? "☀" : "☽"} {theme === "dark" ? "Thème clair" : "Thème sombre"}
+                  </button>
+                  <div className="cb-menu-info">Données du {fetchedAt ? fmtDate(fetchedAt) : "—"}</div>
+                </div>
+              )}
+            </div>
+          )}
           <button
             className={`wl-btn${watchlistOpen ? " active" : ""}`}
             onClick={() => setWatchlistOpen((o) => !o)}

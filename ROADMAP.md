@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 86 | **Graphique mobile v1 — consultation** *(enfant #70)* | 🧩 | 5 | M | | 🔍 Affiné | [ticket](docs/backlog/86-graphique-mobile.md). Toolbar du haut remplacée par une barre d'actions en bas (ticker → recherche · intervalle favoris+voir plus · dessins · indicateurs · ⋯), pop-ups en panneaux glissants, repli « ^ » des légendes, dessins en lecture seule ; refresh/thème/horodatage dans le ⋯. **Aucune question ouverte — prêt à sprinter.** |
+| 86 | **Graphique mobile v1 — consultation** *(enfant #70)* | 🧩 | 5 | M | | 🧪 À valider | [ticket](docs/backlog/86-graphique-mobile.md). Toolbar basculée en barre du bas (ticker → recherche · intervalle favoris + voir plus · indicateurs · dessins · ⋯), panneaux glissants, repli ⌄ des légendes, dessins en lecture seule (liste + suppression + ensembles) — livré le 02/09. **UAT iPhone** (dont zoom/pan tactiles). |
 
 ---
 
