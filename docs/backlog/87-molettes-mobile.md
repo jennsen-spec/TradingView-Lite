@@ -1,6 +1,6 @@
 # #87 — Molettes symbole & intervalle (épopée #70)
 
-**Statut** : 🔍 Affiné · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#86](86-graphique-mobile.md) ✅
+**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : après [#86](86-graphique-mobile.md) ✅
 
 ## Objectif
 Changer de symbole (et d'intervalle) **sans quitter le graphique** : un glissement vertical sur
@@ -14,15 +14,22 @@ sur l'entrée voulue. Comportement relevé sur la vidéo TradingView du 02/09.
 4. **Au relâchement**, le graphique charge le symbole centré et la carte disparaît (BRK.B chargé).
 
 ## Critères d'acceptation
-- [ ] Au repos, ticker et intervalle affichent la mini-molette (précédent estompé / courant / suivant estompé).
-- [ ] Un **glissement vertical** (> ~8 px) sur le ticker ouvre la molette ; un **tap** sans déplacement garde le comportement actuel (ouvre la recherche).
-- [ ] La carte s'affiche **centrée sur le graphique**, l'entrée centrale nette et grande, les voisines dégradées en taille et en opacité.
-- [ ] Le défilement suit le doigt ; le graphique **ne recharge pas** pendant le geste.
-- [ ] Au relâchement, le symbole centré est chargé ; sortir du geste sans bouger (retour à l'origine) ne change rien.
-- [ ] Même molette sur l'**intervalle**, alimentée par les favoris d'intervalle.
-- [ ] Aucun parasite iOS pendant l'appui (pas de sélection de texte ni de menu contextuel sur les deux boutons).
-- [ ] Desktop : aucun changement.
+- [x] Au repos, ticker et intervalle affichent la mini-molette (`EQ.SYNTH | MOM.SYNTH` · `4h | 1J | 1S`).
+- [x] Un **glissement vertical** (> 8 px) ouvre la molette ; un **tap** sans déplacement ouvre la recherche (vérifié : les deux gestes se distinguent).
+- [x] La carte s'affiche **centrée sur le graphique**, entrée centrale à 26 px opacité 1, voisines dégradées jusqu'à 15,5 px / 0,34.
+- [x] Le défilement suit le doigt ; le graphique **ne recharge pas** pendant le geste (titre resté sur l'ancien symbole tout du long).
+- [x] Au relâchement, le symbole centré est chargé (EQ.SYNTH → VMO.TO) ; sans déplacement, rien ne change.
+- [x] Même molette sur l'**intervalle** (1J → 1S), alimentée par les favoris ; le chevron ouvre toujours le panneau complet.
+- [x] `user-select`, `-webkit-touch-callout` et `touch-action: pan-x` posés sur la molette (la barre continue de défiler horizontalement) — **parasites iOS à confirmer sur l'appareil**.
+- [x] Desktop : aucun changement (bouton ticker classique, rangée d'intervalles inline, aucune molette).
 - [ ] UAT Jean sur iPhone.
+
+## Réalisation (02/09/2026)
+- `WheelPicker.tsx` (nouveau) : composant générique — mini-molette au repos + carte flottante en portail pendant le geste ; dégradé taille/opacité selon la distance au centre ; sélection **au relâchement** uniquement.
+- `App.tsx` : molette du ticker alimentée par la collection courante (relue à chaque geste) ; un symbole hors collection est ajouté en tête pour que la molette démarre au bon endroit.
+- `IntervalSelector.tsx` : molette sur les favoris en mobile ; rangée inline conservée sur desktop.
+- `collections.ts` + `WatchlistPanel.tsx` : la collection courante est mémorisée (`tvlike:wl-current`, local à l'appareil, pas de synchro cloud) pour que la molette liste ce que Jean a sous les yeux. Effet de bord bienvenu : la collection choisie survit désormais au rechargement.
+- **Défaut évité en cours de route** : l'état du geste vivait dans un état React, or `pointerdown` et `pointermove` peuvent tomber dans la même frame — le gestionnaire lisait alors un état périmé et ignorait le geste. Passé sur des références.
 
 ## Décisions
 - **Geste = glissement, pas appui long.** La vidéo ne montre aucune attente : le tap (recherche) et le glissement (molette) se distinguent par le déplacement, ce qui évite le délai et le conflit avec la loupe iOS.

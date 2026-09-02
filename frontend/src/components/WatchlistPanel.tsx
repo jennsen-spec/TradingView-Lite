@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   loadCollections, saveCollections, newSection, newSymbolItem, newCollection,
+  loadCurrentCollectionId, saveCurrentCollectionId,
   type Collection,
 } from "../lib/collections";
 import { fetchQuotes, type Quote } from "../lib/api";
@@ -68,7 +69,12 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
   // Mobile (#85) : chips de collections à nom complet (au lieu de l'initiale).
   const isMobile = useIsMobile();
   const [collections, setCollections] = useState<Collection[]>(() => loadCollections());
-  const [currentId, setCurrentId] = useState<string>(() => collections[0].id);
+  // La collection courante est mémorisée : la molette du graphique (#87) lit la même.
+  const [currentId, setCurrentId] = useState<string>(() => {
+    const memo = loadCurrentCollectionId();
+    return memo && collections.some((c) => c.id === memo) ? memo : collections[0].id;
+  });
+  useEffect(() => saveCurrentCollectionId(currentId), [currentId]);
   const [nameMenu, setNameMenu] = useState(false);
   const [dotsMenu, setDotsMenu] = useState(false);
   const [editingName, setEditingName] = useState(false);

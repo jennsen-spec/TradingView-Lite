@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { syncToCloud } from "../lib/cloudPrefs";
 import { useIsMobile } from "../lib/useIsMobile";
+import WheelPicker from "./WheelPicker";
 
 // Catalogue d'intervalles. Intraday (min/heures) = historique court côté Yahoo.
 const CATALOG = [
@@ -73,16 +74,28 @@ export default function IntervalSelector({ value, onChange }: Props) {
   return (
     <div className="interval-selector" ref={ref}>
       <div className="iv-bar">
-        {favItems.map((it) => (
-          <button
-            key={it.key}
-            className={value === it.key ? "active" : ""}
-            onClick={() => onChange(it.key)}
-            title={it.label}
-          >
-            {it.short}
-          </button>
-        ))}
+        {/* Mobile : molette sur les favoris (#87) au lieu de la rangée complète —
+            le chevron ouvre toujours le panneau (favoris + voir plus). */}
+        {isMobile ? (
+          <WheelPicker
+            entries={favItems.map((it) => ({ key: it.key, label: it.short }))}
+            value={value}
+            onSelect={onChange}
+            onTap={() => { setOpen((o) => !o); setShowAll(false); }}
+            label="Intervalle — glisser pour changer, taper pour la liste"
+          />
+        ) : (
+          favItems.map((it) => (
+            <button
+              key={it.key}
+              className={value === it.key ? "active" : ""}
+              onClick={() => onChange(it.key)}
+              title={it.label}
+            >
+              {it.short}
+            </button>
+          ))
+        )}
         <button
           className={`iv-chevron${open ? " open" : ""}`}
           onClick={() => { setOpen((o) => !o); setShowAll(false); }}

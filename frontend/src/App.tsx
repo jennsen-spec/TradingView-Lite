@@ -6,6 +6,8 @@ import WatchlistPanel from "./components/WatchlistPanel";
 import { fetchCandles, searchSymbols } from "./lib/api";
 import { syncToCloud } from "./lib/cloudPrefs";
 import { useIsMobile } from "./lib/useIsMobile";
+import WheelPicker, { type WheelEntry } from "./components/WheelPicker";
+import { loadCollections, loadCurrentCollectionId } from "./lib/collections";
 import type { Candle } from "./lib/indicators";
 
 // Historique journalier long pour la SOURCE des SMA (au-delà de l'affichage) → SMA pleines
@@ -67,6 +69,19 @@ export default function App() {
       document.removeEventListener("gestureend", stop);
     };
   }, [isMobile]);
+
+  // Symboles de la collection affichée dans la watchlist → entrées de la molette (#87).
+  // Relu à chaque geste : la collection courante a pu changer entre-temps.
+  const symbolesCollection = (): WheelEntry[] => {
+    const cols = loadCollections();
+    const memo = loadCurrentCollectionId();
+    const cur = cols.find((c) => c.id === memo) ?? cols[0];
+    const syms = (cur?.items ?? []).filter((i) => i.type === "symbol" && i.sym).map((i) => i.sym!);
+    // Le symbole affiché peut ne pas être dans la collection (recherche libre) : on l'ajoute
+    // en tête, sinon la molette démarrerait sur une entrée sans rapport.
+    if (!syms.includes(symbol)) syms.unshift(symbol);
+    return syms.map((s) => ({ key: s, label: s }));
+  };
 
   // Ferme le menu « ⋯ » au tap en dehors.
   useEffect(() => {
@@ -164,9 +179,20 @@ export default function App() {
   return (
     <div className={`app${isMobile ? ` mobile mtab-${mobileTab}` : ""}`}>
       <header className="toolbar">
-        <button className="symbol-trigger" onClick={() => setSearchOpen(true)}>
-          <span className="st-ticker">{symbol}</span>
-        </button>
+        {isMobile ? (
+          <WheelPicker
+            entries={symbolesCollection()}
+            value={symbol}
+            onSelect={setSymbol}
+            onTap={() => setSearchOpen(true)}
+            label="Symbole — glisser pour changer, taper pour rechercher"
+            refresh={symbolesCollection}
+          />
+        ) : (
+          <button className="symbol-trigger" onClick={() => setSearchOpen(true)}>
+            <span className="st-ticker">{symbol}</span>
+          </button>
+        )}
 
         <IntervalSelector value={interval} onChange={setInterval} />
 

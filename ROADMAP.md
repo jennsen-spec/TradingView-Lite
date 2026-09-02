@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 87 | **Molettes symbole & intervalle** *(enfant #70)* | 🧩 | 5 | M | | 🔍 Affiné | [ticket](docs/backlog/87-molettes-mobile.md). Glissement vertical sur le ticker/l'intervalle → molette façon sélecteur iOS, carte centrée sur le graphique, chargement au relâchement ; mini-molettes au repos dans la barre. Spec relevée sur vidéo TradingView. |
+| 87 | **Molettes symbole & intervalle** *(enfant #70)* | 🧩 | 5 | M | | 🧪 À valider | [ticket](docs/backlog/87-molettes-mobile.md). Glissement vertical → molette façon sélecteur iOS (carte centrée, chargement au relâchement), mini-molettes au repos, tap = recherche ; collection courante mémorisée — livré le 02/09. **UAT iPhone.** |
 
 ---
 

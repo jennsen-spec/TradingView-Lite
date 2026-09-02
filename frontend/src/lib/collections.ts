@@ -58,6 +58,17 @@ export function saveCollections(list: Collection[]) {
   }
 }
 
+// Collection affichée dans la watchlist. Purement local à l'appareil (pas de
+// synchro cloud) : sert à la molette du graphique (#87) pour lister les mêmes
+// symboles que ceux que Jean a sous les yeux.
+const CUR_KEY = "tvlike:wl-current";
+export const loadCurrentCollectionId = (): string | null => {
+  try { return localStorage.getItem(CUR_KEY); } catch { return null; }
+};
+export const saveCurrentCollectionId = (id: string) => {
+  try { localStorage.setItem(CUR_KEY, id); } catch { /* ignore */ }
+};
+
 export const newSection = (name: string): WLItem => ({ id: genWlId(), type: "section", name });
 export const newSymbolItem = (sym: string): WLItem => ({ id: genWlId(), type: "symbol", sym: sym.toUpperCase() });
 export const newCollection = (name: string): Collection => ({ id: genWlId(), name, favorite: false, items: [] });
