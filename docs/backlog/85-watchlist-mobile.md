@@ -12,6 +12,8 @@ accidentelles au tap. Desktop inchangé.
 - [x] En-tête façon TV mobile : **⋯ à gauche, + à droite**, pas de titre (la chip active fait office). *(retour UAT)*
 - [x] **Le bloc d'info (fiche détail) n'apparaît pas en mobile** — c'est un affichage desktop. *(retour UAT)*
 - [x] **Tap sur une ligne → deux boutons** : « Graphique » (ouvre l'onglet Graphique avec le titre) et « Backtest » (inactif — activé quand le module existera, cf. #83). Re-tap sur la ligne ou choix → les boutons se replient. *(retour UAT : plus de bascule directe au tap)*
+- [x] Les boutons apparaissent **en overlay sur la ligne même** (comme les icônes de survol, dégradé qui efface le Chg%) — pas de seconde ligne. *(retour UAT : la ligne qui se dépliait était bruyante)*
+- [x] **« ＋ Créer une nouvelle liste » dans le menu ⋯** en mobile (le sélecteur ⌄ masqué emportait cette option) ; en desktop l'option reste dans le menu du titre, le ⋯ est inchangé. *(retour UAT)*
 - [x] Lignes tactiles : hauteur de tap ≥ 44 px (48 px mesurés), ticker/variation lisibles (police élargie).
 - [x] Les icônes étiquette/poubelle (révélées au survol sur desktop) **n'apparaissent pas au tap** en mobile — pas de suppression accidentelle ; l'édition reste un geste desktop en v1 (conforme épopée : consultation d'abord).
 - [x] Le bouton ✕ du volet est masqué en mobile (les onglets du bas gèrent la navigation).
