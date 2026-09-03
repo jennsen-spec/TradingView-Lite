@@ -10,6 +10,9 @@ self.addEventListener("push", (event) => {
   try { d = event.data ? event.data.json() : {}; } catch { /* charge illisible */ }
   const titre = d.titre || "TVLite";
   const corps = d.corps || "Un nouveau rapport est publié.";
+  // Pastille sur l'icône de l'écran d'accueil : iOS ne la pose PAS tout seul en
+  // affichant une bannière, il faut la demander explicitement.
+  try { self.navigator?.setAppBadge?.(1); } catch { /* non supporté */ }
   event.waitUntil(
     self.registration.showNotification(titre, {
       body: corps,

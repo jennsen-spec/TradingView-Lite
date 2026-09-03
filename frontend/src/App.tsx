@@ -96,6 +96,15 @@ export default function App() {
   // Rapport quand Jean tape la notification (message envoyé par le worker).
   useEffect(() => {
     void enregistrerWorker().then(() => etatPush()).then(setPush);
+    // Notification tapée APP FERMÉE : le worker ouvre une fenêtre neuve avec ?vue=rapport
+    // (aucun client à qui envoyer un message dans ce cas). On nettoie l'URL derrière
+    // nous pour qu'un rechargement ultérieur ne rouvre pas le rapport.
+    if (new URLSearchParams(location.search).get("vue") === "rapport") {
+      setMobileTab("rapport");
+      setRapportMounted(true);
+      rapportVu();
+      history.replaceState(null, "", location.pathname);
+    }
     const onMsg = (e: MessageEvent) => {
       if (e.data?.type !== "ouvrir-rapport") return;
       setMobileTab("rapport");
