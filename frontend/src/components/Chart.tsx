@@ -27,9 +27,12 @@ import { rgba, visibleForInterval, loadIndicators, saveIndicators, smaDefault, S
 import { fmtTimeByInterval, fmtCrosshair, dureeEntre } from "../lib/timeFormat";
 
 // Temps -> secondes (nombre). Date "YYYY-MM-DD" → Date.parse ; intraday = déjà un timestamp.
-// Hauteur reservee en haut de chaque panneau, en mode automatique, pour que la
-// legende superposee ne touche pas les cours (#voir provider).
-const RESERVE_LEGENDE_PX = 30;
+// Reserve en haut d'un panneau, en mode automatique, pour que la legende
+// superposee ne touche pas les cours. Celle du panneau des prix est MESUREE
+// (elle grandit avec le nombre de moyennes mobiles affichees) ; les autres
+// panneaux n'ont qu'une ligne.
+const MARGE_SOUS_LEGENDE_PX = 10; // air entre le bas du texte et le plus haut cours
+const RESERVE_AUTRES_PANNEAUX_PX = 26;
 
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
 
@@ -414,6 +417,9 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
   const [layout, setLayout] = useState<PaneBox[]>([]);
   const layoutRef = useRef<PaneBox[]>([]);
   layoutRef.current = layout;
+  // Hauteur reelle de la legende du panneau des prix, relue a chaque rendu.
+  const legendeRef = useRef<HTMLDivElement | null>(null);
+  const legendeHRef = useRef<number>(RESERVE_AUTRES_PANNEAUX_PX);
   const [hovered, setHovered] = useState<number | null>(null);
 
   // Mesure la géométrie des panneaux pour positionner les boutons.
@@ -577,8 +583,13 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         const etendue = (maxValue - minValue) || 1;
         const bas = etendue * 0.08;
         const h = layoutRef.current[idx]?.height ?? 0;
-        const relatif = h > 0 ? (RESERVE_LEGENDE_PX / h) * etendue : 0;
-        const haut = Math.max(etendue * 0.08, relatif);
+        // Le panneau des prix porte la legende haute (ticker + OHLC + les SMA).
+        const estPrix = idx === posDe(seriesRef.current.candle);
+        const px = estPrix
+          ? legendeHRef.current + MARGE_SOUS_LEGENDE_PX
+          : RESERVE_AUTRES_PANNEAUX_PX;
+        const relatif = h > 0 ? (px / h) * etendue : 0;
+        const haut = Math.max(etendue * 0.04, relatif);
         return { priceRange: { minValue: minValue - bas, maxValue: maxValue + haut } };
       }
       return base;
@@ -871,6 +882,20 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       paneScalesRef.current = [];
     };
   }, [measure, applyMeas]);
+
+  // La reserve du haut depend de la hauteur REELLE de la legende, qui grandit avec
+  // le nombre de moyennes mobiles affichees. On la relit apres chaque rendu et on
+  // redemande une mise a l'echelle quand elle a bouge.
+  useEffect(() => {
+    const h = legendeRef.current?.offsetHeight ?? 0;
+    if (h <= 0 || Math.abs(h - legendeHRef.current) < 2) return;
+    legendeHRef.current = h;
+    const i = (() => { try { return seriesRef.current.candle!.getPane().paneIndex(); } catch { return -1; } })();
+    const ps = i >= 0 ? paneScalesRef.current[i] : null;
+    if (!ps || !paneStateRef.current[i]?.auto) return;
+    // Bascule dans la meme frame : force le recalcul sans clignotement.
+    try { ps.applyOptions({ autoScale: false }); ps.applyOptions({ autoScale: true }); } catch { /* chart detruit */ }
+  });
 
   // Applique l'état A/L de chaque panneau à son échelle de prix.
   useEffect(() => {
@@ -1460,7 +1485,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
           </>
         )}
         {legend && layout[panePos.candle ?? 0] && (
-          <div className="pane-legend" style={{ top: layout[panePos.candle ?? 0].top + 4 }}>
+          <div className="pane-legend" ref={legendeRef} style={{ top: layout[panePos.candle ?? 0].top + 4 }}>
             <div className="lg-line">
               <span className="lg-sym">{symbol}</span>
               {name && <span className="lg-name">{name}</span>}
