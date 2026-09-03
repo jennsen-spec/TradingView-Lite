@@ -123,13 +123,27 @@ export default function App() {
   useEffect(() => {
     if (!isMobile) return;
     const stop = (e: Event) => e.preventDefault();
-    document.addEventListener("gesturestart", stop);
-    document.addEventListener("gesturechange", stop);
-    document.addEventListener("gestureend", stop);
+    // `passive: false` explicite : sans lui le navigateur peut poser l'ecouteur en
+    // passif, et preventDefault() y est ignore — le garde-fou ne gardait rien.
+    const opts = { passive: false } as AddEventListenerOptions;
+    document.addEventListener("gesturestart", stop, opts);
+    document.addEventListener("gesturechange", stop, opts);
+    document.addEventListener("gestureend", stop, opts);
+    // Filet de securite : iOS zoome aussi sans emettre d'evenement `gesture*`
+    // (deuxieme doigt pose pendant un defilement, par exemple sur la molette des
+    // titres). On refuse le multi-touch PARTOUT SAUF sur le graphique, ou le
+    // pincement doit continuer de zoomer les bougies.
+    const multi = (e: TouchEvent) => {
+      if (e.touches.length < 2) return;
+      if ((e.target as HTMLElement | null)?.closest?.(".chart-area")) return;
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", multi, opts);
     return () => {
       document.removeEventListener("gesturestart", stop);
       document.removeEventListener("gesturechange", stop);
       document.removeEventListener("gestureend", stop);
+      document.removeEventListener("touchmove", multi);
     };
   }, [isMobile]);
 

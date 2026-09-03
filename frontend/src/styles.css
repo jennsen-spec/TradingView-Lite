@@ -3028,6 +3028,13 @@ body {
   button, a {
     touch-action: manipulation; /* supprime le délai/zoom du double-tap iOS */
   }
+  /* Le chrome de l'app n'est pas une page a zoomer : ni pincement ni double-tap.
+     Le graphique en est exclu — le pincement doit y zoomer les bougies. */
+  .app.mobile .toolbar,
+  .app.mobile .bottom-tabs,
+  .app.mobile .wl-panel {
+    touch-action: pan-x pan-y;
+  }
   /* Le document ne doit jamais défiler ni rebondir : arrivé au bout d'une liste,
      iOS enchaînait sur le document (rubber-band) et décalait l'en-tête ET la barre
      d'onglets. L'onglet Graphique y échappait — le graphique capte le tactile —
