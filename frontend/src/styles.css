@@ -2772,8 +2772,17 @@ body {
 .app.mobile .theme-btn {
   display: none;
 }
+/* Le ⋯ est le SEUL accès au rechargement, au thème et aux notifications : il ne doit
+   jamais sortir de l'écran. La barre défile horizontalement, donc on l'épingle à
+   droite — sinon il se retrouvait au-delà du bord (393 px pour 375 px d'écran) et
+   restait introuvable. */
 .app.mobile .refresh-cluster {
   margin-left: auto;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  padding-left: 10px;
+  background: linear-gradient(to right, transparent, var(--bg) 10px);
 }
 /* « Indicateurs » : libellé sur desktop, icône seule en mobile. */
 .icat-svg {
@@ -2792,6 +2801,22 @@ body {
 }
 .cb-more-wrap {
   position: relative;
+}
+/* Style propre au ⋯ : il ne doit PAS réutiliser .theme-btn, masqué en mobile
+   (le bouton se serait rendu invisible lui-même — c'est arrivé). */
+.cb-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 .cb-menu {
   background: var(--surface);

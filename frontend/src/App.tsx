@@ -306,7 +306,7 @@ export default function App() {
           {isMobile && (
             <div className="cb-more-wrap">
               <button
-                className="theme-btn cb-more"
+                className="cb-more"
                 onClick={() => setMoreMenu((o) => !o)}
                 aria-label="Plus d'options"
               >
