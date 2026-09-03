@@ -25,6 +25,8 @@
 | # | Item | Cat | Pts | Taille | Note |
 |---|------|:---:|:---:|:---:|---|
 | **⚡ NOW** | | | | | |
+| 93 | **Composition de portefeuille** | 💼 | ? | — | *À affiner.* Créer un portefeuille dans l'app et y mettre des titres, pour en faire un **synthétique** affichable comme un symbole. Aujourd'hui les synthétiques sont **codés en dur** (`lib/portfolios.ts` : `EQ.SYNTH` = poche 5 ETF 60/10/30, `MOM.SYNTH` = courbe du duo) — il s'agit de rendre ça pilotable par Jean. Recouvre le slot d'onglet « Portfolio » réservé au [#84](docs/backlog/84-coquille-mobile.md). |
+| 94 | **Fiche backtest d'un titre** | 💼 | ? | — | *À affiner.* Prendre un titre — réel ou synthétique — et afficher ses informations de backtest. **Recoupe [#82](docs/backlog/82-analyse-technique-backtest-synth.md) et [#83](docs/backlog/83-prtflio-backtest-overlay-tvlite.md)** (tous deux en LATER) : à cadrer ensemble avant de sprinter, sinon on construit trois fois la même chose. |
 | **⏭️ THEN** | | | | | |
 | 23 | **Compte utilisateur** (authentification) | 🚀 | ? | — | Auth (email / OAuth) ; base utilisateurs. |
 | 24 | **Espace membre** | 🚀 | ? | — | Zone connectée : préférences, contenus liés au compte. |
