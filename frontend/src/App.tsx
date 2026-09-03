@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Chart from "./components/Chart";
 import SymbolSearch from "./components/SymbolSearch";
 import IntervalSelector from "./components/IntervalSelector";
@@ -155,7 +156,7 @@ export default function App() {
     if (!moreMenu) return;
     const onDoc = (e: Event) => {
       const t = e.target as HTMLElement | null;
-      if (!t?.closest?.(".cb-more-wrap")) setMoreMenu(false);
+      if (!t?.closest?.(".cb-more-wrap, .cb-menu")) setMoreMenu(false);
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("touchstart", onDoc); // iOS : tap hors élément interactif
@@ -321,15 +322,14 @@ export default function App() {
               >
                 ⋯
               </button>
-              {moreMenu && (
-                <div className="cb-menu">
-                  <button
-                    className="cb-menu-item"
-                    disabled={refreshing}
-                    onClick={() => { setMoreMenu(false); refresh(); }}
-                  >
-                    <span className="refresh-ico">↻</span> Recharger les données
-                  </button>
+              {/* Rendu dans <body> : dans la barre d'outils, le panneau restait prisonnier
+                  du contexte d'empilement de celle-ci et Safari iOS le peignait SOUS les
+                  surcouches du graphique (legendes, controles d'echelle, z-index 30 a 50).
+                  Un portail supprime toute dependance aux parents. */}
+              {moreMenu && createPortal(
+                <>
+                  <div className="cb-voile" onClick={() => setMoreMenu(false)} />
+                  <div className="cb-menu">
                   <button
                     className="cb-menu-item"
                     onClick={() => { setMoreMenu(false); setTheme((t) => (t === "dark" ? "light" : "dark")); }}
@@ -353,7 +353,9 @@ export default function App() {
                     </button>
                   )}
                   <div className="cb-menu-info">Données du {fetchedAt ? fmtDate(fetchedAt) : "—"}</div>
-                </div>
+                  </div>
+                </>,
+                document.body,
               )}
             </div>
           )}

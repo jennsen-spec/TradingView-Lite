@@ -2717,7 +2717,6 @@ body {
    par-dessus la barre et les onglets. `fixed` échappe à l'overflow de la barre. */
 .app.mobile .icat-menu,
 .app.mobile .icat-modal,
-.app.mobile .cb-menu,
 .app.mobile .sets-modal {
   position: fixed;
   top: auto;
@@ -2785,9 +2784,20 @@ body {
 }
 /* Horodatage, refresh et thème passent dans le menu ⋯ ; le statut reste inline. */
 .app.mobile .refresh-info,
-.app.mobile .refresh-btn,
 .app.mobile .theme-btn {
   display: none;
+}
+/* Recharger est le geste le plus frequent : acces direct, pas enterre dans le ⋯. */
+.app.mobile .refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 17px;
 }
 /* Le ⋯ est le SEUL accès au rechargement, au thème et aux notifications : il ne doit
    jamais sortir de l'écran. La barre défile horizontalement, donc on l'épingle à
@@ -2835,11 +2845,44 @@ body {
   line-height: 1;
   cursor: pointer;
 }
+/* Panneau glissant du ⋯, rendu dans <body> (voir App.tsx) : il n'a donc aucun
+   parent dont l'empilement pourrait le faire passer sous le graphique. */
+.cb-voile {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  background: rgba(0, 0, 0, 0.34);
+  animation: cb-fade 0.18s ease-out;
+}
 .cb-menu {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(50px + env(safe-area-inset-bottom)); /* laisse les onglets accessibles */
+  z-index: 1901;
+  max-height: 58vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.28);
-  padding: 6px;
+  padding: 6px 6px 12px;
+  animation: sheet-up 0.18s ease-out;
+}
+/* Barrette d'apprehension, comme sur une feuille iOS. */
+.cb-menu::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 4px auto 8px;
+  border-radius: 2px;
+  background: var(--border);
+}
+@keyframes cb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .cb-menu-item {
   display: flex;
@@ -2886,6 +2929,13 @@ body {
 /* --- Molettes symbole & intervalle (#87) --- */
 /* Au repos : aperçu « précédent / courant / suivant » dans la barre du bas.
    `pan-x` laisse la barre défiler horizontalement ; le vertical est à nous. */
+/* La molette d'intervalle n'affiche que « 1J » / « 4h » : 74 px etaient du vide.
+   Resserree et centree, elle libere la place du bouton Recharger. */
+.app.mobile .interval-selector .wheel {
+  min-width: 38px;
+  align-items: center;
+  padding: 2px 4px;
+}
 .wheel {
   display: flex;
   flex-direction: column;
