@@ -408,6 +408,12 @@ export default function WatchlistPanel({ onClose, onSelectSymbol, currentSymbol 
         title="Redimensionner"
       />
       <div className="wl-head">
+        {/* Marque, mobile seulement (masquee en CSS sur grand ecran) : la watchlist
+            est alors la vue plein ecran et son en-tete n'a plus de titre — la place
+            centrale est libre, on n'ajoute donc aucune hauteur. */}
+        <div className="wl-marque" aria-hidden="true">
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="26" height="26" />
+        </div>
         {editingName ? (
           <input
             className="wl-name-input" autoFocus defaultValue={cur.name}

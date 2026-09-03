@@ -2652,8 +2652,25 @@ body {
 .app.mobile .wl-title-wrap {
   display: none;
 }
+/* Marque centree dans l'en-tete : rien sur grand ecran, ou le titre occupe la place. */
+.wl-marque { display: none; }
+.app.mobile .wl-marque {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.app.mobile .wl-marque img {
+  display: block;
+  border-radius: 5px;
+}
 .app.mobile .wl-head-actions > .wl-icon-btn:not(.wl-close) {
-  margin-left: auto; /* pousse le + à droite maintenant que le titre a disparu */
+  margin-left: 0; /* c'est la marque (flex:1) qui occupe le centre et pousse le + */
 }
 .app.mobile .wl-dots-wrap .wl-menu-right {
   left: 0;
