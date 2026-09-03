@@ -1,6 +1,6 @@
 # #92 — Notification iOS à la publication du rapport
 
-**Statut** : 🧪 À valider (sprinté le 02/09/2026) · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : suite de [#90](90-pastille-nouveau-rapport.md)
+**Statut** : ✅ Fait (UAT Jean 02/09/2026 — « ça marche totalement ») · **Points** : 5 · **Catégorie** : 🧩 Fonctionnalité · **Priorité** : suite de [#90](90-pastille-nouveau-rapport.md)
 
 ## Objectif
 Quand le rapport mensuel est publié, **la notification arrive seule sur l'iPhone** — app fermée,
@@ -19,13 +19,13 @@ Trois objets distincts, une seule règle : **consulter le rapport une fois étei
 Taper la notification ouvre l'app **sur l'onglet Rapport** → les trois s'éteignent d'un coup.
 
 ## Critères d'acceptation
-- [ ] Depuis l'app installée sur l'écran d'accueil, une entrée du menu **⋯** permet d'activer les notifications (iOS exige un geste explicite) ; l'état activé/refusé est lisible.
-- [ ] À la publication d'un nouveau signal, une notification arrive sur l'iPhone **app fermée**, titrée avec la date du signal.
-- [ ] La taper ouvre TVLite **sur l'onglet Rapport**.
-- [ ] Après consultation : bannière fermée, pastille d'icône effacée, pastille interne éteinte.
-- [ ] **Une seule notification par publication** — pas une par déploiement du site.
-- [ ] Un refus de permission (ou un navigateur sans support) laisse l'app pleinement fonctionnelle, pastille interne comprise.
-- [ ] Desktop : aucun changement.
+- [x] Depuis l'app installée sur l'écran d'accueil, une entrée du menu **⋯** permet d'activer les notifications (iOS exige un geste explicite) ; l'état activé/refusé est lisible.
+- [x] À la publication d'un nouveau signal, une notification arrive sur l'iPhone **app fermée**, titrée avec la date du signal.
+- [x] La taper ouvre TVLite **sur l'onglet Rapport**.
+- [x] Après consultation : bannière fermée, pastille d'icône effacée, pastille interne éteinte.
+- [x] **Une seule notification par publication** — pas une par déploiement du site.
+- [x] Un refus de permission (ou un navigateur sans support) laisse l'app pleinement fonctionnelle, pastille interne comprise.
+- [x] Desktop : aucun changement.
 
 ## Décisions
 - **Service worker `push` uniquement, sans gestionnaire `fetch`.** *Correction de ce que j'avais
@@ -59,10 +59,19 @@ retranscrire ses 495 lignes — celles qui servent **les graphiques, les cours e
 avec un risque d'erreur pour un bénéfice nul. Une fonction dédiée annule ce risque : une panne des
 notifications ne peut plus emporter l'app. Vérifié après déploiement : `/quotes` et `/prefs` intacts.
 
-## Reste à faire (Jean)
-Trois secrets à poser sur le projet Supabase (Edge Functions → Secrets) :
-`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_SEND_SECRET`.
-Le secret GitHub `PUSH_SEND_SECRET` est déjà posé (généré sans jamais être affiché).
+## Secrets (posés le 02/09)
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_SEND_SECRET` sur Supabase (vérifiés par
+empreinte SHA256, sans exposer les valeurs) ; `PUSH_SEND_SECRET` aussi en secret GitHub.
+
+## Défauts trouvés à l'UAT — corrigés
+- **Le bouton ⋯ était invisible** : il réutilisait la classe `theme-btn`, que j'avais moi-même masquée en mobile au #86 en y déplaçant le thème. Le bouton se cachait lui-même. → style propre, 36 px, épinglé à droite de la barre (il débordait aussi hors écran : 393 px pour 375). **Je suis retombé dans le piège documenté au #86** — un `.click()` programmatique réussit sur un élément `display:none` ; seule la détection de collision (`elementFromPoint`) prouve qu'un doigt l'atteint.
+- **La notification n'ouvrait pas le Rapport app fermée** : sans fenêtre existante, le worker ouvre `?vue=rapport`, mais rien ne lisait ce paramètre au démarrage. → lecture au montage + nettoyage de l'URL.
+- **Pas de pastille sur l'icône** : iOS ne la pose pas en affichant une bannière, il faut `setAppBadge()`. J'avais écrit l'effacement, jamais la pose. → posée à la réception dans le worker.
+- *(Non-défaut)* La pastille interne de l'onglet Rapport ne s'allumait pas aux tests : normal, elle compare le signal publié au dernier consulté et aucun rapport n'était réellement republié.
+
+## Reste à surveiller
+Supprimer puis rajouter l'icône crée un **nouvel abonnement sans retirer l'ancien** (2 lignes au
+02/09 → risque de notification en double). L'abonnement mort disparaîtra au premier `410 Gone`.
 
 ## Notes / risques
 - **Rien ne se vérifie en émulation** : Web Push iOS ne fonctionne que sur l'appareil réel, app installée. Prévoir un envoi de test manuel plutôt que d'attendre la fin du mois.

@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| 92 | **Notification iOS à la publication du rapport** | 🧩 | 5 | M | | 🧪 À valider | [ticket](docs/backlog/92-notification-push-rapport.md). Web Push : la notif arrive app fermée, déclenchée par l'étape `Publier` du cycle mensuel. Service worker **`push` seul, sans `fetch`** → pas de piège de cache. Consulter le rapport éteint bannière + pastille d'icône + pastille interne. |
+| — | *Rien en attente* | | | | | | Tout est livré et en prod. |
 
 ---
 
@@ -51,7 +51,7 @@
 ## ✅ Livrés (ex-backlog / ex-DoR)
 - **Synthétiques & stratégie** : [#76](docs/backlog/76-ordre-collections.md) Réordonner les collections · [#76](docs/backlog/76-portefeuille-synthetique.md) Portefeuille perso en bougies (**EQ.SYNTH**, panier actuel base 100) · [#77](docs/backlog/77-duo-mom-synthetique.md) **MOM.SYNTH** instrument synthétique du duo (backtest → prod) · [#79](docs/backlog/79-duo-mom-phase2-append.md) MOM.SYNTH phase 2 (quotidien, public, auto-actualisé, point courant live) · [#80](docs/backlog/80-fiche-detail-synthetiques.md) Fiche détail des synthétiques.
 - **🎯 Épopée [#70 — Responsive mobile / iPad](docs/backlog/70-epopee-responsive.md)** *(20 pts)* — ✅ **close le 02/09/2026**. TVLite s'utilise au doigt, installée sur l'écran d'accueil de l'iPhone ; desktop inchangé. Enfants : [#84](docs/backlog/84-coquille-mobile.md) Coquille · [#89](docs/backlog/89-onglet-rapport-mobile.md) Onglet Rapport · [#85](docs/backlog/85-watchlist-mobile.md) Watchlist · [#86](docs/backlog/86-graphique-mobile.md) Graphique v1 · [#87](docs/backlog/87-molettes-mobile.md) Molettes · [#88](docs/backlog/88-pwa.md) PWA.
-- **Rapport & synchro (02/09)** : [#90](docs/backlog/90-pastille-nouveau-rapport.md) Pastille « nouveau rapport » (méta de signal, extinction à la 1ʳᵉ consultation) · [#91](docs/backlog/91-fusion-dessins-suppressions.md) Les suppressions de dessins se propagent enfin entre appareils (`seen` des deux côtés de la fusion). **Purge du 02/09** : les 244 dessins ont été supprimés à la demande de Jean ; les 7 ensembles sont conservés.
+- **Rapport & synchro (02/09)** : [#92](docs/backlog/92-notification-push-rapport.md) **Notification iOS à la publication** (Web Push : bannière app fermée + pastille d'icône, ouverture directe sur le Rapport ; worker `push` seul, sans cache) · [#90](docs/backlog/90-pastille-nouveau-rapport.md) Pastille « nouveau rapport » (méta de signal, extinction à la 1ʳᵉ consultation) · [#91](docs/backlog/91-fusion-dessins-suppressions.md) Les suppressions de dessins se propagent enfin entre appareils (`seen` des deux côtés de la fusion). **Purge du 02/09** : les 244 dessins ont été supprimés à la demande de Jean ; les 7 ensembles sont conservés.
 - **Autres ex-backlog** : #2 Watchlists (Collections) · #58 Base saturée · #59 Rapport 17 h · #60 Inventaire univers · #61 Conformité moteur · #62 Poids dérivants · #63 Ensembles de dessins · #64 Sélection multiple · #65 Mesure unités durée.
 - **Clos par décision** : [#81](docs/backlog/81-mom-synth-supabase.md) MOM.SYNTH sur Supabase — évalué, **écarté** (on garde l'approche actuelle client-side, portable dev/prod).
 - **🗄️ Absorbés par [#47](docs/backlog/47-epopee-un-seul-produit.md)** : #39 · #40 · #41 · #42.
