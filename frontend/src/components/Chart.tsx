@@ -27,6 +27,10 @@ import { rgba, visibleForInterval, loadIndicators, saveIndicators, smaDefault, S
 import { fmtTimeByInterval, fmtCrosshair, dureeEntre } from "../lib/timeFormat";
 
 // Temps -> secondes (nombre). Date "YYYY-MM-DD" → Date.parse ; intraday = déjà un timestamp.
+// Hauteur reservee en haut de chaque panneau, en mode automatique, pour que la
+// legende superposee ne touche pas les cours (#voir provider).
+const RESERVE_LEGENDE_PX = 30;
+
 const tsOf = (t: Time) => (typeof t === "number" ? t : Date.parse(t) / 1000);
 
 // Aligne des points journaliers (SMA jour) sur la timeline de l'intervalle :
@@ -562,12 +566,20 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
       const r = manualRangeRef.current[idx];
       // Mode manuel/zoom : plage exacte (marges à 0 → pas de distorsion).
       if (r) return { priceRange: { minValue: r.min, maxValue: r.max } };
-      // Mode auto : on ajoute un petit padding pour ne pas coller aux bords.
+      // Mode auto : marge en bas, et en haut une reserve pour la LEGENDE qui se
+      // superpose au graphique (nom du titre, valeurs). Sans elle, le plus haut du
+      // cours vient toucher le texte. La reserve est exprimee en pixels puis
+      // convertie en prix via la hauteur reelle du panneau — un pourcentage seul
+      // donnerait un trou enorme sur un grand panneau et rien sur un petit.
       const base = orig();
       if (base && base.priceRange) {
         const { minValue, maxValue } = base.priceRange;
-        const pad = (maxValue - minValue) * 0.1 || 1;
-        return { priceRange: { minValue: minValue - pad, maxValue: maxValue + pad } };
+        const etendue = (maxValue - minValue) || 1;
+        const bas = etendue * 0.08;
+        const h = layoutRef.current[idx]?.height ?? 0;
+        const relatif = h > 0 ? (RESERVE_LEGENDE_PX / h) * etendue : 0;
+        const haut = Math.max(etendue * 0.08, relatif);
+        return { priceRange: { minValue: minValue - bas, maxValue: maxValue + haut } };
       }
       return base;
     };
@@ -743,8 +755,28 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
         /* échelle pas prête — ignoré */
       }
     };
+    // Le glissement sur l'axe des prix est gere NATIVEMENT par Lightweight Charts
+    // (handleScale.axisPressedMouseMove) : notre indicateur « A » n'en savait rien et
+    // restait allume alors que l'echelle etait devenue manuelle. Sur mobile c'etait le
+    // seul chemin, faute de molette. On coupe donc le mode auto des l'appui sur l'axe.
+    const onAxisDown = (e: PointerEvent) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const boxes = layoutRef.current;
+      const idx = boxes.findIndex((b) => y >= b.top && y <= b.top + b.height);
+      if (idx < 0) return;
+      const ps = paneScalesRef.current[idx];
+      if (!ps) return;
+      if (e.clientX - rect.left < rect.width - ps.width() - 2) return; // pas sur l'axe
+      if (!paneStateRef.current[idx]?.auto) return;
+      setPaneState((prev) => prev.map((s, i) => (i === idx ? { ...s, auto: false } : s)));
+    };
+
     const wheelEl = wrapRef.current;
     wheelEl?.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    wheelEl?.addEventListener("pointerdown", onAxisDown, { capture: true });
 
     // Outil de mesure : Shift + clic démarre ; clic fige ; clic ferme (façon TradingView).
     // Boîte du panneau des prix. L'ATR occupant le panneau visuel 0, on ne peut pas
@@ -827,6 +859,7 @@ export default function Chart({ candles, dailyCandles, currency, symbol, name, i
     return () => {
       chart.unsubscribeCrosshairMove(onCrosshair);
       wheelEl?.removeEventListener("wheel", onWheel, { capture: true } as any);
+      wheelEl?.removeEventListener("pointerdown", onAxisDown, { capture: true } as any);
       wheelEl?.removeEventListener("mousedown", onMeasureDown, { capture: true } as any);
       window.removeEventListener("mousemove", onMeasureMove);
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRangeChange);
