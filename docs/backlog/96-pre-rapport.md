@@ -1,6 +1,8 @@
 # #96 — Pré-rapport (répétition à J−1)
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 🧩 · **Priorité** : —
+**Statut** : ✅ Fait · **Points** : 5 · **Catégorie** : 🧩 · **Priorité** : —
+
+**UAT validée par Jean le 05/09/2026.**
 
 ## Objectif
 La veille de la fin du mois, ajouter **en tête du rapport** une section qui répond à
