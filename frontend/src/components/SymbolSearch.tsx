@@ -20,6 +20,7 @@ const CATEGORIES = [
   { key: "obligation", label: "Obligations" },
   { key: "crypto", label: "Crypto" },
   { key: "indice", label: "Indices" },
+  { key: "economie", label: "Économie" },
 ];
 
 // Métadonnées pays : drapeau + région (pour la vue « Sources »).

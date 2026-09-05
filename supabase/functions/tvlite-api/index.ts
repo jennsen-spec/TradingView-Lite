@@ -351,6 +351,72 @@ async function searchSymbols(query: string) {
     });
 }
 
+// --- Fournisseur FRED (#99) — séries macro de la Fed de St. Louis ---
+//
+// Cache EN MÉMOIRE volontairement, pas dans `bars` : une série remonte à 1996 (~7 700 points)
+// et sept séries gonfleraient la base Supabase, déjà saturée une fois (audit du 31/08).
+// Une série pèse ~125 Ko, l'Edge Function la garde 12 h ; le coût est une requête à froid.
+const FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv";
+const FRED_PREFIX = "FRED:";
+const FRED_UNITES: Record<string, string> = {
+  T10Y2Y: "%", T10Y3M: "%", DGS10: "%", DGS2: "%", DFF: "%", UNRATE: "%", CPIAUCSL: "indice",
+};
+const fredCache = new Map<string, { t: number; s: any }>();
+
+const isFred = (symbol: string) => symbol.toUpperCase().startsWith(FRED_PREFIX);
+const fredSerie = (symbol: string) => symbol.toUpperCase().slice(FRED_PREFIX.length);
+
+async function getFredTimeSeries(symbol: string, interval = "1d", fresh = false): Promise<any> {
+  symbol = symbol.toUpperCase();
+  const agg = AGG[interval];
+  if (agg) {
+    const src = await getFredTimeSeries(symbol, agg.base === "1h" ? "1d" : agg.base, fresh);
+    return { ...src, interval, candles: aggregate(src.candles, agg.bucket) };
+  }
+  const hit = fredCache.get(symbol);
+  if (!fresh && hit && Date.now() - hit.t < CACHE_TTL_MS) return { ...hit.s, cached: true };
+
+  const serie = fredSerie(symbol);
+  const depuis = `${new Date().getUTCFullYear() - 30}-01-01`;
+  const res = await fetch(`${FRED_CSV}?id=${encodeURIComponent(serie)}&cosd=${depuis}`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`Série FRED introuvable : ${serie}`);
+  const texte = await res.text();
+  if (texte.trimStart().startsWith("<")) throw new Error(`Série FRED introuvable : ${serie}`);
+
+  const candles: any[] = [];
+  const lignes = texte.trim().split("\n");
+  for (let i = 1; i < lignes.length; i++) {
+    const [date, brut] = lignes[i].split(",");
+    const v = Number(brut);
+    if (!date || !brut || brut === "." || !Number.isFinite(v)) continue;
+    candles.push({ time: date, open: v, high: v, low: v, close: v, volume: 0 });
+  }
+  if (!candles.length) throw new Error(`Aucune donnée FRED pour ${serie}`);
+
+  const out = { symbol, interval: "1d", cached: false, currency: FRED_UNITES[serie] ?? null,
+                name: serie, candles, fetchedAt: Date.now() };
+  fredCache.set(symbol, { t: Date.now(), s: out });
+  return out;
+}
+
+async function getFredQuote(symbol: string): Promise<any> {
+  const s = await getFredTimeSeries(symbol);
+  const n = s.candles.length;
+  const price = n ? s.candles[n - 1].close : null;
+  const prevClose = n > 1 ? s.candles[n - 2].close : null;
+  return { symbol, price, prevClose,
+    changePct: price != null && prevClose ? ((price - prevClose) / prevClose) * 100 : null,
+    currency: s.currency, marketState: null, volume: null };
+}
+
+async function getFredDetail(symbol: string): Promise<any> {
+  const q = await getFredQuote(symbol);
+  return { symbol, longName: fredSerie(symbol), exchange: "FRED · Fed de St. Louis",
+    quoteType: "ECONOMIC", currency: q.currency, price: q.price, prevClose: q.prevClose,
+    change: q.price != null && q.prevClose != null ? q.price - q.prevClose : null,
+    changePct: q.changePct, marketState: null, volume: null, avgVolume: null, marketCap: null };
+}
+
 const cors: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -396,19 +462,28 @@ Deno.serve(async (req: Request) => {
       const symbols = (url.searchParams.get("symbols") || "")
         .split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
       if (!symbols.length) return jsonResponse([]);
-      return jsonResponse(await getQuotes(symbols.slice(0, 60)));
+      // Chaque fournisseur répond pour les siens (#99).
+      const fred = symbols.filter(isFred);
+      const yahoo = symbols.filter((s) => !isFred(s));
+      const vide = (s: string) => ({ symbol: s, price: null, prevClose: null, changePct: null, currency: null, marketState: null, volume: null });
+      return jsonResponse([
+        ...(yahoo.length ? await getQuotes(yahoo.slice(0, 60)) : []),
+        ...(await Promise.all(fred.map((s) => getFredQuote(s).catch(() => vide(s))))),
+      ]);
     }
     if (url.pathname.includes("/quote-detail")) {
       const s = (url.searchParams.get("symbol") || "").trim();
       if (!s) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);
-      return jsonResponse(await getQuoteDetail(s));
+      return jsonResponse(isFred(s) ? await getFredDetail(s) : await getQuoteDetail(s));
     }
     const symbol = url.searchParams.get("symbol");
     if (!symbol) return jsonResponse({ error: "Paramètre 'symbol' requis" }, 400);
     const interval = url.searchParams.get("interval") || "1d";
     const range = url.searchParams.get("range");
     const fresh = url.searchParams.get("fresh") === "1";
-    const data = await getTimeSeries(symbol, interval, range, fresh);
+    const data = isFred(symbol)
+      ? await getFredTimeSeries(symbol, interval, fresh)
+      : await getTimeSeries(symbol, interval, range, fresh);
     return jsonResponse(data);
   } catch (e) {
     return jsonResponse({ error: (e as Error).message }, 400);

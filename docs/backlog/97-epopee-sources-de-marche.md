@@ -66,16 +66,18 @@ rien dans TVLite ne dit que « GOLD » se charge sous `GC=F`. Deux défauts anne
 ## Ordre de travail (enfants)
 *Numérotés au moment de leur écriture — un numéro n'existe que quand le fichier existe.*
 
-1. **Socle multi-fournisseurs** *(8)* — registre d'instruments, routage, Yahoo ramené au rang de
+1. [**#98**](98-socle-multi-fournisseurs.md) **Socle multi-fournisseurs** *(8)* — 🧪 — registre d'instruments, routage, Yahoo ramené au rang de
    fournisseur. **Bloquant pour tout le reste.**
-2. **FRED + catégorie Économie** *(5)* — débloque `US10Y-US02Y` et l'onglet macro.
+2. [**#99**](99-fournisseur-fred.md) **FRED + catégorie Économie** *(5)* — 🧪 — débloque `US10Y-US02Y` et l'onglet macro.
 3. **multpl** *(3)* — le PE du S&P 500.
 4. **Catalogue + onglets** *(5)* — Contrats à terme / Forex / Économie, collection livrée,
    correction des codes de bourse manquants.
 5. **Banque du Canada + BCE + CoinGecko** *(5)*.
 6. **Recherche multi-source et choix de la source** *(8)*.
 
-**Après l'étape 2, les 10 lignes des captures fonctionnent.** Le reste est de l'ouverture.
+**Après l'étape 3, les 10 lignes des captures fonctionnent** — l'étape 2 en apporte 9 sur 10,
+la dernière (le PE du S&P 500) dépend de multpl. *(Corrigé le 05/09 : la rédaction initiale
+annonçait les 10 dès l'étape 2, c'était faux.)* Le reste est de l'ouverture.
 
 ## Questions ouvertes
 - Le catalogue initial n'est pas figé : Jean a indiqué que les 10 lignes sont **un échantillon**.

@@ -10,7 +10,7 @@
 
 import type { SymbolHit } from "./api";
 
-export type ProviderId = "yahoo"; // fred · multpl : enfants suivants de #97
+export type ProviderId = "yahoo" | "fred"; // multpl : enfant suivant de #97
 
 export interface Instrument {
   symbol: string;   // symbole TVLite — celui qu'on affiche partout
@@ -70,6 +70,31 @@ const CATALOGUE: Instrument[] = [
   { symbol: "EURUSD", name: "Euro / Dollar US", provider: "yahoo", ticker: "EURUSD=X",
     category: "devise", type: "Devise", exchange: "Forex", country: "Forex",
     mots: "eurusd eur usd euro dollar americain taux de change" },
+
+  // --- Économie (FRED, #99) ---
+  // Séries quotidiennes à une valeur : en journalier les bougies sont des traits
+  // (open = close) ; en hebdo/mensuel l'agrégation reconstitue de vraies bougies.
+  { symbol: "US10Y-US02Y", name: "Courbe des taux US — 10 ans moins 2 ans", provider: "fred",
+    ticker: "FRED:T10Y2Y", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "courbe des taux spread 10 ans 2 ans inversion recession us10y us02y" },
+  { symbol: "US10Y-US03M", name: "Courbe des taux US — 10 ans moins 3 mois", provider: "fred",
+    ticker: "FRED:T10Y3M", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "courbe des taux spread 10 ans 3 mois inversion recession" },
+  { symbol: "US10Y", name: "Taux souverain US 10 ans", provider: "fred",
+    ticker: "FRED:DGS10", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "taux 10 ans obligation souverain tresor us10y rendement" },
+  { symbol: "US02Y", name: "Taux souverain US 2 ans", provider: "fred",
+    ticker: "FRED:DGS2", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "taux 2 ans obligation souverain tresor us02y rendement" },
+  { symbol: "FEDFUNDS", name: "Taux directeur de la Fed", provider: "fred",
+    ticker: "FRED:DFF", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "taux directeur fed banque centrale politique monetaire fed funds" },
+  { symbol: "USUNEMP", name: "Taux de chômage US", provider: "fred",
+    ticker: "FRED:UNRATE", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "chomage emploi unemployment marche du travail" },
+  { symbol: "USCPI", name: "Indice des prix à la consommation US", provider: "fred",
+    ticker: "FRED:CPIAUCSL", category: "economie", type: "Économie", exchange: "FRED", country: "USA",
+    mots: "inflation prix consommation cpi ipc cout de la vie" },
 ];
 
 const PAR_SYMBOLE = new Map(CATALOGUE.map((i) => [i.symbol, i]));
@@ -95,7 +120,9 @@ export function instrumentHits(query: string): SymbolHit[] {
   const q = query.trim().toLowerCase();
   const enHit = (i: Instrument): SymbolHit => ({
     symbol: i.symbol, name: i.name, exchange: i.exchange, country: i.country,
-    type: i.type, category: i.category, source: `${i.provider} · ${i.ticker}`,
+    type: i.type, category: i.category,
+    // « fred · T10Y2Y » plutôt que « fred · FRED:T10Y2Y » : le préfixe dit déjà le fournisseur.
+    source: `${i.provider} · ${i.ticker.replace(/^[A-Z]+:/, "")}`,
   });
   if (!q) return [];
   return CATALOGUE

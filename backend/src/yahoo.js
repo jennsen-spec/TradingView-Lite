@@ -34,7 +34,7 @@ function weekKey(dateStr) {
 //   Range 30 ans sur la base journalière pour conserver l'historique long (réutilise le cache SMA).
 // - 4h  = fenêtres de 4h "horloge" sur le 1h (time intraday = ts+gmt déjà en secondes locales)
 // - 3mo/6mo/12mo = trimestre / semestre / année CIVILS sur le mensuel (désormais propre car agrégé du journalier)
-const AGG = {
+export const AGG = {
   "1w": { base: "1d", range: "30y", bucket: (t) => weekKey(t) },
   "1mo": { base: "1d", range: "30y", bucket: (t) => t.slice(0, 7) },
   "4h": { base: "1h", bucket: (t) => Math.floor(t / (4 * 3600)) },
@@ -45,7 +45,7 @@ const AGG = {
 
 // Regroupe des bougies consécutives par clé de bucket : open=1ère, close=dernière, high/low, volume=somme.
 // Le temps du bucket = temps de la 1ère bougie qu'il contient.
-function aggregate(base, bucketFn) {
+export function aggregate(base, bucketFn) {
   const out = [];
   let cur = null;
   let curKey = null;
