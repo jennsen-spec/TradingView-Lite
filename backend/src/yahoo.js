@@ -156,9 +156,9 @@ function mapType(quoteType) {
     case "cryptocurrency":
       return { label: "Crypto", category: "crypto" };
     case "currency":
-      return { label: "Devise", category: "autre" };
+      return { label: "Devise", category: "devise" };
     case "future":
-      return { label: "Future", category: "autre" };
+      return { label: "Contrat à terme", category: "future" };
     case "bond":
       return { label: "Obligation", category: "obligation" };
     default:
@@ -169,6 +169,7 @@ function mapType(quoteType) {
 // Codes de bourse Yahoo -> noms lisibles (fallback : le code brut).
 const EXCHANGES = {
   NMS: "NASDAQ", NGM: "NASDAQ", NCM: "NASDAQ", NAS: "NASDAQ",
+  CMX: "COMEX", NYM: "NYMEX", CBT: "CBOT", CME: "CME", NYB: "ICE US",
   NYQ: "NYSE", NYS: "NYSE", ASE: "NYSE American", PCX: "NYSE Arca",
   PNK: "OTC", OTC: "OTC", OQB: "OTC", OQX: "OTC", BATS: "Cboe BZX",
   TOR: "Toronto", NEO: "Cboe Canada", VAN: "TSX Venture", CNQ: "CSE",
@@ -188,6 +189,7 @@ const EXCHANGES = {
 // Code de bourse -> pays (pour le filtre par pays).
 const EXCHANGE_COUNTRY = {
   NMS: "USA", NGM: "USA", NCM: "USA", NAS: "USA", NYQ: "USA", NYS: "USA",
+  CMX: "USA", NYM: "USA", CBT: "USA", CME: "USA", NYB: "USA",
   ASE: "USA", PCX: "USA", PNK: "USA", OTC: "USA", OQB: "USA", OQX: "USA", BATS: "USA",
   TOR: "Canada", NEO: "Canada", VAN: "Canada", CNQ: "Canada",
   LSE: "Royaume-Uni", IOB: "Royaume-Uni",

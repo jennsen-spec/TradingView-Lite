@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { searchSymbols, type SymbolHit } from "../lib/api";
 import { syntheticHits } from "../lib/portfolios";
+import { instrumentHits, isTickerDuRegistre } from "../lib/instruments";
 
 interface Props {
   onSelect?: (symbol: string) => void;
@@ -14,6 +15,8 @@ const CATEGORIES = [
   { key: "tous", label: "Tous" },
   { key: "action", label: "Actions" },
   { key: "fonds", label: "ETF & Fonds" },
+  { key: "future", label: "Contrats à terme" },
+  { key: "devise", label: "Forex" },
   { key: "obligation", label: "Obligations" },
   { key: "crypto", label: "Crypto" },
   { key: "indice", label: "Indices" },
@@ -125,11 +128,15 @@ export default function SymbolSearch({ onSelect, onClose, mode = "select", onAdd
     const t = setTimeout(() => {
       searchSymbols(q)
         .then((res) => {
-          setHits([...syntheticHits(q), ...res]); // portefeuilles synthétiques (#76) en tête
+          // Synthétiques (#76) puis registre (#98) en tête ; on retire du flot Yahoo les
+          // sous-jacents déjà représentés par une entrée du registre (GOLD masque GC=F).
+          const registre = instrumentHits(q);
+          const reste = res.filter((h) => !isTickerDuRegistre(h.symbol));
+          setHits([...syntheticHits(q), ...registre, ...reste]);
           setActive(0);
           setCountry(""); // nouvelle recherche → on réinitialise le filtre pays
         })
-        .catch(() => setHits(syntheticHits(q)))
+        .catch(() => setHits([...syntheticHits(q), ...instrumentHits(q)]))
         .finally(() => setLoading(false));
     }, 250);
     return () => clearTimeout(t);
@@ -291,6 +298,7 @@ export default function SymbolSearch({ onSelect, onClose, mode = "select", onAdd
                     <span className="r-meta">
                       <span className="r-type">{h.type}</span>
                       <span className="r-exch">{h.exchange}</span>
+                      {h.source && <span className="r-src" title="Source du cours">{h.source}</span>}
                     </span>
                     {mode === "add" && (
                       <button

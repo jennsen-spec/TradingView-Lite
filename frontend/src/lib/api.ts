@@ -1,5 +1,6 @@
 import type { Candle } from "./indicators";
 import { isSynthetic, computeSynthetic, computeDuoMom, duoBasketTickers, ETF_TICKERS } from "./portfolios";
+import { resolveTicker, getInstrument } from "./instruments";
 
 export interface CandlesResponse {
   symbol: string;
@@ -18,6 +19,7 @@ export interface SymbolHit {
   country: string;
   type: string;
   category: string;
+  source?: string; // registre (#98) : « fournisseur · ticker », d'où vient le cours
 }
 
 // Prod : Edge Function Supabase (VITE_API_BASE défini). Dev : chaîne vide → proxy Vite → backend Node.
@@ -36,15 +38,20 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 function rawFetchCandles(symbol: string, interval = "1d", fresh = false, range?: string) {
+  // Registre (#98) : on interroge le ticker du fournisseur, on rend le symbole TVLite.
+  // Neutre hors registre — `AAPL` reste `AAPL`.
+  const ticker = resolveTicker(symbol);
+  const rendre = (r: CandlesResponse): CandlesResponse =>
+    ({ ...r, symbol, name: getInstrument(symbol)?.name ?? r.name });
   if (API_BASE) {
     // Edge Function : cache Supabase (TTL 12 h). `fresh=1` le contourne (bouton refresh).
-    const q = new URLSearchParams({ symbol, interval });
+    const q = new URLSearchParams({ symbol: ticker, interval });
     if (range) q.set("range", range);
     if (fresh) q.set("fresh", "1");
-    return getJson<CandlesResponse>(`${API_BASE}/candles?${q.toString()}`);
+    return getJson<CandlesResponse>(`${API_BASE}/candles?${q.toString()}`).then(rendre);
   }
   const q = `interval=${interval}${fresh ? "&fresh=1" : ""}${range ? `&range=${range}` : ""}`;
-  return getJson<CandlesResponse>(`/api/candles/${encodeURIComponent(symbol)}?${q}`);
+  return getJson<CandlesResponse>(`/api/candles/${encodeURIComponent(ticker)}?${q}`).then(rendre);
 }
 
 // Portefeuilles synthétiques (#76/#77) : calculés côté client.
@@ -97,10 +104,17 @@ export interface Quote {
 
 // Quotes groupées (watchlist) : variation du jour par symbole.
 export function fetchQuotes(symbols: string[]) {
-  const list = symbols.map((s) => s.trim()).filter(Boolean).join(",");
-  if (!list) return Promise.resolve([] as Quote[]);
-  if (API_BASE) return getJson<Quote[]>(`${API_BASE}/quotes?symbols=${encodeURIComponent(list)}`);
-  return getJson<Quote[]>(`/api/quotes?symbols=${encodeURIComponent(list)}`);
+  const demandes = symbols.map((s) => s.trim()).filter(Boolean);
+  if (!demandes.length) return Promise.resolve([] as Quote[]);
+  // Registre (#98) : interrogé par ticker, rendu par symbole TVLite (la watchlist indexe dessus).
+  const parTicker = new Map(demandes.map((s) => [resolveTicker(s).toUpperCase(), s]));
+  const list = demandes.map((s) => resolveTicker(s)).join(",");
+  const p = API_BASE
+    ? getJson<Quote[]>(`${API_BASE}/quotes?symbols=${encodeURIComponent(list)}`)
+    : getJson<Quote[]>(`/api/quotes?symbols=${encodeURIComponent(list)}`);
+  return p.then((rows) =>
+    rows.map((q) => ({ ...q, symbol: parTicker.get((q.symbol ?? "").toUpperCase()) ?? q.symbol }))
+  );
 }
 
 export interface QuoteDetail {
@@ -121,8 +135,13 @@ export interface QuoteDetail {
 
 // Détail d'un symbole (volet watchlist) : nom, bourse, prix, stats clés.
 export function fetchQuoteDetail(symbol: string) {
-  if (API_BASE) return getJson<QuoteDetail>(`${API_BASE}/quote-detail?symbol=${encodeURIComponent(symbol)}`);
-  return getJson<QuoteDetail>(`/api/quote-detail?symbol=${encodeURIComponent(symbol)}`);
+  // Registre (#98) : idem — ticker à l'aller, symbole et nom TVLite au retour.
+  const ticker = resolveTicker(symbol);
+  const inst = getInstrument(symbol);
+  const rendre = (d: QuoteDetail): QuoteDetail =>
+    ({ ...d, symbol, longName: inst?.name ?? d.longName, exchange: inst?.exchange ?? d.exchange });
+  if (API_BASE) return getJson<QuoteDetail>(`${API_BASE}/quote-detail?symbol=${encodeURIComponent(ticker)}`).then(rendre);
+  return getJson<QuoteDetail>(`/api/quote-detail?symbol=${encodeURIComponent(ticker)}`).then(rendre);
 }
 
 // --- Dividendes (#56) ---

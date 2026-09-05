@@ -326,6 +326,16 @@ body {
 .search-results .r-exch {
   color: var(--accent-2);
 }
+/* Source du cours (#98) — « fournisseur · ticker », discret, monospace. */
+.search-results .r-src {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
 .search-results .hl {
   color: var(--accent-2);
 }
