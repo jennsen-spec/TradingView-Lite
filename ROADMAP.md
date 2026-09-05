@@ -15,7 +15,7 @@
 
 | # | Item | Cat | Pts | Taille | ⭐ | Statut | Note |
 |---|------|:---:|:---:|:---:|:---:|---|---|
-| — | *Rien en attente* | | | | | | Tout est livré et en prod. |
+| [**96**](docs/backlog/96-pre-rapport.md) | **Pré-rapport** (répétition à J−1) | 🧩 | 5 | M | | 🧪 | La veille de la fin du mois, une section ajoutée **en tête** du rapport : « si le mois se terminait aujourd'hui » — ventes (au marché) puis achats de la prochaine séance, et les candidats. Notifie comme une vraie publication ; disparaît quand le vrai rapport sort. Maquette validée le 05/09. |
 
 ---
 

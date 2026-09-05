@@ -8,6 +8,12 @@ name: Rapport mensuel
 # complète. Rien n'est publié tant que le signal n'a pas changé, donc les passages
 # inutiles ne coûtent qu'une minute et ne laissent aucune trace.
 #
+# PRÉ-RAPPORT (#96) — la VEILLE du dernier jour civil du mois (reculée au vendredi si
+# elle tombe un samedi ou un dimanche), on publie une répétition : « qu'est-ce qu'on
+# ferait si le mois se terminait aujourd'hui ? ». Cette veille peut tomber dès le 25
+# (février), d'où la fenêtre élargie ci-dessous. UNE SEULE ligne de cron : deux lignes
+# se déclencheraient toutes les deux le même soir sur les jours communs.
+#
 # Les jours 1 et 2 servent de rattrapage : si les barres du dernier jour n'étaient
 # pas encore ingérées le 31, le passage suivant produit le bon signal et corrige.
 #
@@ -20,7 +26,7 @@ name: Rapport mensuel
 
 on:
   schedule:
-    - cron: "30 21,22 28,29,30,31,1,2 * *" # 17 h 30 ET (voir la note sur l'heure d'été)
+    - cron: "30 21,22 25,26,27,28,29,30,31,1,2 * *" # 17 h 30 ET (voir la note sur l'heure d'été)
   workflow_dispatch: # déclenchement manuel depuis l'onglet Actions
 
 permissions:
@@ -65,16 +71,39 @@ jobs:
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Le calendrier du soir : jour de pré-rapport (#96) ? passage utile tout court ?
+      # La veille du dernier jour civil peut tomber un week-end — il n'y a alors pas de
+      # clôture à lire, on recule au vendredi. Sans ce recul, un mois sur trois n'aurait
+      # pas de pré-rapport (30/11/26, 31/01/27, 28/02/27…).
+      # `actif` évite de faire tourner le rapport complet les soirs où il n'a rien à
+      # faire : la fenêtre de cron couvre le pré-rapport, pas le rapport.
+      - name: Quel jour sommes-nous
+        id: jour
+        run: |
+          set -euo pipefail
+          AUJ=$(TZ=America/Toronto date +%F)
+          JJ=$(TZ=America/Toronto date +%-d)
+          FIN=$(date -d "$(TZ=America/Toronto date +%Y-%m-01) +1 month -1 day" +%F)
+          VEILLE=$(date -d "$FIN -1 day" +%F)
+          DOW=$(date -d "$VEILLE" +%u)
+          if [ "$DOW" -ge 6 ]; then VEILLE=$(date -d "$VEILLE -$((DOW - 5)) days" +%F); fi
+          echo "Aujourd'hui $AUJ · fin de mois $FIN · veille retenue $VEILLE"
+          if [ "$AUJ" = "$VEILLE" ]; then P=true; else P=false; fi
+          if [ "$JJ" -ge 28 ] || [ "$JJ" -le 2 ] || [ "$P" = "true" ]; then A=true; else A=false; fi
+          echo "preavis=$P" >> "$GITHUB_OUTPUT"
+          echo "actif=$A" >> "$GITHUB_OUTPUT"
+          echo "::notice::pré-rapport ce soir : $P · passage utile : $A"
+
       # #60 — l'inventaire de l'univers tourne avant le rapport ; s'il trouve des
       # titres du duo absents de la base, le rapport porte une alerte visible.
       # Non bloquant : un pépin réseau chez Cboe ne doit pas empêcher le signal.
       - name: Inventaire de l'univers
-        if: steps.frais.outputs.ok == 'true'
+        if: steps.frais.outputs.ok == 'true' && steps.jour.outputs.actif == 'true'
         run: npm run inventaire -- --max-yahoo 30 || echo "::warning::inventaire indisponible ce soir"
 
       - name: Générer le rapport
         id: gen
-        if: steps.frais.outputs.ok == 'true'
+        if: steps.frais.outputs.ok == 'true' && steps.jour.outputs.actif == 'true'
         run: |
           set -euo pipefail
           AVANT=$(cat portefeuille/dernier-signal.txt 2>/dev/null || echo "aucun")
@@ -137,8 +166,62 @@ jobs:
         if: steps.gen.outputs.change == 'true'
         run: npm run collection -- --frais
 
+      # ── PRÉ-RAPPORT (#96) ────────────────────────────────────────────────────
+      # Ne part QUE si le vrai rapport n'a rien publié ce soir : quand le mois est
+      # complet, c'est lui qui parle et la répétition n'a plus d'objet. Pas de
+      # `--frais` : l'étape précédente vient de rafraîchir le cache du runner.
+      # Pas de `--enregistrer` non plus, et le script le refuse : un pré-rapport ne
+      # décide rien, il ne doit inscrire aucun cycle dans etat.json.
+      - name: Générer le pré-rapport
+        id: preavis
+        if: steps.frais.outputs.ok == 'true' && steps.jour.outputs.preavis == 'true' && steps.gen.outputs.change != 'true'
+        run: |
+          set -euo pipefail
+          AVANT=$(cat portefeuille/dernier-preavis.txt 2>/dev/null || echo "aucun")
+          npm run rapport -- --preavis
+          APRES=$(cat portefeuille/dernier-preavis.txt 2>/dev/null || echo "aucun")
+          echo "apres=$APRES" >> "$GITHUB_OUTPUT"
+          if [ "$AVANT" = "$APRES" ]; then
+            echo "change=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pré-rapport déjà publié sur la clôture du $APRES — rien à faire."
+          else
+            echo "change=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pré-rapport sur la clôture du $APRES"
+          fi
+
+      - name: Publier le pré-rapport
+        if: steps.preavis.outputs.change == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "TVLite"
+          git config user.email "de.brunel@gmail.com"
+          # L'étape « Générer le rapport » tourne avec --enregistrer et a donc réécrit
+          # le cycle courant dans etat.json (même contenu, date de publication du jour).
+          # Un pré-rapport n'inscrit rien : on restaure le fichier avant de committer.
+          git checkout -- portefeuille/etat.json portefeuille/dernier-signal.txt
+          git add frontend/public/rapport.html frontend/public/rapport-meta.json portefeuille/dernier-preavis.txt
+          git commit -m "pré-rapport : répétition du ${{ steps.preavis.outputs.apres }}" \
+                     -m "Généré automatiquement, à titre indicatif. Aucun cycle n'est inscrit dans etat.json ; la section disparaît à la publication du rapport du mois."
+          git push
+
+      - name: Notifier les appareils (pré-rapport)
+        if: steps.preavis.outputs.change == 'true'
+        env:
+          PUSH_SEND_SECRET: ${{ secrets.PUSH_SEND_SECRET }}
+        run: |
+          if [ -z "${PUSH_SEND_SECRET:-}" ]; then
+            echo "::warning::PUSH_SEND_SECRET absent — aucune notification envoyée."
+            exit 0
+          fi
+          curl -fsS -X POST \
+            "https://cucshrxmtwwizzzqthcj.supabase.co/functions/v1/tvlite-push/send" \
+            -H "Content-Type: application/json" \
+            -H "x-push-secret: ${PUSH_SEND_SECRET}" \
+            -d "{\"titre\":\"TVLite — pré-rapport\",\"corps\":\"Si le mois finissait aujourd'hui (clôture du ${{ steps.preavis.outputs.apres }})\",\"signal\":\"${{ steps.preavis.outputs.apres }}\"}" \
+            || echo "::warning::envoi des notifications en échec — le pré-rapport reste publié."
+
       - name: Rien à publier
-        if: steps.frais.outputs.ok == 'true' && steps.gen.outputs.change != 'true'
+        if: steps.frais.outputs.ok == 'true' && steps.jour.outputs.actif == 'true' && steps.gen.outputs.change != 'true' && steps.preavis.outputs.change != 'true'
         run: |
           echo "Le dernier signal complet est toujours ${{ steps.gen.outputs.apres }}."
           echo "Le rapport en ligne est à jour ; aucun commit."

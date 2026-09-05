@@ -23,9 +23,21 @@ export interface Candidat {
   ticker: string; secteur: "Industrials" | "Technology"; rang: number;
   momentum: number; cloture: number; dv50: number; retenu: boolean;
 }
-export interface Ordre extends Candidat {
-  quantite: number; engage: number; limite: number; plafondOrdre: number;
+// Ce qu'une ligne a coûté à l'entrée, et ce qu'elle vaut aujourd'hui. Tout est
+// `null` quand le portefeuille précédent ne dit rien du titre — mieux vaut une
+// case vide qu'un résultat calculé sur un prix inventé.
+export interface Resultat {
+  detenu: number | null; entree: number | null; gain: number | null; pctGain: number | null;
+}
+export interface Ordre extends Candidat, Resultat {
+  quantite: number; engage: number; montant: number; limite: number; plafondOrdre: number;
   action: "acheter" | "conserver"; partVolume: number;
+}
+// Une ligne qui sort. Elle n'est plus retenue, donc elle n'a pas forcément de rang :
+// un sortant peut avoir été écarté par un filtre, voire ne plus coter du tout.
+export interface Vente extends Resultat {
+  ticker: string; secteur: string; rang: number | null; momentum: number | null;
+  cloture: number | null; produit: number | null;
 }
 export interface Cycle {
   signal: string; genere: string;
@@ -38,14 +50,27 @@ export interface Cycle {
   marche: { ticker: string; ma: string; date: string; cours: number; ouverture: number;
             seance: boolean; moyenne: number; ratio: number; investi: boolean };
   poche: number; ligne: number; marge: number; nEligibles: number;
-  ordres: Ordre[]; sortants: string[]; detenus: string[];
+  ordres: Ordre[]; sortants: Vente[]; detenus: string[];
   candidats: { secteur: string; titres: Candidat[] }[];
-  engage: number; residuel: number;
+  // `engage` ne compte que les ACHATS : c'est l'argent qui sort. `conserve` est la
+  // valeur des lignes gardées, `produit` celle des ventes. `residuel` part des
+  // liquidités réellement rapportées quand elles existent, sinon de la poche.
+  engage: number; conserve: number; produit: number; residuel: number;
+  coutMax: number; gainRealise: number | null; gainLatent: number | null;
+  pctRealise: number | null; pctLatent: number | null;
+  // D'où viennent les prix d'entrée : les exécutions rapportées par Jean priment
+  // sur la prescription. Le rapport doit dire laquelle il a lue.
+  sourceEntree: "execute" | "prescrit" | null;
+  // Signal PROVISOIRE : une clôture qui n'est pas une fin de mois (#96). Le cycle
+  // est calculé à l'identique, mais rien de ce qu'il dit ne doit être enregistré.
+  provisoire: boolean;
   alertes: { inachetables: Ordre[]; lourds: Ordre[] };
   regles: JeuDeRegles; etat: Record<string, unknown>;
 }
 
-export async function calculerCycle(opts: { signal?: string; marge?: number; frais?: boolean } = {}): Promise<Cycle> {
+export async function calculerCycle(
+  opts: { signal?: string; marge?: number; frais?: boolean; provisoire?: boolean } = {},
+): Promise<Cycle> {
   const etat = lireEtat();
   // +5 % : Jean a confirmé le 24/08 qu'un ordre limité déposé la veille participe
   // à l'encan d'ouverture du TSX (jusqu'à 60 jours de validité). L'encan servant à
@@ -106,8 +131,17 @@ export async function calculerCycle(opts: { signal?: string; marge?: number; fra
       .filter(([mois, d]) => mois < dernierMois || (aujourdhui >= dernierJourCivil(mois) && aJour(mois, d)))
       .map(([, d]) => d);
   })();
-  const signal = opts.signal ?? fins[fins.length - 1];
-  if (!fins.includes(signal)) throw new Error(`« ${signal} » n'est pas une fin de mois complète (dernières : ${fins.slice(-3).join(", ")})`);
+  // PROVISOIRE (#96) — le signal est la dernière clôture connue, pas une fin de mois,
+  // et le garde-fou ci-dessous est levé : c'est tout l'objet de l'exercice, « et si le
+  // mois se terminait aujourd'hui ? ». Le reste du calcul ne change pas d'une ligne —
+  // le momentum est une fenêtre glissante en séances, l'interrupteur se lit sur la
+  // dernière barre ≤ signal, aucun des deux n'a besoin d'un bord de mois.
+  const derniereSeance = () => duo.reduce((d, s) => {
+    const x = s.dates[s.dates.length - 1]; return x > d ? x : d;
+  }, "");
+  const provisoire = opts.provisoire === true;
+  const signal = opts.signal ?? (provisoire ? derniereSeance() : fins[fins.length - 1]);
+  if (!provisoire && !fins.includes(signal)) throw new Error(`« ${signal} » n'est pas une fin de mois complète (dernières : ${fins.slice(-3).join(", ")})`);
 
   // Première séance strictement postérieure au signal, sur l'union des dates de
   // l'univers. Absente = elle n'a pas encore eu lieu.
@@ -178,24 +212,91 @@ export async function calculerCycle(opts: { signal?: string; marge?: number; fra
   const poche = (etat.poche_duo.montant_initial ?? 0) + (etat.poche_duo.liquidites ?? 0);
   const ligne = marche.investi ? poche / (regles.trier.selection as { n: number }).n : 0;
 
+  // PRIX D'ENTRÉE du portefeuille en cours (#96). Les exécutions que Jean a rapportées
+  // priment sur la prescription : c'est lui qui décide, et lui seul connaît le prix
+  // réellement payé. À défaut, `prescrit.cloture` sert de repli — c'est la clôture du
+  // signal, pas un prix d'exécution, et le rapport dit laquelle des deux il a lue.
+  const dernierCycle = cyclesAvant.length ? cyclesAvant[cyclesAvant.length - 1] : null;
+  const exe = dernierCycle?.execute as
+    { ordres?: { ticker: string; quantite: number; prix: number }[]; liquidites?: number } | null | undefined;
+  const prescrit = dernierCycle?.prescrit as { ticker: string; quantite: number; cloture: number }[] | undefined;
+  const sourceEntree = exe?.ordres?.length ? "execute" : prescrit?.length ? "prescrit" : null;
+  const entrees = new Map<string, { quantite: number; prix: number }>();
+  if (sourceEntree === "execute") for (const o of exe!.ordres!) entrees.set(o.ticker, { quantite: o.quantite, prix: o.prix });
+  if (sourceEntree === "prescrit") for (const o of prescrit!) entrees.set(o.ticker, { quantite: o.quantite, prix: o.cloture });
+  const liquiditesAvant = typeof exe?.liquidites === "number" ? exe.liquidites : null;
+
+  const resultat = (ticker: string, cloture: number | null): Resultat => {
+    const e = entrees.get(ticker);
+    if (!e) return { detenu: null, entree: null, gain: null, pctGain: null };
+    if (cloture === null || !(e.prix > 0)) return { detenu: e.quantite, entree: e.prix, gain: null, pctGain: null };
+    return { detenu: e.quantite, entree: e.prix, gain: e.quantite * (cloture - e.prix), pctGain: cloture / e.prix - 1 };
+  };
+
   const ordres: Ordre[] = retenus.map((e) => {
     const quantite = Math.floor(ligne / e.cloture);
     const limite = Math.ceil(e.cloture * (1 + marge) * 100) / 100;
+    const action = detenus.has(e.ticker) ? "conserver" : "acheter";
+    const r = action === "conserver" ? resultat(e.ticker, e.cloture)
+      : { detenu: null, entree: null, gain: null, pctGain: null };
+    // « montant » = ce que la ligne pèse. Un achat engage la ligne cible ; une
+    // conservation vaut ce qu'on détient — pas ce qu'on rachèterait aujourd'hui.
+    const montant = action === "conserver" && r.detenu !== null ? r.detenu * e.cloture : quantite * e.cloture;
     return { ticker: e.ticker, secteur: e.secteur, rang: e.rang, momentum: e.momentum,
-      cloture: e.cloture, dv50: e.dv50, retenu: true, quantite, engage: quantite * e.cloture,
-      limite, plafondOrdre: quantite * limite,
-      action: detenus.has(e.ticker) ? "conserver" : "acheter",
-      partVolume: (quantite * e.cloture) / e.dv50 };
+      cloture: e.cloture, dv50: e.dv50, retenu: true, quantite, engage: quantite * e.cloture, montant,
+      limite, plafondOrdre: quantite * limite, action,
+      partVolume: (quantite * e.cloture) / e.dv50, ...r };
   });
-  const engage = ordres.reduce((a, o) => a + o.engage, 0);
+
+  // LES VENTES. Un sortant n'est plus dans la sélection, donc pas forcément dans le
+  // classement : on le retrouve d'abord parmi les éligibles, sinon directement dans
+  // sa série, et s'il n'y cote plus rien on n'invente pas — les cases restent vides.
+  const parTicker = new Map(elig.map((e) => [e.ticker, e]));
+  const serieDe = new Map(duo.map((s) => [s.ticker, s]));
+  const sortants: Vente[] = precedent.filter((t) => !estRetenu.has(t)).map((ticker) => {
+    const e = parTicker.get(ticker);
+    const s = serieDe.get(ticker);
+    const i = s?.idx.get(signal);
+    const cloture = e?.cloture ?? (i !== undefined ? s!.close[i] : null);
+    const r = resultat(ticker, cloture);
+    return { ticker, secteur: s ? secteurDe(ticker) : "", rang: e?.rang ?? null,
+      momentum: e?.momentum ?? null, cloture,
+      produit: r.detenu !== null && cloture !== null ? r.detenu * cloture : null, ...r };
+  });
+
+  const achats = ordres.filter((o) => o.action === "acheter");
+  const gardes = ordres.filter((o) => o.action === "conserver");
+  const somme = (xs: (number | null)[]) => xs.reduce((a: number, x) => a + (x ?? 0), 0);
+  const engage = somme(achats.map((o) => o.montant));
+  const conserve = somme(gardes.map((o) => o.montant));
+  const produit = somme(sortants.map((v) => v.produit));
+  const coutMax = somme(achats.map((o) => o.plafondOrdre));
+  // Un pourcentage n'a de sens que rapporté au COÛT D'ENTRÉE du groupe, jamais au
+  // montant affiché. Sans prix d'entrée, pas de pourcentage : `null`.
+  const rendement = (lignes: Resultat[]) => {
+    const avec = lignes.filter((l) => l.gain !== null && l.entree !== null && l.detenu !== null);
+    if (avec.length === 0) return { gain: null, pct: null };
+    const cout = somme(avec.map((l) => l.detenu! * l.entree!));
+    const gain = somme(avec.map((l) => l.gain));
+    return { gain, pct: cout > 0 ? gain / cout : null };
+  };
+  const realise = rendement(sortants);
+  const latent = rendement(gardes);
 
   return { signal, genere: new Date().toISOString(), execution, marche, poche, ligne, marge,
-    nEligibles: elig.length, ordres, sortants: precedent.filter((t) => !estRetenu.has(t)),
+    nEligibles: elig.length, ordres, sortants,
     detenus: retenus.map((e) => e.ticker),
     candidats: [...parSecteur].map(([secteur, titres]) => ({ secteur,
       titres: titres.map(({ ...c }) => ({ ticker: c.ticker, secteur: c.secteur, rang: c.rang,
         momentum: c.momentum, cloture: c.cloture, dv50: c.dv50, retenu: c.retenu })) })),
-    engage, residuel: poche - engage,
+    engage, conserve, produit, coutMax,
+    // Les liquidités d'après : celles rapportées au cycle précédent, plus le produit
+    // des ventes, moins les achats. Sans exécutions rapportées, on retombe sur la
+    // poche déclarée — c'est ce que faisait le rapport avant #96.
+    residuel: liquiditesAvant !== null ? liquiditesAvant + produit - engage : poche - engage,
+    gainRealise: realise.gain, pctRealise: realise.pct,
+    gainLatent: latent.gain, pctLatent: latent.pct,
+    sourceEntree, provisoire,
     alertes: { inachetables: ordres.filter((o) => o.quantite === 0), lourds: ordres.filter((o) => o.partVolume > 0.05) },
     regles, etat };
 }

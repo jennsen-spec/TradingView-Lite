@@ -74,10 +74,14 @@ export default function App() {
     let annule = false;
     fetch(`${import.meta.env.BASE_URL}rapport-meta.json`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((m: { signal?: string } | null) => {
-        if (annule || !m?.signal) return;
-        signalRef.current = m.signal;
-        setRapportNeuf(localStorage.getItem("tvlike:rapport-vu") !== m.signal);
+      .then((m: { signal?: string; preavis?: string } | null) => {
+        // `preavis` (#96) prend le pas quand il est là : un pré-rapport allume la
+        // pastille comme une vraie publication, et le rapport du lendemain la
+        // rallume avec sa propre date de signal.
+        const cle = m?.preavis ?? m?.signal;
+        if (annule || !cle) return;
+        signalRef.current = cle;
+        setRapportNeuf(localStorage.getItem("tvlike:rapport-vu") !== cle);
       })
       .catch(() => { /* pas de pastille */ });
     return () => { annule = true; };

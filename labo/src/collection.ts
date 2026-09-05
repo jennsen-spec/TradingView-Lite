@@ -46,7 +46,7 @@ const c = await calculerCycle({ frais: values.frais });
 
 // Ce que chaque symbole du duo doit porter, avec un rang pour l'ordre d'affichage.
 const attendu = new Map<string, { flag: string; rang: number; secteur: string }>();
-for (const t of c.sortants) attendu.set(t, { flag: ROUGE, rang: -1, secteur: "" });
+for (const v of c.sortants) attendu.set(v.ticker, { flag: ROUGE, rang: -1, secteur: "" });
 if (c.marche.investi) {
   for (const o of c.ordres)
     attendu.set(o.ticker, { flag: o.action === "acheter" ? VERT : BLEU, rang: o.rang, secteur: o.secteur });

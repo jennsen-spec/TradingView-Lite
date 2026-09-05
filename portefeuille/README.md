@@ -51,12 +51,35 @@ logique n'aura plus d'effet et pourra être retirée.
 
 | Quand | Qui | Quoi |
 |---|---|---|
+| Veille du dernier jour civil | générateur | **Pré-rapport** — répétition, rien n'est enregistré |
 | Clôture du dernier jour ouvrable | générateur | Signal, rapport, libellés de la collection |
 | Ouverture du 1er jour | Jean | Passe les ordres — et déroge s'il veut |
 | Après exécution | Jean → générateur | Prix et quantités réellement obtenus |
 
 L'exécution suit la convention du backtest : signal lu à la **clôture** du dernier
 jour du mois, ordre passé à l'**ouverture** du premier jour du suivant.
+
+### Le pré-rapport (#96)
+
+La veille du dernier jour civil du mois — reculée au vendredi si elle tombe un
+week-end — l'Action ajoute **en tête du rapport** une section « si le mois se
+terminait aujourd'hui » : ventes, achats et conservations de la prochaine séance, et
+les candidats. Elle notifie comme une vraie publication, et **disparaît d'elle-même**
+quand le rapport du mois est publié le lendemain.
+
+Elle n'inscrit **aucun cycle** dans `etat.json` : rien n'y est décidé. Son marqueur est
+`dernier-preavis.txt`, distinct de `dernier-signal.txt` qui ne désigne que les fins de
+mois publiées. Reprise à la main si un soir échoue :
+
+```
+npm run rapport -- --frais --preavis
+```
+
+Répétition générale hors fin de mois (n'écrit que le fichier de sortie demandé) :
+
+```
+npm run rapport -- --preavis --preavis-signal 2026-08-27 --sortie /tmp/essai.html
+```
 
 ## Le code couleur des libellés (collection `duo-industrie-techno`)
 

@@ -3,6 +3,14 @@
 //   npm run rapport                          dernier signal disponible
 //   npm run rapport -- --signal 2026-08-31
 //   npm run rapport -- --sortie chemin.html
+//   npm run rapport -- --preavis             + la section « pré-rapport » (#96)
+//   npm run rapport -- --preavis --preavis-signal 2026-08-27    (répétition générale)
+//
+// PRÉ-RAPPORT (#96) — la veille de la fin du mois, la page porte EN TÊTE une section
+// qui répond à « qu'est-ce qu'on ferait si le mois se terminait aujourd'hui ? ». Le
+// rapport du mois précédent reste dessous, intact : la page est régénérée en entier à
+// chaque passage, la section est donc un mode de génération, pas une greffe. Elle
+// disparaît d'elle-même au passage suivant sans `--preavis`.
 //
 // Ordre des sections, et c'est délibéré : on lit d'abord CE QU'IL FAUT FAIRE,
 // une main sur le carnet d'ordres. Les comptes viennent après. Le journal réel
@@ -11,16 +19,37 @@
 
 import { parseArgs } from "node:util";
 import { readFileSync, writeFileSync } from "node:fs";
-import { calculerCycle, RACINE } from "./cycleCalc.ts";
+import { calculerCycle, RACINE, type Cycle } from "./cycleCalc.ts";
 import { construireJournal } from "./journal.ts";
 
 const { values } = parseArgs({ options: {
   signal: { type: "string" }, sortie: { type: "string" }, marge: { type: "string" },
   frais: { type: "boolean" }, enregistrer: { type: "boolean" },
+  preavis: { type: "boolean" }, "preavis-signal": { type: "string" },
 } });
 
 const TVLITE = "https://jennsen-spec.github.io/TradingView-Lite/";
-const c = await calculerCycle({ signal: values.signal, marge: values.marge ? Number(values.marge) : undefined, frais: values.frais });
+const marge = values.marge ? Number(values.marge) : undefined;
+const c = await calculerCycle({ signal: values.signal, marge, frais: values.frais });
+// `--enregistrer` inscrit un cycle dans l'état ; le pré-rapport ne décide rien et ne
+// doit RIEN y inscrire. Les combiner écrirait un cycle daté du mauvais jour dans
+// l'historique, et le mois suivant partirait d'un portefeuille faux.
+if (values.preavis && values.enregistrer) {
+  console.error(" --preavis et --enregistrer sont incompatibles : un pré-rapport n'inscrit aucun cycle (#96).");
+  process.exit(1);
+}
+// Le cycle provisoire du pré-rapport. `frais: false` : le premier appel vient de
+// rafraîchir le cache, un second téléchargement ne servirait qu'à perdre deux minutes.
+let p = values.preavis
+  ? await calculerCycle({ signal: values["preavis-signal"], marge, provisoire: true })
+  : null;
+// Le mois vient de se terminer : la « répétition » dirait mot pour mot ce que le
+// rapport dit déjà. On retire la section plutôt que de publier un doublon — et le
+// marqueur reste intact, donc l'Action ne verra rien à publier.
+if (p && p.signal <= c.signal) {
+  console.log(` Pré-rapport sans objet : la clôture du ${p.signal} est déjà couverte par le signal du ${c.signal}.`);
+  p = null;
+}
 // Aucune hypothèse n'est forcée ici : elle est déclarée dans le jeu de règles
 // (`execution.achat_differe`) et le rapport AFFICHE celle qu'il a appliquée. Forcer
 // la valeur ici masquerait un jeu de règles qui dirait autre chose.
@@ -90,15 +119,164 @@ const achats = c.ordres.filter((o) => o.action === "acheter");
 const reconduits = c.ordres.filter((o) => o.action === "conserver");
 const enCours = etat.cycles.length > 0;
 
-const ligneOrdre = (o: typeof c.ordres[number]) => `<tr>
-  <td class="g"><i class="puce ${o.secteur === "Technology" ? "T" : "I"}"></i><span class="tick">${o.ticker}</span></td>
-  <td class="g"><span class="badge ${o.action === "acheter" ? "acheter" : "conserver"}">${o.action}</span></td>
-  <td class="num">${o.rang}</td><td class="num pos">${pc(o.momentum)}</td>
-  <td class="num">${eur(o.cloture)}&nbsp;$</td>
-  <td class="num qte">${o.quantite}</td>
-  <td class="num fort">${eur(o.limite)}&nbsp;$</td>
-  <td class="num">${eur(o.engage, 0)}&nbsp;$</td>
-  <td class="num min">${eur(o.plafondOrdre, 0)}&nbsp;$</td></tr>`;
+// ── Le tableau « À faire » ────────────────────────────────────────────────────
+// Un seul tableau, trié par rang, la colonne Action portant vendre / acheter /
+// conserver. Les sortants n'ont plus de rang utile : ils tombent naturellement en bas.
+// Le même rendu sert au rapport et au pré-rapport — s'ils divergeaient, l'un des deux
+// mentirait.
+const TIRET = `<span class="min">—</span>`;
+const signe = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
+const argent = (v: number, d = 0) => `${v >= 0 ? "+" : "−"}${eur(Math.abs(v), d)}&nbsp;$`;
+
+interface Rangee {
+  ticker: string; secteur: string; action: "vendre" | "acheter" | "conserver";
+  rang: number | null; momentum: number | null; cloture: number | null;
+  quantite: number | null; prix: string; montant: number | null; coutMax: string;
+  entree: number | null; gain: number | null; pctGain: number | null;
+}
+const rangees = (cy: Cycle): Rangee[] => [
+  ...cy.ordres.map((o): Rangee => ({
+    ticker: o.ticker, secteur: o.secteur, action: o.action, rang: o.rang,
+    momentum: o.momentum, cloture: o.cloture,
+    // Sur une ligne gardée, la quantité est celle qu'on DÉTIENT : dans un tableau qui
+    // affiche aussi des quantités vendues et un résultat, le nombre doit désigner
+    // partout des actions en main.
+    quantite: o.action === "conserver" ? (o.detenu ?? o.quantite) : o.quantite,
+    prix: o.action === "acheter" ? `${eur(o.limite)}&nbsp;$` : TIRET,
+    montant: o.montant,
+    coutMax: o.action === "acheter" ? `${eur(o.plafondOrdre, 0)}&nbsp;$` : TIRET,
+    entree: o.entree, gain: o.gain, pctGain: o.pctGain,
+  })),
+  ...cy.sortants.map((v): Rangee => ({
+    ticker: v.ticker, secteur: v.secteur, action: "vendre", rang: v.rang,
+    momentum: v.momentum, cloture: v.cloture, quantite: v.detenu,
+    // Une vente part AU MARCHÉ : la stratégie n'a ni stop ni prix objectif, elle sort
+    // au rebalancement. Afficher une limite inventerait une règle qui n'existe pas.
+    prix: `<span class="marche">au marché</span>`,
+    montant: v.produit, coutMax: TIRET, entree: v.entree, gain: v.gain, pctGain: v.pctGain,
+  })),
+].sort((a, b) => (a.rang ?? 1e9) - (b.rang ?? 1e9));
+
+const cellResultat = (gain: number | null, pct: number | null) =>
+  gain === null ? TIRET
+    : `<span class="${signe(gain)}">${argent(gain)}</span>`
+      + (pct === null ? "" : `<br><span class="pct ${signe(gain)}">${pc(pct)}</span>`);
+
+const ligneOrdre = (r: Rangee) => `<tr>
+  <td class="g"><i class="puce ${r.secteur === "Technology" ? "T" : "I"}"></i><span class="tick">${r.ticker}</span></td>
+  <td class="g"><span class="badge ${r.action}">${r.action}</span></td>
+  <td class="num">${r.rang ?? TIRET}</td>
+  <td class="num ${r.momentum === null ? "" : signe(r.momentum)}">${r.momentum === null ? TIRET : pc(r.momentum)}</td>
+  <td class="num">${r.cloture === null ? TIRET : `${eur(r.cloture)}&nbsp;$`}${
+    r.entree === null ? "" : `<br><span class="achete">acheté ${eur(r.entree)}&nbsp;$</span>`}</td>
+  <td class="num qte">${r.quantite ?? TIRET}</td>
+  <td class="num fort">${r.prix}</td>
+  <td class="num">${r.montant === null ? TIRET : `${eur(r.montant, 0)}&nbsp;$`}</td>
+  <td class="num min">${r.coutMax}</td>
+  <td class="num res">${cellResultat(r.gain, r.pctGain)}</td></tr>`;
+
+// Pied décomposé : une ligne par groupe présent, puis le total. Les pourcentages sont
+// rapportés au COÛT D'ENTRÉE du groupe, jamais au montant affiché — sinon ils ne
+// voudraient rien dire. Le total ne paraît que s'il y a plus d'un groupe, sans quoi il
+// répéterait la ligne du dessus (cas d'un premier mois : que des achats).
+const coutEntree = (xs: { detenu: number | null; entree: number | null; gain: number | null }[]) =>
+  xs.filter((x) => x.gain !== null && x.detenu !== null && x.entree !== null)
+    .reduce((a, x) => a + x.detenu! * x.entree!, 0);
+
+const piedTableau = (cy: Cycle) => {
+  const ligne = (lib: string, quoi: string, n: number, montant: number, cmax: string,
+                 gain: number | null, pct: number | null, total = false) =>
+    `<tr${total ? ` class="total"` : ""}><td class="g" colspan="7">${lib}<span class="quoi">${quoi}</span>`
+    + `${n ? `<span class="quoi">${n} ligne${n > 1 ? "s" : ""}</span>` : ""}</td>`
+    + `<td class="num">${eur(montant, 0)}&nbsp;$</td><td class="num min">${cmax}</td>`
+    + `<td class="num res">${cellResultat(gain, pct)}</td></tr>`;
+  const nA = cy.ordres.filter((o) => o.action === "acheter").length;
+  const gardes = cy.ordres.filter((o) => o.action === "conserver");
+  const g: string[] = [];
+  if (cy.sortants.length)
+    g.push(ligne("Ventes", "produit estimé", cy.sortants.length, cy.produit, TIRET, cy.gainRealise, cy.pctRealise));
+  if (nA) g.push(ligne("Achats", "engagé", nA, cy.engage, `${eur(cy.coutMax, 0)}&nbsp;$`, null, null));
+  if (gardes.length)
+    g.push(ligne("Conservations", "valeur des lignes", gardes.length, cy.conserve, TIRET, cy.gainLatent, cy.pctLatent));
+  if (g.length > 1) {
+    const gain = cy.gainRealise === null && cy.gainLatent === null
+      ? null : (cy.gainRealise ?? 0) + (cy.gainLatent ?? 0);
+    const cout = coutEntree([...cy.sortants, ...gardes]);
+    g.push(ligne("Portefeuille après les ordres", "hors ventes", 0, cy.engage + cy.conserve,
+      `${eur(cy.coutMax, 0)}&nbsp;$`, gain, gain !== null && cout > 0 ? gain / cout : null, true));
+  }
+  return g.join("");
+};
+
+const TETE_ORDRES = `<thead><tr><th class="g">Titre</th><th class="g">Action</th><th>Rang</th>`
+  + `<th>Momentum</th><th>Dernière clôture</th><th>Quantité</th><th>Prix</th><th>Montant</th>`
+  + `<th>Coût max</th><th>Résultat</th></tr></thead>`;
+
+const tableauOrdres = (cy: Cycle) => `<div class="cadre"><table>
+    ${TETE_ORDRES}
+    <tbody>${rangees(cy).map(ligneOrdre).join("")}</tbody>
+    <tfoot>${piedTableau(cy)}</tfoot>
+  </table></div>`;
+
+// L'interrupteur et les candidats se disent au mot près dans le rapport et dans le
+// pré-rapport : un seul rendu pour les deux, sinon l'un des deux finirait par mentir.
+const blocInterrupteur = (cy: Cycle, titre: string, oui: string, non: string) =>
+  `<div class="interrupteur ${cy.marche.investi ? "on" : "off"}">
+    <b>${titre}</b>
+    <span>${cy.marche.seance
+      ? `${cy.marche.ticker} ouvre à <span class="mono">${eur(cy.marche.ouverture)}&nbsp;$</span> et clôture à <span class="mono">${eur(cy.marche.cours)}&nbsp;$</span>, contre sa MM${cy.marche.ma.slice(3)} à <span class="mono">${eur(cy.marche.moyenne)}&nbsp;$</span> — il faut les DEUX sous la moyenne pour couper`
+      : `${cy.marche.ticker} clôture à <span class="mono">${eur(cy.marche.cours)}&nbsp;$</span> contre sa MM${cy.marche.ma.slice(3)} à <span class="mono">${eur(cy.marche.moyenne)}&nbsp;$</span>`}
+    → <strong>${cy.marche.investi ? oui : non}</strong></span>
+  </div>`;
+
+const tableauxCandidats = (cy: Cycle) => cy.candidats.map((g) => `
+  <h3>${g.secteur === "Technology" ? "Technology" : "Industrials"}</h3>
+  <div class="cadre"><table>
+    <thead><tr><th class="g">Titre</th><th class="g">État</th><th>Rang</th><th>Momentum</th><th>Cours</th><th>Volume $ / jour</th></tr></thead>
+    <tbody>${g.titres.map((t) => `<tr class="${t.retenu ? "" : "reserve"}">
+      <td class="g"><i class="puce ${t.secteur === "Technology" ? "T" : "I"}"></i><span class="tick">${t.ticker}</span></td>
+      <td class="g"><span class="badge ${t.retenu ? "acheter" : "reserve"}">${t.retenu ? "retenu" : "réserve"}</span></td>
+      <td class="num">${t.rang}</td><td class="num ${signe(t.momentum)}">${pc(t.momentum)}</td>
+      <td class="num">${eur(t.cloture)}&nbsp;$</td><td class="num min">${eur(t.dv50 / 1000, 0)}&nbsp;k$</td></tr>`).join("")}</tbody>
+  </table></div>`).join("");
+
+const LEGENDE_CANDIDATS = `<div class="legende"><span><i class="badge acheter">retenu</i> la règle l'achète</span><span><i class="badge reserve">réserve</i> vu, écarté par le plafond ou le rang</span></div>`;
+
+// Les mêmes alertes servent aux deux tableaux.
+const alertes = (cy: Cycle) =>
+  (cy.alertes.inachetables.length ? `<div class="alerte"><strong>Inachetable à ${eur(cy.ligne, 0)} $ la ligne :</strong> ${cy.alertes.inachetables.map((o) => `${o.ticker} à ${eur(o.cloture)} $ l'action`).join(" · ")}. Une action entière coûte plus cher que la ligne entière.</div>` : "")
+  + (cy.alertes.lourds.length ? `<div class="alerte"><strong>Ordre lourd :</strong> ${cy.alertes.lourds.map((o) => `${o.ticker} pèse ${(o.partVolume * 100).toFixed(0)} % d'une journée de volume`).join(" · ")}. L'encan d'ouverture ne représente qu'une fraction de la journée — attends-toi à décaler le prix.</div>` : "");
+
+// PRÉ-RAPPORT (#96) — placé au-dessus de l'en-tête, comme l'encart d'inventaire :
+// c'est l'information actionnable du soir, le rapport du mois reste entier dessous.
+// Les marqueurs de distinction sont sur le CONTENANT (bandeau ambre plein, pastille
+// « provisoire », encadré, titres en italique ambre) ; à l'intérieur, tout se lit
+// exactement comme le rapport — mêmes colonnes, mêmes badges, mêmes conventions.
+const blocPreavis = (cy: Cycle | null) => cy === null ? "" : `
+<section class="preavis">
+  <div class="bandeau">
+    <span class="etiq">Pré-rapport · répétition à J−1</span>
+    <span class="chip">provisoire</span>
+  </div>
+  <div class="dedans">
+    <h2>Si le mois se terminait aujourd'hui&nbsp;— <span class="mono">${jour(cy.signal)}</span></h2>
+    <p class="chapo">Ce que la règle prescrirait si la clôture du ${jour(cy.signal)} était la fin du mois. <strong>Ce n'est pas le signal du mois</strong>&nbsp;: le vrai rapport paraît le dernier jour du mois, et cette section disparaîtra alors. Rien n'est enregistré, aucun ordre n'est à passer aujourd'hui.</p>
+    ${blocInterrupteur(cy, "Interrupteur provisoire", "on investirait", "liquidités — on n'achèterait rien")}
+    ${cy.marche.investi ? `
+    <h2>À faire à la prochaine séance</h2>
+    <p class="chapo">Prix limite à <strong>+${(cy.marge * 100).toFixed(0)}&nbsp;%</strong> de la clôture du ${jour(cy.signal)} ; les ventes partent <strong>au marché</strong>. Les quantités bougeront encore d'ici la fin du mois.</p>
+    ${tableauOrdres(cy)}
+    <p style="font-size:.88rem;color:var(--ink-2)">« Montant » vaut la somme engagée pour un achat, le produit estimé pour une vente, la valeur de la ligne pour une conservation ; le total exclut donc les ventes et donne le portefeuille après les ordres.${
+      cy.sourceEntree === null ? "" : ` « Résultat » est calculé sur ${cy.sourceEntree === "execute" ? "tes <strong>prix d'exécution réels</strong>" : "les prix <strong>prescrits</strong> (aucune exécution rapportée)"}, hors dividendes.`}</p>
+    ${alertes(cy)}
+    <h2>Les candidats</h2>
+    <p class="chapo">Les ${etat.regles.candidats_affiches_par_secteur} premiers de chaque secteur au ${jour(cy.signal)}, classés par momentum décroissant. Le plafond de ${cy.regles.plafond.n} par secteur retient les premiers.</p>
+    ${tableauxCandidats(cy)}
+    ${LEGENDE_CANDIDATS}
+    ` : `<div class="vide"><b>Rien à acheter si le mois finissait ce soir.</b>${cy.marche.ticker} a passé la séance entière sous sa moyenne ${cy.marche.ma.slice(3)} jours : la stratégie serait en liquidités, les positions détenues vendues.</div>`}
+    <p class="pied">Calculé le ${new Date().toLocaleDateString("fr-CA", { year: "numeric", month: "long", day: "numeric" })} sur la clôture du ${jour(cy.signal)} · jeu de règles <span class="mono">${etat.regles.jeu}</span> · aucun cycle n'est inscrit dans <span class="mono">etat.json</span> · le rapport du mois, ci-dessous, reste celui du <strong>${jour(c.signal)}</strong>.</p>
+  </div>
+</section>`;
 
 const html = `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -195,11 +373,42 @@ tr.ligne-cash td{color:var(--ink-3);font-style:italic}
 ul.notes{max-width:70ch;padding-left:20px;color:var(--ink-2)} ul.notes li{margin-bottom:9px} ul.notes b{color:var(--ink)}
 footer{padding:32px 0 0;color:var(--ink-3);font-size:.85rem;border-top:1px solid var(--rule);margin-top:38px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Colonne Résultat et lignes de vente (#96). */
+.badge.vendre{color:var(--perte)}
+.marche{color:var(--ink-3);font-style:italic}
+.achete{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3)}
+td.res{font-weight:600;line-height:1.25}
+td.res .pct{font-size:.82em;font-weight:400}
+/* Pied décomposé : un trait fort ouvre le pied, des traits fins séparent les groupes,
+   la ligne de total se détache. */
+tfoot tr + tr td{border-top:1px solid var(--rule)}
+tfoot tr.total td{border-top:1px solid var(--rule-fort)}
+tfoot .quoi{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.09em;
+  text-transform:uppercase;font-weight:400;color:var(--ink-3);margin-left:12px}
+/* Pré-rapport (#96) — encadré ambre, bandeau plein, titres italiques : les marqueurs
+   sont sur le CONTENANT ; à l'intérieur, tout se lit comme le rapport. */
+.preavis{border:2px solid var(--attente);border-radius:8px;margin:24px 0 8px;overflow:hidden;background:var(--surface);
+  padding:0;border-bottom:2px solid var(--attente)} /* annule le padding et le filet des <section> : le bandeau colle au cadre */
+.preavis .bandeau{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:var(--attente);color:var(--paper);padding:8px 20px}
+.preavis .bandeau .etiq{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.preavis .bandeau .chip{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid currentColor;border-radius:2px;padding:1px 8px}
+.preavis .dedans{padding:6px 20px 20px;background:linear-gradient(var(--attente-doux),var(--surface) 180px)}
+@media (max-width:640px){.preavis .dedans{padding:6px 12px 16px}.preavis .bandeau{padding:8px 12px}}
+.preavis h2{font-style:italic;color:var(--attente);margin-top:26px}
+.preavis h2:first-of-type{margin-top:18px}
+.preavis th{background:var(--attente-doux);color:var(--attente);border-bottom-color:var(--attente)}
+.preavis .cadre{border-color:var(--rule-fort)}
+.preavis td.qte{background:transparent;color:var(--attente)}
+.preavis .interrupteur{margin:16px 0 4px}
+.preavis .pied{max-width:none;margin:26px 0 0;padding-top:12px;border-top:1px solid var(--rule);color:var(--ink-3);font-size:.82rem}
 </style>
 
 <div class="env">
 
 ${blocInventaire}
+${blocPreavis(p)}
 <header class="tete">
   <div class="barre">
     <span class="oeil">TVLite · Rapport mensuel · duo industrie-techno</span>
@@ -207,36 +416,25 @@ ${blocInventaire}
   </div>
   <h1>Signal du ${jour(c.signal)}</h1>
   <p class="sous">Lu à la clôture du ${jour(c.signal)}. Les ordres passent à l'ouverture de la séance suivante, <strong>${quand}</strong>.</p>
-  <div class="interrupteur ${c.marche.investi ? "on" : "off"}">
-    <b>Interrupteur</b>
-    <span>${c.marche.seance
-      ? `${c.marche.ticker} ouvre à <span class="mono">${eur(c.marche.ouverture)}&nbsp;$</span> et clôture à <span class="mono">${eur(c.marche.cours)}&nbsp;$</span>, contre sa MM${c.marche.ma.slice(3)} à <span class="mono">${eur(c.marche.moyenne)}&nbsp;$</span> — il faut les DEUX sous la moyenne pour couper`
-      : `${c.marche.ticker} clôture à <span class="mono">${eur(c.marche.cours)}&nbsp;$</span> contre sa MM${c.marche.ma.slice(3)} à <span class="mono">${eur(c.marche.moyenne)}&nbsp;$</span>`}
-    → <strong>${c.marche.investi ? "on investit ce mois-ci" : "liquidités — aucun achat ce mois-ci"}</strong></span>
-  </div>
+  ${blocInterrupteur(c, "Interrupteur", "on investit ce mois-ci", "liquidités — aucun achat ce mois-ci")}
 </header>
 
 <div class="chiffres">
   <div class="chiffre"><span class="etiq">Poche duo</span><span class="val">${eur(c.poche, 0)}&nbsp;$</span><span class="note">${c.regles.trier.selection.n} lignes de ${eur(c.ligne, 0)}&nbsp;$</span></div>
   <div class="chiffre"><span class="etiq">À engager</span><span class="val" style="color:var(--accent)">${eur(c.engage, 0)}&nbsp;$</span><span class="note">${achats.length} achat${achats.length > 1 ? "s" : ""}, ${reconduits.length} reconduit${reconduits.length > 1 ? "s" : ""}</span></div>
-  <div class="chiffre"><span class="etiq">Liquidités après</span><span class="val">${eur(c.residuel, 0)}&nbsp;$</span><span class="note">${(c.residuel / c.poche * 100).toFixed(1).replace(".", ",")}&nbsp;% — arrondi aux actions entières</span></div>
-  <div class="chiffre"><span class="etiq">À vendre</span><span class="val">${c.sortants.length}</span><span class="note">${c.sortants.join(" ") || "rien ne sort"}</span></div>
+  <div class="chiffre"><span class="etiq">Liquidités après</span><span class="val">${eur(c.residuel, 0)}&nbsp;$</span><span class="note">${(c.residuel / c.poche * 100).toFixed(1).replace(".", ",")}&nbsp;% de la poche</span></div>
+  <div class="chiffre"><span class="etiq">À vendre</span><span class="val">${c.sortants.length}</span><span class="note">${c.sortants.map((v) => v.ticker).join(" ") || "rien ne sort"}</span></div>
   <div class="chiffre"><span class="etiq">Univers</span><span class="val">${c.nEligibles}</span><span class="note">titres éligibles ce mois-ci</span></div>
 </div>
 
 <section>
   <h2>À faire ${c.marche.investi ? quand : "ce mois-ci"}</h2>
   ${c.marche.investi ? `
-  <p class="chapo">Prix limite calculé à <strong>+${(c.marge * 100).toFixed(0)}&nbsp;%</strong> de la dernière clôture. Dans un encan d'ouverture, une limite au-dessus du cours d'ouverture s'exécute <em>au cours d'ouverture</em> — la marge sert à entrer dans l'encan, pas à payer plus cher.</p>
-  <div class="cadre"><table>
-    <thead><tr><th class="g">Titre</th><th class="g">Action</th><th>Rang</th><th>Momentum</th><th>Dernière clôture</th><th>Quantité</th><th>Prix limite</th><th>Engagé</th><th>Coût max</th></tr></thead>
-    <tbody>${c.ordres.map(ligneOrdre).join("")}</tbody>
-    <tfoot><tr><td class="g">Total</td><td colspan="4"></td><td></td><td></td>
-      <td class="num">${eur(c.engage, 0)}&nbsp;$</td><td class="num min">${eur(c.ordres.reduce((a, o) => a + o.plafondOrdre, 0), 0)}&nbsp;$</td></tr></tfoot>
-  </table></div>
-  <p style="font-size:.88rem;color:var(--ink-2)">« Engagé » suppose une exécution à la dernière clôture ; « coût max » suppose une exécution au prix limite. Le prix réel sera celui de l'encan d'ouverture, entre les deux le plus souvent — <strong>ni l'un ni l'autre n'est une certitude</strong>.</p>
-  ${c.alertes.inachetables.length ? `<div class="alerte"><strong>Inachetable à ${eur(c.ligne, 0)} $ la ligne :</strong> ${c.alertes.inachetables.map((o) => `${o.ticker} à ${eur(o.cloture)} $ l'action`).join(" · ")}. Une action entière coûte plus cher que la ligne entière.</div>` : ""}
-  ${c.alertes.lourds.length ? `<div class="alerte"><strong>Ordre lourd :</strong> ${c.alertes.lourds.map((o) => `${o.ticker} pèse ${(o.partVolume * 100).toFixed(0)} % d'une journée de volume`).join(" · ")}. L'encan d'ouverture ne représente qu'une fraction de la journée — attends-toi à décaler le prix.</div>` : ""}
+  <p class="chapo">Prix limite calculé à <strong>+${(c.marge * 100).toFixed(0)}&nbsp;%</strong> de la dernière clôture ; les ventes partent <strong>au marché</strong>. Dans un encan d'ouverture, une limite au-dessus du cours d'ouverture s'exécute <em>au cours d'ouverture</em> — la marge sert à entrer dans l'encan, pas à payer plus cher.</p>
+  ${tableauOrdres(c)}
+  <p style="font-size:.88rem;color:var(--ink-2)">« Montant » vaut la somme engagée pour un achat, le produit estimé pour une vente, la valeur de la ligne pour une conservation ; il suppose une exécution à la dernière clôture, quand « coût max » suppose une exécution au prix limite. Le prix réel sera celui de l'encan d'ouverture, entre les deux le plus souvent — <strong>ni l'un ni l'autre n'est une certitude</strong>.${
+    c.sourceEntree === null ? "" : ` « Résultat » est calculé sur ${c.sourceEntree === "execute" ? "tes <strong>prix d'exécution réels</strong>" : "les prix <strong>prescrits</strong> (aucune exécution rapportée)"}, hors dividendes.`}</p>
+  ${alertes(c)}
   ` : `<div class="vide"><b>Rien à acheter.</b>${c.marche.ticker} a passé la séance entière sous sa moyenne ${c.marche.ma.slice(3)} jours : la stratégie reste en liquidités jusqu'au prochain signal. Les positions détenues sont vendues, le produit ne va nulle part — il attend.</div>`}
 </section>
 
@@ -244,17 +442,8 @@ ${c.marche.investi ? `
 <section>
   <h2>Les candidats</h2>
   <p class="chapo">Les ${etat.regles.candidats_affiches_par_secteur} premiers de chaque secteur, classés par momentum décroissant. Le plafond de ${c.regles.plafond.n} par secteur retient les premiers ; les suivants sont là pour que tu voies ce que la règle a écarté — et pour que tu puisses déroger en connaissance de cause.</p>
-  ${c.candidats.map((g) => `
-  <h3>${g.secteur === "Technology" ? "Technology" : "Industrials"}</h3>
-  <div class="cadre"><table>
-    <thead><tr><th class="g">Titre</th><th class="g">État</th><th>Rang</th><th>Momentum</th><th>Cours</th><th>Volume $ / jour</th></tr></thead>
-    <tbody>${g.titres.map((t) => `<tr class="${t.retenu ? "" : "reserve"}">
-      <td class="g"><i class="puce ${t.secteur === "Technology" ? "T" : "I"}"></i><span class="tick">${t.ticker}</span></td>
-      <td class="g"><span class="badge ${t.retenu ? "acheter" : "reserve"}">${t.retenu ? "retenu" : "réserve"}</span></td>
-      <td class="num">${t.rang}</td><td class="num ${t.momentum >= 0 ? "pos" : "neg"}">${pc(t.momentum)}</td>
-      <td class="num">${eur(t.cloture)}&nbsp;$</td><td class="num min">${eur(t.dv50 / 1000, 0)}&nbsp;k$</td></tr>`).join("")}</tbody>
-  </table></div>`).join("")}
-  <div class="legende"><span><i class="badge acheter">retenu</i> la règle l'achète</span><span><i class="badge reserve">réserve</i> vu, écarté par le plafond ou le rang</span></div>
+  ${tableauxCandidats(c)}
+  ${LEGENDE_CANDIDATS}
 </section>` : ""}
 
 <section>
@@ -386,16 +575,26 @@ rendre();
 // l'adresse vers laquelle pointe le bouton de l'en-tête.
 const sortie = values.sortie ?? RACINE + "frontend/public/rapport.html";
 writeFileSync(sortie, html);
-// Marqueur du dernier signal publié : l'Action s'en sert pour ne committer
-// que lorsque le signal CHANGE. Sans lui elle committerait tous les jours,
-// la date de génération suffisant à faire varier le fichier.
-writeFileSync(RACINE + "portefeuille/dernier-signal.txt", c.signal + "\n");
+// Marqueurs du dernier publié : l'Action s'en sert pour ne committer que lorsque le
+// signal CHANGE. Sans eux elle committerait tous les jours, la date de génération
+// suffisant à faire varier le fichier. Le pré-rapport a le SIEN : `dernier-signal.txt`
+// veut dire « dernière fin de mois publiée » et ne doit pas bouger pour une répétition.
+// `--sortie` = répétition générale : on écrit la page demandée et RIEN d'autre. Sans
+// ça, un essai à la main poserait le marqueur du jour et l'Action croirait le soir venu
+// que le pré-rapport est déjà publié — elle se tairait.
+const publication = values.sortie === undefined;
+if (publication) {
+  if (p) writeFileSync(RACINE + "portefeuille/dernier-preavis.txt", p.signal + "\n");
+  else writeFileSync(RACINE + "portefeuille/dernier-signal.txt", c.signal + "\n");
+}
 // Métadonnée servie à côté du rapport (#90) : TVLite la lit pour allumer la pastille
 // « nouveau rapport ». On expose la DATE DE SIGNAL, pas la date de génération : le site
 // est redéployé à chaque commit, la pastille clignoterait sinon à chaque déploiement.
-writeFileSync(
+// `preavis` prend le pas côté client quand il est là : une répétition allume la
+// pastille elle aussi, et le rapport du lendemain la rallume avec sa propre date.
+if (publication) writeFileSync(
   RACINE + "frontend/public/rapport-meta.json",
-  JSON.stringify({ signal: c.signal }) + "\n"
+  JSON.stringify(p ? { signal: c.signal, preavis: p.signal } : { signal: c.signal }) + "\n"
 );
 
 // --enregistrer : inscrire le cycle dans l'état. Réservé à la publication (l'Action) ;
@@ -423,4 +622,6 @@ if (values.enregistrer) {
   console.log(` Cycle ${c.signal} inscrit dans portefeuille/etat.json`);
 }
 console.log(`\n Rapport du ${c.signal} → ${sortie}`);
-console.log(` ${(html.length / 1024).toFixed(0)} Ko · ${c.ordres.length} ordres · ${j.positions.length} positions de backtest · interrupteur ${c.marche.investi ? "ON" : "OFF"}\n`);
+console.log(` ${(html.length / 1024).toFixed(0)} Ko · ${c.ordres.length} ordres · ${c.sortants.length} vente(s) · ${j.positions.length} positions de backtest · interrupteur ${c.marche.investi ? "ON" : "OFF"}`);
+if (p) console.log(` + pré-rapport du ${p.signal} : ${p.ordres.filter((o) => o.action === "acheter").length} achat(s), ${p.ordres.length - p.ordres.filter((o) => o.action === "acheter").length} reconduit(s), ${p.sortants.length} vente(s) · interrupteur ${p.marche.investi ? "ON" : "OFF"}`);
+console.log("");
