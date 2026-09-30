@@ -11,7 +11,7 @@ la dernière : la requête a fini par dépasser le `statement_timeout` de 3 s du
 du 29/09 n'est jamais parti, et Jean l'a découvert par le silence. Cause profonde côté
 process : #96 a été clos **sans passage réel sur GitHub** (le `workflow_dispatch` prévu au
 plan n'a jamais été fait). Correctif immédiat : `fd351b6` — la fraîcheur se lit sur la
-dernière barre de **SPY** (clé primaire, 0,25 s).
+dernière barre de **SPY** (clé primaire, 0,25 s), remplacé le même jour par **XSP.TO** : c'est la référence de l'interrupteur, cotée à Toronto comme l'univers du duo — SPY suit le calendrier américain (Memorial Day du 31/05/2027 = fin de mois où Toronto est ouverte).
 
 ## Objectif
 Qu'un échec du rapport ne puisse plus passer en silence, et qu'on sache **avant** la date
