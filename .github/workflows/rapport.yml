@@ -52,6 +52,10 @@ jobs:
       # mois et publierait un signal périmé sans rien signaler. On exige donc, un
       # jour de semaine, que la base porte bien une barre datée d'aujourd'hui.
       # Un jour férié la condition échoue : le passage de rattrapage du 1er s'en charge.
+      # On lit la dernière barre de SPY, pas celle de toute la table : trier les ~650 000
+      # barres journalières dépassait le délai de 3 s du rôle anon (erreur 500, curl
+      # code 22) et a fait échouer tous les passages du 27 au 29/09/2026 — pré-rapport
+      # compris. SPY passe par la clé primaire (ticker, interval, bar_date) : instantané.
       - name: Fraîcheur des données
         id: frais
         run: |
@@ -59,7 +63,7 @@ jobs:
           BASE="https://cucshrxmtwwizzzqthcj.supabase.co/rest/v1/bars"
           CLE="sb_publishable_mbSe0WzTCQixT5Do_WILRg_U2F6DgTE"
           DERNIERE=$(curl -sf -H "apikey: $CLE" \
-            "$BASE?select=bar_date&interval=eq.1d&order=bar_date.desc&limit=1" \
+            "$BASE?select=bar_date&ticker=eq.SPY&interval=eq.1d&order=bar_date.desc&limit=1" \
             | sed -n 's/.*"bar_date":"\([0-9-]*\)".*/\1/p')
           AUJ=$(TZ=America/Toronto date +%F)
           JOUR=$(TZ=America/Toronto date +%u)
