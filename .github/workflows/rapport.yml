@@ -23,11 +23,31 @@ name: Rapport mensuel
 # Aucun calcul d'heure n'est nécessaire — c'est le contrôle de fraîcheur ci-dessous
 # qui écarte le passage trop précoce, et le contrôle « signal inchangé » qui rend le
 # passage en trop silencieux. L'heure locale utile est donc 17 h 30 toute l'année.
+#
+# FILET DE SÉCURITÉ (#100, 30/09/2026) — du 27 au 29/09 le workflow a échoué trois
+# soirs de suite sans que personne le sache, et le pré-rapport n'est jamais parti.
+#  · Tout passage en échec envoie maintenant une notification « rapport en ÉCHEC ».
+#  · Le 22 de chaque mois, une RÉPÉTITION GÉNÉRALE fait tourner toute la chaîne sur
+#    les vraies données (rapport + pré-rapport) SANS rien publier ni committer, et
+#    notifie « répétition OK ». On sait avant la date butoir si le soir J marchera.
+#    Le 22 est hors de la fenêtre 25→2 : la ligne de cron ne double aucun passage.
+#  · À la main : Actions → Rapport mensuel → Run workflow, case « repetition »
+#    (et « simuler_echec » pour vérifier que l'alerte d'échec arrive bien).
 
 on:
   schedule:
     - cron: "30 21,22 25,26,27,28,29,30,31,1,2 * *" # 17 h 30 ET (voir la note sur l'heure d'été)
+    - cron: "30 22 22 * *" # répétition générale du 22 (#100)
   workflow_dispatch: # déclenchement manuel depuis l'onglet Actions
+    inputs:
+      repetition:
+        description: "Répétition générale : toute la chaîne, rien de publié"
+        type: boolean
+        default: false
+      simuler_echec:
+        description: "Faire échouer le passage pour tester l'alerte"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -39,6 +59,8 @@ concurrency:
 jobs:
   publier:
     runs-on: ubuntu-latest
+    env:
+      REPETITION: ${{ github.event.schedule == '30 22 22 * *' || inputs.repetition == true }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -94,6 +116,8 @@ jobs:
           echo "Aujourd'hui $AUJ · fin de mois $FIN · veille retenue $VEILLE"
           if [ "$AUJ" = "$VEILLE" ]; then P=true; else P=false; fi
           if [ "$JJ" -ge 28 ] || [ "$JJ" -le 2 ] || [ "$P" = "true" ]; then A=true; else A=false; fi
+          # Une répétition ne publie jamais, même lancée un soir de fenêtre.
+          if [ "$REPETITION" = "true" ]; then P=false; A=false; fi
           echo "preavis=$P" >> "$GITHUB_OUTPUT"
           echo "actif=$A" >> "$GITHUB_OUTPUT"
           echo "::notice::pré-rapport ce soir : $P · passage utile : $A"
@@ -223,6 +247,59 @@ jobs:
             -H "x-push-secret: ${PUSH_SEND_SECRET}" \
             -d "{\"titre\":\"TVLite — pré-rapport\",\"corps\":\"Si le mois finissait aujourd'hui (clôture du ${{ steps.preavis.outputs.apres }})\",\"signal\":\"${{ steps.preavis.outputs.apres }}\"}" \
             || echo "::warning::envoi des notifications en échec — le pré-rapport reste publié."
+
+      # ── RÉPÉTITION GÉNÉRALE (#100) ─────────────────────────────────────────
+      # Mêmes commandes que le soir J, mais `--sortie` : seule la page demandée est
+      # écrite, dans un dossier temporaire — ni rapport.html, ni marqueur, ni etat.json,
+      # ni commit. Le contrôle de fraîcheur a déjà tourné plus haut : c'est lui qui a
+      # cassé en septembre, la répétition le couvre donc aussi.
+      - name: Répétition générale
+        id: repet
+        if: env.REPETITION == 'true'
+        env:
+          PUSH_SEND_SECRET: ${{ secrets.PUSH_SEND_SECRET }}
+        run: |
+          set -euo pipefail
+          npm run inventaire -- --max-yahoo 30 || echo "::warning::inventaire indisponible"
+          npm run rapport -- --frais --sortie "$RUNNER_TEMP/rapport.html"
+          npm run rapport -- --preavis --sortie "$RUNNER_TEMP/preavis.html"
+          test -s "$RUNNER_TEMP/rapport.html"
+          test -s "$RUNNER_TEMP/preavis.html"
+          if [ -z "${PUSH_SEND_SECRET:-}" ]; then
+            echo "::error::PUSH_SEND_SECRET absent — le soir J, aucune notification ne partirait."
+            exit 1
+          fi
+          echo "::notice::Répétition OK — rapport et pré-rapport générés, rien de publié."
+
+      - name: Simuler un échec
+        if: inputs.simuler_echec == true
+        run: |
+          echo "::error::Échec volontaire (test de l'alerte, #100)."
+          exit 1
+
+      - name: Notifier la répétition
+        if: steps.repet.outcome == 'success'
+        env:
+          PUSH_SEND_SECRET: ${{ secrets.PUSH_SEND_SECRET }}
+        run: |
+          curl -fsS -X POST \
+            "https://cucshrxmtwwizzzqthcj.supabase.co/functions/v1/tvlite-push/send" \
+            -H "Content-Type: application/json" \
+            -H "x-push-secret: ${PUSH_SEND_SECRET}" \
+            -d "{\"titre\":\"TVLite — répétition OK\",\"corps\":\"La chaîne du rapport a tourné sans erreur le $(TZ=America/Toronto date +%d/%m). Rien n'a été publié.\"}"
+
+      # Dernière ligne de défense, et la seule étape qui tourne quand une autre a
+      # échoué : sans elle, un échec ne se voit que dans l'onglet Actions — c.-à-d. jamais.
+      - name: Alerter en cas d'échec
+        if: failure()
+        env:
+          PUSH_SEND_SECRET: ${{ secrets.PUSH_SEND_SECRET }}
+        run: |
+          curl -fsS -X POST \
+            "https://cucshrxmtwwizzzqthcj.supabase.co/functions/v1/tvlite-push/send" \
+            -H "Content-Type: application/json" \
+            -H "x-push-secret: ${PUSH_SEND_SECRET}" \
+            -d "{\"titre\":\"TVLite — rapport en ÉCHEC\",\"corps\":\"Le passage du $(TZ=America/Toronto date '+%d/%m à %H h %M') a échoué. Rien n'a été publié : voir GitHub Actions.\"}"
 
       - name: Rien à publier
         if: steps.frais.outputs.ok == 'true' && steps.jour.outputs.actif == 'true' && steps.gen.outputs.change != 'true' && steps.preavis.outputs.change != 'true'
