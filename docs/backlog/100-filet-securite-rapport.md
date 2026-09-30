@@ -18,12 +18,12 @@ Qu'un échec du rapport ne puisse plus passer en silence, et qu'on sache **avant
 butoir si la chaîne marchera.
 
 ## Critères d'acceptation
-- [ ] Tout passage du workflow « Rapport mensuel » en échec envoie une notification push **« TVLite — rapport en ÉCHEC »** avec la date et l'heure.
-- [ ] Le **22 de chaque mois** (18 h 30 à Toronto l'été), une répétition générale fait tourner la chaîne sur les vraies données : contrôle de fraîcheur, inventaire, rapport, pré-rapport, présence du secret de notification.
-- [ ] La répétition **ne publie rien** : aucun commit, `rapport.html`, marqueurs et `etat.json` intacts ; notification **« TVLite — répétition OK »** si tout passe, « en ÉCHEC » sinon.
-- [ ] Lancement manuel possible : Actions → Rapport mensuel → Run workflow, cases `repetition` et `simuler_echec`.
+- [x] Tout passage du workflow « Rapport mensuel » en échec envoie une notification push **« TVLite — rapport en ÉCHEC »** avec la date et l'heure.
+- [x] Le **22 de chaque mois** (18 h 30 à Toronto l'été), une répétition générale fait tourner la chaîne sur les vraies données : contrôle de fraîcheur, inventaire, rapport, pré-rapport, présence du secret de notification.
+- [x] La répétition **ne publie rien** : aucun commit, `rapport.html`, marqueurs et `etat.json` intacts ; notification **« TVLite — répétition OK »** si tout passe, « en ÉCHEC » sinon.
+- [x] Lancement manuel possible : Actions → Rapport mensuel → Run workflow, cases `repetition` et `simuler_echec`.
 - [ ] Le passage normal du soir J est inchangé.
-- [ ] **Preuve** : liens des passages GitHub réels (répétition et échec simulé) ci-dessous.
+- [x] **Preuve** : liens des passages GitHub réels (répétition et échec simulé) ci-dessous.
 
 ## Décisions
 - **Le 22** : hors de la fenêtre de cron 25→2, donc aucun double passage ; laisse 3 jours pour corriger avant le pré-rapport le plus précoce (25 février).
@@ -32,7 +32,9 @@ butoir si la chaîne marchera.
 - **Règle de process** : aucune automatisation n'est déclarée livrée sans un passage réel sur GitHub, lien dans le ticket.
 
 ## Vérifications faites
-- *(à compléter avec les liens des passages)*
+- **Répétition réelle sur GitHub, 30/09 15 h 12** : [run 36764034111](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36764034111) — succès en 55 s, rapport + pré-rapport générés, **aucun commit** (`origin/main` inchangé), notification « répétition OK » : `envoyees:3, echecs:0`.
+- **Échec simulé sur GitHub, 30/09 15 h 13** : [run 36764173409](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36764173409) — en échec comme prévu, aucune étape de publication lancée, notification « rapport en ÉCHEC » : `envoyees:3, echecs:0`.
+- **Soir J inchangé** : à confirmer par le passage du 30/09 au soir (lancé à la main après 17 h 45, plus le cron).
 
 ## Notes / risques
 - Un soir où GitHub ne lance pas du tout le cron (panne, retard > fenêtre), il n'y a pas d'échec à signaler, donc pas d'alerte. La répétition du 22 ne couvre pas ce cas ; en septembre, les passages ont bien été lancés (avec 3 h de retard).
