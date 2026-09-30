@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "maj": "2026-09-01",
+  "maj": "2026-09-30",
   "repartition_apports": {
     "commentaire": "Découpe de CHAQUE APPORT de Jean — jamais des avoirs détenus. Aucun rééquilibrage : les poches dérivent librement ensuite. Modifiable (100 % duo un jour).",
     "duo": 0.3,
@@ -207,8 +207,8 @@
           {
             "ticker": "BBD-A.TO",
             "quantite": 1,
-            "prix": 293.0,
-            "montant": 293.0
+            "prix": 293,
+            "montant": 293
           },
           {
             "ticker": "MTL.TO",
@@ -226,6 +226,147 @@
         "total": 4564.12,
         "liquidites": 435.88
       }
+    },
+    {
+      "signal": "2026-09-30",
+      "execution": null,
+      "publie": "2026-09-30",
+      "investi": true,
+      "poche": 5000,
+      "ligne": 500,
+      "detenus": [
+        "AMD.TO",
+        "DBO.TO",
+        "HMM-A.TO",
+        "QTRH.TO",
+        "DRX.TO",
+        "HPS-A.TO",
+        "ARE.TO",
+        "MTL.TO",
+        "BB.TO",
+        "TSAT.TO"
+      ],
+      "sortants": [
+        {
+          "ticker": "KEEL.TO",
+          "secteur": "Technology",
+          "rang": 38,
+          "momentum": 0.1043257198132812,
+          "cloture": 5.019999980926514,
+          "produit": 577.2999978065491,
+          "detenu": 115,
+          "entree": 4.35,
+          "gain": 77.04999780654911,
+          "pctGain": 0.15402298412103765
+        },
+        {
+          "ticker": "BBD-A.TO",
+          "secteur": "Industrials",
+          "rang": 16,
+          "momentum": 0.5668296128018457,
+          "cloture": 316.3299865722656,
+          "produit": 316.3299865722656,
+          "detenu": 1,
+          "entree": 293,
+          "gain": 23.329986572265625,
+          "pctGain": 0.07962452755039462
+        },
+        {
+          "ticker": "FTG.TO",
+          "secteur": "Industrials",
+          "rang": 10,
+          "momentum": 0.7495682523629794,
+          "cloture": 25,
+          "produit": 600,
+          "detenu": 24,
+          "entree": 20.55,
+          "gain": 106.79999999999998,
+          "pctGain": 0.2165450121654502
+        }
+      ],
+      "prescrit": [
+        {
+          "ticker": "AMD.TO",
+          "action": "conserver",
+          "quantite": 4,
+          "cloture": 110.45,
+          "limite": 115.98,
+          "momentum": 1.8443
+        },
+        {
+          "ticker": "DBO.TO",
+          "action": "conserver",
+          "quantite": 454,
+          "cloture": 1.1,
+          "limite": 1.16,
+          "momentum": 1.6512
+        },
+        {
+          "ticker": "HMM-A.TO",
+          "action": "acheter",
+          "quantite": 17,
+          "cloture": 28.17,
+          "limite": 29.58,
+          "momentum": 1.5938
+        },
+        {
+          "ticker": "QTRH.TO",
+          "action": "conserver",
+          "quantite": 172,
+          "cloture": 2.9,
+          "limite": 3.05,
+          "momentum": 1.3704
+        },
+        {
+          "ticker": "DRX.TO",
+          "action": "acheter",
+          "quantite": 35,
+          "cloture": 14.16,
+          "limite": 14.87,
+          "momentum": 1.0138
+        },
+        {
+          "ticker": "HPS-A.TO",
+          "action": "conserver",
+          "quantite": 1,
+          "cloture": 282.42,
+          "limite": 296.55,
+          "momentum": 0.9427
+        },
+        {
+          "ticker": "ARE.TO",
+          "action": "conserver",
+          "quantite": 9,
+          "cloture": 54.1,
+          "limite": 56.81,
+          "momentum": 0.8712
+        },
+        {
+          "ticker": "MTL.TO",
+          "action": "conserver",
+          "quantite": 18,
+          "cloture": 27.3,
+          "limite": 28.67,
+          "momentum": 0.8637
+        },
+        {
+          "ticker": "BB.TO",
+          "action": "conserver",
+          "quantite": 38,
+          "cloture": 12.84,
+          "limite": 13.49,
+          "momentum": 0.6302
+        },
+        {
+          "ticker": "TSAT.TO",
+          "action": "acheter",
+          "quantite": 7,
+          "cloture": 65.59,
+          "limite": 68.87,
+          "momentum": 0.6203
+        }
+      ],
+      "execute": null
     }
   ],
   "derogations": []
