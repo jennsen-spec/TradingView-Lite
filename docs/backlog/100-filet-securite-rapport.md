@@ -22,7 +22,7 @@ butoir si la chaîne marchera.
 - [x] Le **22 de chaque mois** (18 h 30 à Toronto l'été), une répétition générale fait tourner la chaîne sur les vraies données : contrôle de fraîcheur, inventaire, rapport, pré-rapport, présence du secret de notification.
 - [x] La répétition **ne publie rien** : aucun commit, `rapport.html`, marqueurs et `etat.json` intacts ; notification **« TVLite — répétition OK »** si tout passe, « en ÉCHEC » sinon.
 - [x] Lancement manuel possible : Actions → Rapport mensuel → Run workflow, cases `repetition` et `simuler_echec`.
-- [ ] Le passage normal du soir J est inchangé.
+- [x] Le passage normal du soir J est inchangé.
 - [x] **Preuve** : liens des passages GitHub réels (répétition et échec simulé) ci-dessous.
 
 ## Décisions
@@ -34,7 +34,8 @@ butoir si la chaîne marchera.
 ## Vérifications faites
 - **Répétition réelle sur GitHub, 30/09 15 h 12** : [run 36764034111](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36764034111) — succès en 55 s, rapport + pré-rapport générés, **aucun commit** (`origin/main` inchangé), notification « répétition OK » : `envoyees:3, echecs:0`.
 - **Échec simulé sur GitHub, 30/09 15 h 13** : [run 36764173409](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36764173409) — en échec comme prévu, aucune étape de publication lancée, notification « rapport en ÉCHEC » : `envoyees:3, echecs:0`.
-- **Soir J inchangé** : à confirmer par le passage du 30/09 au soir (lancé à la main après 17 h 45, plus le cron).
+- **Répétition sur XSP.TO, 30/09 15 h 23** : [run 36765292841](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36765292841) — succès, notification `envoyees:3`.
+- **Soir J, 30/09 17 h 45** : [run 36781458341](https://github.com/jennsen-spec/TradingView-Lite/actions/runs/36781458341) — signal 2026-08-31 → **2026-09-30**, toutes les étapes en succès (rapport, DUO.MOM, publication `6054b62`, notification `envoyees:3`, libellés de la collection), alerte d'échec non déclenchée. Clôtures du rapport recoupées avec Yahoo sur 9 titres (XSP.TO 76,72 · AMD.TO 110,45 · HMM-A.TO 28,17…) : identiques au centime — les barres de mi-séance du 30/09 ont bien été remplacées.
 
 ## Notes / risques
 - Un soir où GitHub ne lance pas du tout le cron (panne, retard > fenêtre), il n'y a pas d'échec à signaler, donc pas d'alerte. La répétition du 22 ne couvre pas ce cas ; en septembre, les passages ont bien été lancés (avec 3 h de retard).
