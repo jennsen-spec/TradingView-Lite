@@ -117,7 +117,75 @@ const quand = c.execution ? `le ${jour(c.execution)}` : "à la prochaine séance
 
 const achats = c.ordres.filter((o) => o.action === "acheter");
 const reconduits = c.ordres.filter((o) => o.action === "conserver");
-const enCours = etat.cycles.length > 0;
+
+// ── Journal de mon investissement ─────────────────────────────────────────────
+// Une période par cycle EXÉCUTÉ : les lignes réellement détenues (`detenus` du cycle),
+// au prix d'achat réel (`execute`, le plus récent pour ce titre), valorisées à la clôture
+// du signal suivant — la fin de la période pendant laquelle on les a tenues. Le total
+// (titres + liquidités rapportées) se compare à la poche. Rien de backtest ici : une
+// période sans exécution rapportée n'apparaît pas.
+interface LigneJournal {
+  ticker: string; quantite: number | null; prix: number | null; date: string | null;
+  limite: number | null; cloture: number | null; valeur: number | null; gain: number | null; pct: number | null;
+}
+interface Periode {
+  signal: string; execution: string; fin: string; poche: number;
+  lignes: LigneJournal[]; cout: number; valeur: number; liquidites: number | null;
+}
+const periodes: Periode[] = (() => {
+  const cycles = (etat.cycles as any[]).filter((cy) => cy.signal < c.signal);
+  const achats = new Map<string, { quantite: number; prix: number; date: string }>();
+  const out: Periode[] = [];
+  cycles.forEach((cy, k) => {
+    const exe = cy.execute;
+    if (!exe?.ordres?.length) return;
+    for (const o of exe.ordres) achats.set(o.ticker, { quantite: o.quantite, prix: o.prix, date: exe.date });
+    const suivant = cycles[k + 1]?.signal;
+    const fin = suivant && suivant < c.signal ? suivant : c.signal;
+    const lignes = (cy.detenus as string[]).map((t): LigneJournal => {
+      const a = achats.get(t);
+      const cloture = c.clotureA(t, fin);
+      const limite = (cy.prescrit as any[] | null)?.find((o) => o.ticker === t)?.limite ?? null;
+      if (!a) return { ticker: t, quantite: null, prix: null, date: null, limite, cloture, valeur: null, gain: null, pct: null };
+      const valeur = cloture === null ? null : a.quantite * cloture;
+      return { ticker: t, quantite: a.quantite, prix: a.prix, date: a.date, limite, cloture, valeur,
+        gain: valeur === null ? null : valeur - a.quantite * a.prix,
+        pct: cloture === null ? null : cloture / a.prix - 1 };
+    });
+    const comptees = lignes.filter((l) => l.valeur !== null);
+    out.push({ signal: cy.signal, execution: exe.date, fin, poche: cy.poche, lignes,
+      cout: comptees.reduce((x, l) => x + l.quantite! * l.prix!, 0),
+      valeur: comptees.reduce((x, l) => x + l.valeur!, 0),
+      liquidites: typeof exe.liquidites === "number" ? exe.liquidites : null });
+  });
+  return out.reverse(); // la plus récente en tête
+})();
+
+const blocPeriode = (pe: Periode) => {
+  const gainTitres = pe.valeur - pe.cout;
+  const total = pe.liquidites === null ? null : pe.valeur + pe.liquidites;
+  const lignes = pe.lignes.map((l) => `<tr>
+    <td class="g"><span class="tick">${l.ticker}</span></td>
+    <td class="num qte">${l.quantite ?? TIRET}</td>
+    <td class="num">${l.prix === null ? TIRET : `${eur(l.prix)}&nbsp;$`}${
+      l.date === null ? "" : `<br><span class="achete">le ${jour(l.date).slice(0, 5)}${l.limite === null ? "" : ` · limite ${eur(l.limite)}&nbsp;$`}</span>`}</td>
+    <td class="num">${l.cloture === null ? TIRET : `${eur(l.cloture)}&nbsp;$`}</td>
+    <td class="num">${l.valeur === null ? TIRET : `${eur(l.valeur, 0)}&nbsp;$`}</td>
+    <td class="num res">${cellResultat(l.gain, l.pct)}</td></tr>`).join("");
+  const pied = (lib: string, quoi: string, montant: number, gain: number | null, pct: number | null, tot = false) =>
+    `<tr${tot ? ` class="total"` : ""}><td class="g" colspan="4">${lib}<span class="quoi">${quoi}</span></td>`
+    + `<td class="num">${eur(montant, 0)}&nbsp;$</td><td class="num res">${cellResultat(gain, pct)}</td></tr>`;
+  return `
+  <h3>${moisLong(pe.fin).replace(/^./, (x) => x.toUpperCase())} — achats du ${jour(pe.execution)}, valorisés à la clôture du ${jour(pe.fin)}</h3>
+  <div class="cadre"><table>
+    <thead><tr><th class="g">Titre</th><th>Quantité</th><th>Prix d'achat</th><th>Clôture ${jour(pe.fin).slice(0, 5)}</th><th>Valeur</th><th>Résultat</th></tr></thead>
+    <tbody>${lignes}</tbody>
+    <tfoot>${pied("Titres", "coût " + eur(pe.cout, 0) + "\u00A0$", pe.valeur, gainTitres, pe.cout > 0 ? gainTitres / pe.cout : null)}${
+      pe.liquidites === null ? "" : pied("Liquidités", "non investies", pe.liquidites, null, null)}${
+      total === null ? "" : pied("Portefeuille", `contre ${eur(pe.poche, 0)}\u00A0$ de départ`, total, total - pe.poche, total / pe.poche - 1, true)}</tfoot>
+  </table></div>
+`;
+};
 
 // ── Le tableau « À faire » ────────────────────────────────────────────────────
 // Un seul tableau, trié par rang, la colonne Action portant vendre / acheter /
@@ -448,7 +516,7 @@ ${c.marche.investi ? `
 
 <section>
   <h2>Journal de mon investissement</h2>
-  ${enCours ? "" : `<div class="vide"><b>Le premier cycle réel n'a pas encore eu lieu.</b>
+  ${periodes.length ? `<p class="chapo">Ton argent, pas le backtest : les lignes réellement achetées, à tes prix d'exécution, valorisées à la fin de chaque période. Hors dividendes.</p>${periodes.map(blocPeriode).join("")}` : `<div class="vide"><b>Le premier cycle réel n'a pas encore eu lieu.</b>
   Cette section se remplira à partir du moment où tu auras passé tes premiers ordres : prix obtenus, quantités réelles, et l'écart entre ce que les règles disaient et ce que tu as fait. Tant qu'elle est vide, il n'y a rien à raconter — et c'est plus honnête que de la remplir avec du backtest.</div>`}
 </section>
 

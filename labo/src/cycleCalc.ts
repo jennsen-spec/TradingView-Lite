@@ -66,6 +66,10 @@ export interface Cycle {
   provisoire: boolean;
   alertes: { inachetables: Ordre[]; lourds: Ordre[] };
   regles: JeuDeRegles; etat: Record<string, unknown>;
+  // Dernière clôture connue d'un titre à une date (≤ date), sur tout le marché chargé —
+  // un titre détenu peut avoir quitté l'univers du duo. Sert au journal de
+  // l'investissement, qui valorise les lignes réelles à la fin de chaque période.
+  clotureA: (ticker: string, date: string) => number | null;
 }
 
 export async function calculerCycle(
@@ -95,6 +99,13 @@ export async function calculerCycle(
   const CDR = new Set<string>(etat.regles.exclure_cdr ? etat.regles.cdr : []);
   const duo = u.series.filter((s) => DUO.has(secteurDe(s.ticker)) && !CDR.has(s.ticker));
   const regles = chargerJeu(etat.regles.jeu);
+  const coursDe = new Map(u.series.map((s) => [s.ticker, s]));
+  const clotureA = (ticker: string, date: string): number | null => {
+    const s = coursDe.get(ticker);
+    if (!s) return null;
+    for (let i = s.dates.length - 1; i >= 0; i--) if (s.dates[i] <= date) return s.close[i];
+    return null;
+  };
 
   // Fins de mois COMPLÈTES. Un mois est complet si des données existent dans un
   // mois postérieur, OU si la date du jour a atteint son dernier jour civil.
@@ -298,5 +309,5 @@ export async function calculerCycle(
     gainLatent: latent.gain, pctLatent: latent.pct,
     sourceEntree, provisoire,
     alertes: { inachetables: ordres.filter((o) => o.quantite === 0), lourds: ordres.filter((o) => o.partVolume > 0.05) },
-    regles, etat };
+    regles, etat, clotureA };
 }
