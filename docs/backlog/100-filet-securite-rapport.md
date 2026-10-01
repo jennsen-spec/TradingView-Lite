@@ -1,8 +1,10 @@
 # #100 — Filet de sécurité du rapport (alerte d'échec + répétition générale)
 
-**Statut** : 🧪 À valider · **Points** : 3 · **Catégorie** : ⚙️ · **Priorité** : ⭐
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : ⚙️ · **Priorité** : ⭐
 
 Demandé et lancé en prod par Jean le 30/09/2026, après l'incident ci-dessous.
+
+**UAT validée par Jean le 30/09/2026.**
 
 ## Incident du 27 au 29/09/2026
 Le contrôle de fraîcheur du workflow triait les ~650 000 barres journalières pour trouver
