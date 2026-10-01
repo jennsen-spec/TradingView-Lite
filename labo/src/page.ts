@@ -188,8 +188,8 @@ const blocPeriode = (pe: Periode) => {
 };
 
 // ── Le tableau « À faire » ────────────────────────────────────────────────────
-// Un seul tableau, trié par rang, la colonne Action portant vendre / acheter /
-// conserver. Les sortants n'ont plus de rang utile : ils tombent naturellement en bas.
+// Un seul tableau, la colonne Action portant vendre / acheter / conserver, trié par
+// action puis par rang (voir ORDRE_ACTION).
 // Le même rendu sert au rapport et au pré-rapport — s'ils divergeaient, l'un des deux
 // mentirait.
 const TIRET = `<span class="min">—</span>`;
@@ -202,6 +202,9 @@ interface Rangee {
   quantite: number | null; prix: string; montant: number | null; coutMax: string;
   entree: number | null; gain: number | null; pctGain: number | null;
 }
+// Tri par action (Jean, 01/10/2026) : ce qu'on vend, puis ce qu'on achète, puis ce
+// qu'on garde — l'ordre dans lequel on passe les ordres. Par rang à l'intérieur.
+const ORDRE_ACTION = { vendre: 0, acheter: 1, conserver: 2 } as const;
 const rangees = (cy: Cycle): Rangee[] => [
   ...cy.ordres.map((o): Rangee => ({
     ticker: o.ticker, secteur: o.secteur, action: o.action, rang: o.rang,
@@ -223,7 +226,7 @@ const rangees = (cy: Cycle): Rangee[] => [
     prix: `<span class="marche">au marché</span>`,
     montant: v.produit, coutMax: TIRET, entree: v.entree, gain: v.gain, pctGain: v.pctGain,
   })),
-].sort((a, b) => (a.rang ?? 1e9) - (b.rang ?? 1e9));
+].sort((a, b) => ORDRE_ACTION[a.action] - ORDRE_ACTION[b.action] || (a.rang ?? 1e9) - (b.rang ?? 1e9));
 
 const cellResultat = (gain: number | null, pct: number | null) =>
   gain === null ? TIRET

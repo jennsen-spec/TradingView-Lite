@@ -23,6 +23,9 @@ trou était noté dans les risques de #96, sans ticket ouvert.
 - **Hors dividendes**, comme la colonne Résultat de #96.
 - La note libre de `execute` n'est pas affichée : elle cite le courtier et le compte, et le rapport est public.
 
+## Décidé pendant le sprint
+- **Tableau « À faire » trié par action** (Jean, 01/10) : vendre, puis acheter, puis conserver, par rang à l'intérieur — l'ordre dans lequel on passe les ordres. Remplace le tri par rang seul décidé en #96. Aucun chiffre ne change, seulement l'ordre des lignes.
+
 ## Vérifications faites
 - Rapport régénéré (`--frais`) et diffé contre la version publiée : aucun autre écart que la section, la date d'exécution et la date de génération.
 - Clôtures recoupées avec le rapport publié et Yahoo (AMD.TO 110,45 · KEEL.TO 5,02 · ARE.TO 54,10).
