@@ -52,7 +52,7 @@ const calSet = new Set<string>();
 for (const s of duo) for (const d of s.dates) calSet.add(d);
 const calendrier = [...calSet].sort();
 
-const points: { time: string; open: number; high: number; low: number; close: number }[] = [];
+const points: { time: string; open: number; high: number; low: number; close: number; volume: number }[] = [];
 let equite = 1; // base 1, = dernière clôture quotidienne émise
 for (const m of mois as MoisResultat[]) {
   const startE = equite;
@@ -69,6 +69,13 @@ for (const m of mois as MoisResultat[]) {
       for (const { s, entree } of paniers) { const i = s.idx.get(d); if (i === undefined) continue; somme += s.close[i] / entree; n++; }
       return n ? somme / n : 1;
     };
+    // Volume (#102) : dollars échangés ce jour-là sur les titres du panier (Σ clôture × volume).
+    // Volume du MARCHÉ sur les titres détenus — pas le montant échangé par la stratégie.
+    const volAt = (d: string) => {
+      let v = 0;
+      for (const { s } of paniers) { const i = s.idx.get(d); if (i !== undefined) v += s.close[i] * s.volume[i]; }
+      return Math.round(v);
+    };
     // Correction MULTIPLICATIVE (stable) : ratio c ≈ 1 qui ramène la fin du mois sur `net`
     // (frais + exécution à l'ouverture suivante), étalé en rampe sur les jours du mois.
     const c = (1 + m.net) / pathAt(m.next);
@@ -77,13 +84,13 @@ for (const m of mois as MoisResultat[]) {
       const open = equite;
       const corr = 1 + (c - 1) * ((k + 1) / nd);
       const eq = startE * pathAt(d) * corr;
-      points.push({ time: d, open: r4(open), high: r4(Math.max(open, eq)), low: r4(Math.min(open, eq)), close: r4(eq) });
+      points.push({ time: d, open: r4(open), high: r4(Math.max(open, eq)), low: r4(Math.min(open, eq)), close: r4(eq), volume: volAt(d) });
       equite = eq;
     });
   } else {
     // Mois en liquidités : plat (net = 0), un point par jour de bourse pour la densité.
     for (const d of jours) {
-      points.push({ time: d, open: r4(equite), high: r4(equite), low: r4(equite), close: r4(equite) });
+      points.push({ time: d, open: r4(equite), high: r4(equite), low: r4(equite), close: r4(equite), volume: 0 });
     }
   }
   equite = startE * (1 + m.net); // clôture mensuelle autoritative (corrige l'arrondi quotidien)

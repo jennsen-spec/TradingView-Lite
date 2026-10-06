@@ -24,7 +24,7 @@ const SYNTH_NAME = "EQ.SYNTH — portefeuille 60 actions / 10 oblig / 30 or (bas
 // MOM.SYNTH — série QUOTIDIENNE pré-calculée (data/duo-mom.json) + panier courant.
 // L'historique est figé jusqu'à `basketCourant.entree` ; le mois en cours est valorisé
 // EN DIRECT (fetch des titres du panier). Glob vide si le fichier est absent → feature off.
-type DuoPoint = { time: string; open: number; high: number; low: number; close: number };
+type DuoPoint = { time: string; open: number; high: number; low: number; close: number; volume?: number };
 type DuoData = {
   basketCourant?: { investi: boolean; tickers: string[]; entree: string; valeurDebut: number };
   points: DuoPoint[];
@@ -81,7 +81,7 @@ export function syntheticDetail(sym: string): SyntheticDetail | null {
       name: DUO_NAME,
       typeLine: "Backtest de stratégie · base 100 · mensuel · CAD",
       descLabel: "Stratégie",
-      descValue: "Duo secteur momentum (Indus. + Tech) · 10 lignes · plafond 5/secteur · interrupteur séance MM150",
+      descValue: "Duo secteur momentum (Indus. + Tech) · 10 lignes · plafond 5/secteur · interrupteur séance MM150 · volume en $ CA des titres détenus",
       badge: "NON validé — biais du survivant, pas de stop",
     };
   }
@@ -164,10 +164,11 @@ function rebase100(candles: Candle[]): Candle[] {
   return candles.map((c) => mk(c.time as string, c.open * k, c.high * k, c.low * k, c.close * k, c.volume));
 }
 
-// MOM.SYNTH — historique QUOTIDIEN figé (base 100), calculé par l'exporteur. Volume 0.
+// MOM.SYNTH — historique QUOTIDIEN figé (base 100), calculé par l'exporteur.
+// Volume (#102) = dollars échangés sur les titres du panier (Σ clôture × volume), 0 en liquidités.
 function duoHistory(): Candle[] {
   if (!DUO_DATA) return [];
-  return DUO_DATA.points.map((p) => mk(p.time, p.open, p.high, p.low, p.close, 0));
+  return DUO_DATA.points.map((p) => mk(p.time, p.open, p.high, p.low, p.close, p.volume ?? 0));
 }
 
 // Titres du panier courant (mois en cours) à valoriser en direct. Vide si cash/absent.
@@ -184,19 +185,22 @@ function duoTail(stocks: Record<string, Candle[]>): Candle[] {
   // Cours d'entrée par titre (dernière clôture ≤ date d'entrée) + index date→clôture.
   const entries: Record<string, number> = {};
   const closeAt: Record<string, Map<string, number>> = {};
+  const dollarsAt: Record<string, Map<string, number>> = {};
   const daysSet = new Set<string>();
   for (const t of b.tickers) {
     const arr = stocks[t];
     if (!arr?.length) continue;
     let entree = 0;
     const m = new Map<string, number>();
+    const v = new Map<string, number>();
     for (const c of arr) {
       const d = c.time as string;
       m.set(d, c.close);
+      v.set(d, c.close * c.volume);
       if (d <= b.entree) entree = c.close;
       else daysSet.add(d);
     }
-    if (entree > 0) { entries[t] = entree; closeAt[t] = m; }
+    if (entree > 0) { entries[t] = entree; closeAt[t] = m; dollarsAt[t] = v; }
   }
   const noms = Object.keys(entries);
   if (!noms.length) return [];
@@ -204,11 +208,11 @@ function duoTail(stocks: Record<string, Candle[]>): Candle[] {
   const out: Candle[] = [];
   let prev = b.valeurDebut; // base 100, = dernier point figé
   for (const d of jours) {
-    let somme = 0, n = 0;
-    for (const t of noms) { const cl = closeAt[t].get(d); if (cl == null) continue; somme += cl / entries[t]; n++; }
+    let somme = 0, n = 0, vol = 0;
+    for (const t of noms) { const cl = closeAt[t].get(d); if (cl == null) continue; somme += cl / entries[t]; n++; vol += dollarsAt[t].get(d) ?? 0; }
     if (!n) continue;
     const eq = b.valeurDebut * (somme / n); // base 100
-    out.push(mk(d, prev, Math.max(prev, eq), Math.min(prev, eq), eq, 0));
+    out.push(mk(d, prev, Math.max(prev, eq), Math.min(prev, eq), eq, Math.round(vol)));
     prev = eq;
   }
   return out;
