@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "maj": "2026-09-30",
+  "maj": "2026-10-31",
   "repartition_apports": {
     "commentaire": "Découpe de CHAQUE APPORT de Jean — jamais des avoirs détenus. Aucun rééquilibrage : les poches dérivent librement ensuite. Modifiable (100 % duo un jour).",
     "duo": 0.3,
@@ -364,6 +364,147 @@
           "cloture": 65.59,
           "limite": 68.87,
           "momentum": 0.6203
+        }
+      ],
+      "execute": null
+    },
+    {
+      "signal": "2026-10-30",
+      "execution": null,
+      "publie": "2026-10-31",
+      "investi": true,
+      "poche": 5000,
+      "ligne": 500,
+      "detenus": [
+        "MU.TO",
+        "QTRH.TO",
+        "HMM-A.TO",
+        "FTG.TO",
+        "AMD.TO",
+        "RUS.TO",
+        "DRX.TO",
+        "MTL.TO",
+        "BB.TO",
+        "TSAT.TO"
+      ],
+      "sortants": [
+        {
+          "ticker": "DBO.TO",
+          "secteur": "Technology",
+          "rang": null,
+          "momentum": null,
+          "cloture": 1.1100000143051147,
+          "produit": 503.9400064945221,
+          "detenu": 454,
+          "entree": 1.1,
+          "gain": 4.540006494522054,
+          "pctGain": 0.00909092209555884
+        },
+        {
+          "ticker": "HPS-A.TO",
+          "secteur": "Industrials",
+          "rang": 22,
+          "momentum": 0.39432243481905704,
+          "cloture": 229.8800048828125,
+          "produit": 229.8800048828125,
+          "detenu": 1,
+          "entree": 282.42,
+          "gain": -52.539995117187516,
+          "pctGain": -0.1860349660689311
+        },
+        {
+          "ticker": "ARE.TO",
+          "secteur": "Industrials",
+          "rang": 10,
+          "momentum": 0.8003327736328119,
+          "cloture": 49.22999954223633,
+          "produit": 443.06999588012695,
+          "detenu": 9,
+          "entree": 54.1,
+          "gain": -43.83000411987306,
+          "pctGain": -0.09001849274979068
+        }
+      ],
+      "prescrit": [
+        {
+          "ticker": "MU.TO",
+          "action": "acheter",
+          "quantite": 12,
+          "cloture": 38.7,
+          "limite": 40.64,
+          "momentum": 3.5972
+        },
+        {
+          "ticker": "QTRH.TO",
+          "action": "conserver",
+          "quantite": 185,
+          "cloture": 2.7,
+          "limite": 2.84,
+          "momentum": 1.7358
+        },
+        {
+          "ticker": "HMM-A.TO",
+          "action": "conserver",
+          "quantite": 19,
+          "cloture": 25.99,
+          "limite": 27.29,
+          "momentum": 1.5493
+        },
+        {
+          "ticker": "FTG.TO",
+          "action": "acheter",
+          "quantite": 15,
+          "cloture": 32.6,
+          "limite": 34.23,
+          "momentum": 1.2936
+        },
+        {
+          "ticker": "AMD.TO",
+          "action": "conserver",
+          "quantite": 38,
+          "cloture": 13,
+          "limite": 13.65,
+          "momentum": 1.2568
+        },
+        {
+          "ticker": "RUS.TO",
+          "action": "acheter",
+          "quantite": 5,
+          "cloture": 86.99,
+          "limite": 91.34,
+          "momentum": 1.1071
+        },
+        {
+          "ticker": "DRX.TO",
+          "action": "conserver",
+          "quantite": 30,
+          "cloture": 16.34,
+          "limite": 17.16,
+          "momentum": 1.0142
+        },
+        {
+          "ticker": "MTL.TO",
+          "action": "conserver",
+          "quantite": 17,
+          "cloture": 28.81,
+          "limite": 30.26,
+          "momentum": 0.928
+        },
+        {
+          "ticker": "BB.TO",
+          "action": "conserver",
+          "quantite": 42,
+          "cloture": 11.75,
+          "limite": 12.34,
+          "momentum": 0.9022
+        },
+        {
+          "ticker": "TSAT.TO",
+          "action": "conserver",
+          "quantite": 8,
+          "cloture": 55.84,
+          "limite": 58.64,
+          "momentum": 0.5393
         }
       ],
       "execute": null
