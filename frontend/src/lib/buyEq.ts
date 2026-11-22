@@ -45,7 +45,8 @@ export interface Resultat {
  * - Complet (achatsSeulement = false) : parts cibles = ⌊total × poids / cours⌋ ; ventes comprises.
  * - Achats seulement : aucune vente, on part des avoirs.
  * Puis, dans les deux cas, le cash restant va une part à la fois au titre le plus loin sous sa
- * cible, tant qu'une part passe. On ne dépense jamais plus que ce qu'on a.
+ * cible, tant qu'une part passe et qu'il reste un titre sous sa cible. On ne dépense jamais plus
+ * que ce qu'on a.
  * Renvoie null si la valeur totale est nulle.
  */
 export function rebalancer(
@@ -64,7 +65,7 @@ export function rebalancer(
     ? [...avant]
     : CIBLE.map((c, i) => Math.floor((total * c.poids) / prix[i] + 1e-9));
   // Dans les deux cas, le cash restant est placé une part à la fois dans le titre le plus loin
-  // sous sa cible, tant qu'une part passe (sinon le plancher sur 5 lignes laisse beaucoup de
+  // sous sa cible, tant qu'une part passe et qu'un titre reste sous sa cible (sinon le plancher sur 5 lignes laisse beaucoup de
   // cash dormir : 250 $ n'en investissaient que 110).
   {
     let cash = total - apres.reduce((s, n, i) => s + n * prix[i], 0);
@@ -74,7 +75,9 @@ export function rebalancer(
       CIBLE.forEach((c, i) => {
         if (prix[i] > cash + 1e-9) return;
         const m = c.poids * total - apres[i] * prix[i];
-        if (m > manque) { manque = m; meilleur = i; }
+        // Seulement un titre encore SOUS sa cible : les miettes ne vont pas grossir un titre
+        // déjà surpondéré (retour de Jean, 22/11) ; elles restent en liquidités.
+        if (m > 1e-9 && m > manque) { manque = m; meilleur = i; }
       });
       if (meilleur < 0) break;
       apres[meilleur] += 1;

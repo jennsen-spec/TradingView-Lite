@@ -119,6 +119,10 @@ Remplace le calcul fait à la main avant chaque passage d'ordres.
   rebalancement complet → 2 ZEQT · 1 VMO · 0 HXS · 1 ZAG · 2 ZGLD, soit **244,06 $ investis, 5,94 $ restants**
   (test ajouté, vérifié en navigateur). Libellé « Pas d'achat » au lieu de « Conserver » pour un
   titre non détenu.
+- **Retour d'UAT n° 2 (22/11)** : en « Achats seulement », avec seul ZGLD sous sa cible, le reste
+  du cash (moins d'une part de ZGLD) partait dans ZEQT, déjà surpondéré. **Corrigé** : un achat ne
+  va qu'à un titre **encore sous sa cible** (les deux modes) ; ce qui ne suffit pas pour une part
+  reste en liquidités. Ex. : seul ZGLD à −6 pts, 300 $ → 5 ZGLD, 28,60 $ restants (avant : + 2 ZAG).
 - Reste possible en rebalancement complet : vendre quelques parts d'un titre pourtant dans sa
   bande (le message « dérisoire » le signale quand tout est dans la bande).
 
