@@ -7,7 +7,7 @@ import { CIBLE, rebalancer, tolerance } from "../lib/buyEq";
 
 const fmt$ = (n: number) =>
   n.toLocaleString("fr-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtPct = (x: number) => `${(x * 100).toLocaleString("fr-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+const fmtPct = (x: number | null) => x === null ? "—" : `${(x * 100).toLocaleString("fr-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 const fmtPts = (x: number) => {
   const v = x * 100;
   return `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString("fr-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} pt`;
@@ -181,7 +181,8 @@ export default function BuyEqPanel({ onClose }: { onClose?: () => void }) {
                       {fmtPct(l.pctAvant)} → {fmtPct(l.pctApres)} <small>(cible {fmtPct(l.poids)})</small>
                     </span>
                     <span className="bl-ecart" title={`Bande ±${fmtPct(tolerance(l.poids)).replace(" %", " pt")}`}>
-                      écart {fmtPts(l.pctAvant - l.poids)}{l.horsBandeAvant ? " · hors bande" : ""}
+                      {l.pctAvant === null ? "" : `écart ${fmtPts(l.pctAvant - l.poids)}`}
+                      {l.pctAvant !== null && l.horsBandeAvant ? " · hors bande" : ""}
                     </span>
                   </div>
                   <div className="bl-manque">

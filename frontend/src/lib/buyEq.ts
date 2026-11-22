@@ -24,8 +24,10 @@ export interface Ligne {
   partsApres: number;
   delta: number; // > 0 acheter, < 0 vendre, 0 conserver
   montant: number; // |delta| × cours
-  pctAvant: number; // part de la valeur totale (titres + liquidités)
-  pctApres: number;
+  // Parts dans le portefeuille de TITRES, sans le cash (22/11) : avant = répartition actuelle
+  // (comme Disnat), après = une fois le cash dissous. null s'il n'y a aucun titre.
+  pctAvant: number | null;
+  pctApres: number | null;
   horsBandeAvant: boolean;
   horsBandeApres: boolean;
 }
@@ -65,8 +67,8 @@ export function rebalancer(
     ? [...avant]
     : CIBLE.map((c, i) => Math.floor((total * c.poids) / prix[i] + 1e-9));
   // Dans les deux cas, le cash restant est placé une part à la fois dans le titre le plus loin
-  // sous sa cible, tant qu'une part passe et qu'un titre reste sous sa cible (sinon le plancher sur 5 lignes laisse beaucoup de
-  // cash dormir : 250 $ n'en investissaient que 110).
+  // sous sa cible, tant qu'une part passe et qu'un titre reste sous sa cible (sinon le plancher
+  // sur 5 lignes laisse beaucoup de cash dormir : 250 $ n'en investissaient que 110).
   {
     let cash = total - apres.reduce((s, n, i) => s + n * prix[i], 0);
     for (;;) {
@@ -85,11 +87,16 @@ export function rebalancer(
     }
   }
 
+  // Les ordres visent la cible sur le total (titres + cash) ; l'affichage, lui, se lit sur les
+  // titres seuls. Pas de titre avant → tous hors bande (rien n'est encore à sa cible).
+  const titresAvant = avant.reduce((s, n, i) => s + n * prix[i], 0);
+  const titresApres = apres.reduce((s, n, i) => s + n * prix[i], 0);
   const lignes: Ligne[] = CIBLE.map((c, i) => {
     const delta = apres[i] - avant[i];
-    const pctAvant = (avant[i] * prix[i]) / total;
-    const pctApres = (apres[i] * prix[i]) / total;
+    const pctAvant = titresAvant > 0 ? (avant[i] * prix[i]) / titresAvant : null;
+    const pctApres = titresApres > 0 ? (apres[i] * prix[i]) / titresApres : null;
     const tol = tolerance(c.poids);
+    const hors = (p: number | null) => p === null || Math.abs(p - c.poids) > tol + 1e-9;
     return {
       ticker: c.ticker,
       label: c.label,
@@ -101,8 +108,8 @@ export function rebalancer(
       montant: Math.abs(delta) * prix[i],
       pctAvant,
       pctApres,
-      horsBandeAvant: Math.abs(pctAvant - c.poids) > tol + 1e-9,
-      horsBandeApres: Math.abs(pctApres - c.poids) > tol + 1e-9,
+      horsBandeAvant: hors(pctAvant),
+      horsBandeApres: hors(pctApres),
     };
   });
   const cashVentes = lignes.reduce((s, l) => s + (l.delta < 0 ? l.montant : 0), 0);

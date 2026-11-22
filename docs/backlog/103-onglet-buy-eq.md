@@ -123,6 +123,11 @@ Remplace le calcul fait à la main avant chaque passage d'ordres.
   du cash (moins d'une part de ZGLD) partait dans ZEQT, déjà surpondéré. **Corrigé** : un achat ne
   va qu'à un titre **encore sous sa cible** (les deux modes) ; ce qui ne suffit pas pour une part
   reste en liquidités. Ex. : seul ZGLD à −6 pts, 300 $ → 5 ZGLD, 28,60 $ restants (avant : + 2 ZAG).
+- **Retouche après clôture (22/11, demande de Jean)** : les **% s'affichent sur les titres seuls**,
+  sans le cash. % avant = répartition actuelle (comme Disnat, « — » si aucun titre) ; % après =
+  une fois le cash dissous. Écart et bande se lisent sur le % avant. Les **ordres ne changent pas**
+  (la cible reste appliquée à titres + cash). Effet : acheter ZGLD fait baisser la part des autres
+  (ex. ZEQT 26,1 % → 25,4 %), ce qui colle à « dissoudre le cash dans le portefeuille ».
 - Reste possible en rebalancement complet : vendre quelques parts d'un titre pourtant dans sa
   bande (le message « dérisoire » le signale quand tout est dans la bande).
 
