@@ -1,6 +1,6 @@
 # #103 — Onglet BUY EQ : investir et rebalancer en un seul écran
 
-**Statut** : 🧪 À valider · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M · **Priorité** : —
+**Statut** : ✅ Fait (UAT validée par Jean le 22/11/2026) · **Points** : 5 · **Catégorie** : 💼 Portefeuille · **Taille** : M · **Priorité** : —
 
 ## Objectif
 Un écran **BUY EQ** où je saisis **l'état de mon portefeuille** (parts détenues de chaque ETF) et
@@ -54,7 +54,7 @@ Remplace le calcul fait à la main avant chaque passage d'ordres.
       lequel manque.
 - [x] **Rien n'est mémorisé** : recharger l'app vide les champs ; sur desktop, fermer le volet aussi.
       En mobile, changer d'onglet **conserve** la saisie (comme le graphe et la watchlist).
-- [ ] Vérifié sur iPhone réel et sur desktop (UAT Jean), sur les trois usages, avec un recalcul à
+- [x] Vérifié sur iPhone réel et sur desktop (UAT Jean), sur les trois usages, avec un recalcul à
       la main sur un cas.
 
 ## Décisions
