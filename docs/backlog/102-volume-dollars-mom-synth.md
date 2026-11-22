@@ -1,6 +1,7 @@
 # #102 — Volume en dollars sur MOM.SYNTH
 
-**Statut** : 🧪 À valider (sprint du 2026-10-05) · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Taille** : S
+**Statut** : ✅ Fait · **Points** : 3 · **Catégorie** : 💼 Portefeuille · **Taille** : S
+**UAT validée par Jean le 08/10/2026.**
 
 ## Réalisé (2026-10-05)
 - **Exporteur** : chaque point de `duo-mom.json` porte `volume` = Σ clôture × volume des titres du panier, arrondi au dollar ; 0 en liquidités (1 404 jours). Fichier : 778 Ko → 919 Ko.
@@ -18,13 +19,13 @@ Le panneau Volume de MOM.SYNTH est vide : le volume y est mis à 0 depuis le #77
 l'activité du marché sous la courbe (pics de volume sur les creux et les cassures).
 
 ## Critères d'acceptation
-- [ ] Sur MOM.SYNTH, le panneau Volume affiche des barres de 2004 à aujourd'hui, **mois en cours compris**, en 1j, 1sem et 1mois.
-- [ ] La valeur d'un jour = **somme, sur les titres détenus ce jour-là, de clôture × volume** (dollars canadiens). → vérif : recalcul à la main d'une date de l'historique et d'une date du mois en cours = valeur affichée.
-- [ ] Les mois **en liquidités** (interrupteur coupé) affichent un volume **nul**.
-- [ ] La moyenne mobile du volume (« Vol 20 ») se trace et sa valeur apparaît dans la légende.
-- [ ] La **courbe ne bouge pas** : les open/high/low/close de `duo-mom.json` sont identiques avant et après, hors nouveaux jours. → vérif : diff du fichier, champ `volume` retiré.
-- [ ] Pas de marche visible à la **jointure** historique figé ↔ mois en cours (même ordre de grandeur de part et d'autre).
-- [ ] EQ.SYNTH et les titres réels sont inchangés.
+- [x] Sur MOM.SYNTH, le panneau Volume affiche des barres de 2004 à aujourd'hui, **mois en cours compris**, en 1j, 1sem et 1mois.
+- [x] La valeur d'un jour = **somme, sur les titres détenus ce jour-là, de clôture × volume** (dollars canadiens). → vérif : recalcul à la main d'une date de l'historique et d'une date du mois en cours = valeur affichée.
+- [x] Les mois **en liquidités** (interrupteur coupé) affichent un volume **nul**.
+- [x] La moyenne mobile du volume (« Vol 20 ») se trace et sa valeur apparaît dans la légende.
+- [x] La **courbe ne bouge pas** : les open/high/low/close de `duo-mom.json` sont identiques avant et après, hors nouveaux jours. → vérif : diff du fichier, champ `volume` retiré.
+- [x] Pas de marche visible à la **jointure** historique figé ↔ mois en cours (même ordre de grandeur de part et d'autre).
+- [x] EQ.SYNTH et les titres réels sont inchangés.
 
 ## Décisions
 - **Tout l'historique, en dollars** (Jean, 2026-10-05). Revient sur la décision « sans volume » du #77 et le critère « volume 0 » du #79.

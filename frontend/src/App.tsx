@@ -4,6 +4,7 @@ import Chart from "./components/Chart";
 import SymbolSearch from "./components/SymbolSearch";
 import IntervalSelector from "./components/IntervalSelector";
 import WatchlistPanel from "./components/WatchlistPanel";
+import BuyEqPanel from "./components/BuyEqPanel";
 import { fetchCandles, searchSymbols } from "./lib/api";
 import { syncToCloud } from "./lib/cloudPrefs";
 import { useIsMobile } from "./lib/useIsMobile";
@@ -38,9 +39,19 @@ export default function App() {
   // Coquille mobile (#84) : sous la rupture, un volet à la fois + onglets en bas.
   // Le graphique et la watchlist restent montés (masqués en CSS) pour garder leur état.
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "rapport">("chart");
+  const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "buyeq" | "rapport">("chart");
   // Onglet Rapport (#89) : l'iframe n'est montée qu'à la première ouverture, puis conservée.
   const [rapportMounted, setRapportMounted] = useState(false);
+  // BUY EQ (#103) : onglet mobile monté à la première ouverture puis conservé (la saisie survit
+  // au changement d'onglet, pas au rechargement) ; volet en surimpression sur desktop.
+  const [buyEqMounted, setBuyEqMounted] = useState(false);
+  const [buyEqOpen, setBuyEqOpen] = useState(false);
+  useEffect(() => {
+    if (!buyEqOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setBuyEqOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [buyEqOpen]);
   // Menu « ⋯ » de la barre du bas (#86) : refresh, thème, horodatage.
   const [moreMenu, setMoreMenu] = useState(false);
   // Pastille « nouveau rapport » (#90) : allumée quand le signal publié diffère du
@@ -294,6 +305,17 @@ export default function App() {
         </div>
 
         <div className="refresh-cluster">
+          <button
+            className={`rapport-btn buyeq-btn${buyEqOpen ? " active" : ""}`}
+            onClick={() => setBuyEqOpen((o) => !o)}
+            title="BUY EQ — investir et rebalancer la poche ETF"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" />
+              <path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6" />
+            </svg>
+            <span>BUY EQ</span>
+          </button>
           {/* Rapport mensuel du duo : page autonome générée par `npm run rapport`
               dans frontend/public/, donc servie par le même déploiement. */}
           <a
@@ -401,6 +423,11 @@ export default function App() {
             <iframe src={`${import.meta.env.BASE_URL}rapport.html`} title="Rapport mensuel" />
           </div>
         )}
+        {isMobile && buyEqMounted && (
+          <div className="buyeq-area">
+            <BuyEqPanel />
+          </div>
+        )}
         {(isMobile || watchlistOpen) && (
           <WatchlistPanel
             onClose={() => (isMobile ? setMobileTab("chart") : setWatchlistOpen(false))}
@@ -435,6 +462,19 @@ export default function App() {
             <span>Graphique</span>
           </button>
           <button
+            className={`bt-tab${mobileTab === "buyeq" ? " active" : ""}`}
+            onClick={() => {
+              setMobileTab("buyeq");
+              setBuyEqMounted(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" />
+              <path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6" />
+            </svg>
+            <span>BUY EQ</span>
+          </button>
+          <button
             className={`bt-tab${mobileTab === "rapport" ? " active" : ""}${rapportNeuf ? " neuf" : ""}`}
             onClick={() => {
               setMobileTab("rapport");
@@ -450,6 +490,14 @@ export default function App() {
             <span>Rapport</span>
           </button>
         </nav>
+      )}
+      {!isMobile && buyEqOpen && (
+        <>
+          <div className="buyeq-voile" onClick={() => setBuyEqOpen(false)} />
+          <div className="buyeq-overlay" role="dialog" aria-label="BUY EQ">
+            <BuyEqPanel onClose={() => setBuyEqOpen(false)} />
+          </div>
+        </>
       )}
       {searchOpen && (
         <SymbolSearch
