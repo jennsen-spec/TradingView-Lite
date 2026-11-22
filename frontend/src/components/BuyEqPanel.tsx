@@ -28,10 +28,35 @@ function lire(v: string, entier: boolean): number {
   return n;
 }
 
+// Dernière saisie, mémorisée sur CET appareil (demande de Jean, 22/11). Clé volontairement hors
+// du préfixe `tvlike:` : jamais synchronisée vers le cloud (cloudPrefs.ts).
+const CLE = "buyeq:saisie";
+interface Saisie { parts: Record<string, string>; cash: string; achatsSeulement: boolean }
+const VIDE: Saisie = { parts: {}, cash: "", achatsSeulement: false };
+function relire(): Saisie {
+  try {
+    const s = JSON.parse(localStorage.getItem(CLE) || "null");
+    return s && typeof s === "object" ? { ...VIDE, ...s } : VIDE;
+  } catch {
+    return VIDE;
+  }
+}
+
 export default function BuyEqPanel({ onClose }: { onClose?: () => void }) {
-  const [saisieParts, setSaisieParts] = useState<Record<string, string>>({});
-  const [saisieCash, setSaisieCash] = useState("");
-  const [achatsSeulement, setAchatsSeulement] = useState(false);
+  const [initiale] = useState(relire);
+  const [saisieParts, setSaisieParts] = useState<Record<string, string>>(initiale.parts);
+  const [saisieCash, setSaisieCash] = useState(initiale.cash);
+  const [achatsSeulement, setAchatsSeulement] = useState(initiale.achatsSeulement);
+  useEffect(() => {
+    try {
+      localStorage.setItem(CLE, JSON.stringify({ parts: saisieParts, cash: saisieCash, achatsSeulement }));
+    } catch { /* stockage indisponible : la saisie reste valable jusqu'au rechargement */ }
+  }, [saisieParts, saisieCash, achatsSeulement]);
+  const reinitialiser = () => {
+    setSaisieParts({});
+    setSaisieCash("");
+    setAchatsSeulement(false);
+  };
   const [cours, setCours] = useState<Record<string, number | null> | null>(null);
   const [coursAt, setCoursAt] = useState<number | null>(null);
   const [erreurCours, setErreurCours] = useState<string | null>(null);
@@ -82,7 +107,10 @@ export default function BuyEqPanel({ onClose }: { onClose?: () => void }) {
       </div>
 
       <section className="buyeq-form">
-        <div className="buyeq-form-title">Mes parts détenues</div>
+        <div className="buyeq-form-title">
+          <span>Mes parts détenues</span>
+          <button className="buyeq-reset" onClick={reinitialiser}>Réinitialiser</button>
+        </div>
         {CIBLE.map((c) => {
           const v = saisieParts[c.ticker] ?? "";
           const p = cours?.[c.ticker];

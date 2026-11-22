@@ -128,6 +128,10 @@ Remplace le calcul fait à la main avant chaque passage d'ordres.
   une fois le cash dissous. Écart et bande se lisent sur le % avant. Les **ordres ne changent pas**
   (la cible reste appliquée à titres + cash). Effet : acheter ZGLD fait baisser la part des autres
   (ex. ZEQT 26,1 % → 25,4 %), ce qui colle à « dissoudre le cash dans le portefeuille ».
+- **Retouche après clôture n° 2 (22/11, demande de Jean)** : la **dernière saisie est mémorisée**
+  (parts, liquidités, interrupteur) **sur l'appareil seulement** — clé `buyeq:saisie`, hors du
+  préfixe `tvlike:`, donc jamais envoyée au cloud. Bouton **« Réinitialiser »** pour tout remettre
+  à zéro. Remplace la décision « sans mémoire » du raffinement.
 - Reste possible en rebalancement complet : vendre quelques parts d'un titre pourtant dans sa
   bande (le message « dérisoire » le signale quand tout est dans la bande).
 

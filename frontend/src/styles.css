@@ -3166,12 +3166,31 @@ body {
   overflow: hidden;
 }
 .buyeq-form-title {
-  padding: 10px 14px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 4px 14px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+.buyeq-reset {
+  min-height: 32px;
+  padding: 0 10px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.buyeq-reset:hover {
+  background: var(--accent-soft);
 }
 .buyeq-field,
 .buyeq-switch {
